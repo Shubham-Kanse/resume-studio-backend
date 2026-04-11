@@ -3,7 +3,10 @@ package com.resumestudio.reviewer.signals;
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.Skill;
 import com.resumestudio.reviewer.model.WorkExperience;
+import com.resumestudio.reviewer.nlp.NlpService;
 import com.resumestudio.reviewer.skills.EscoSkillGraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -11,23 +14,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Detects anomalies that a sharp recruiter would notice immediately.
- * Pure rule-based — no ML needed.
- *
- * Detects:
- *  - Skill age mismatch (claims 10yr React when React is 12yr old → borderline but ok;
- *                        claims 10yr Flutter when Flutter is 6yr old → impossible)
- *  - Title inflation (senior title + junior-level bullet language)
- *  - Date overlaps (two concurrent full-time roles — already in YoeSignalCalculator,
- *                   surfaced here for anomaly reporting)
- */
 @Component
 public class AnomalyDetector {
 
-    private final EscoSkillGraph escoGraph;
+    private static final Logger log = LoggerFactory.getLogger(AnomalyDetector.class);
 
-    // YOE claimed per skill pattern: "10 years of React", "5+ years Java"
+    private final EscoSkillGraph escoGraph;
+    private final NlpService nlp;
+
     private static final Pattern SKILL_YOE_CLAIM = Pattern.compile(
         "(\\d+)\\s*\\+?\\s*years?\\s+(?:of\\s+)?([A-Za-z][A-Za-z0-9.+#\\s]{1,30})",
         Pattern.CASE_INSENSITIVE);
@@ -36,93 +30,86 @@ public class AnomalyDetector {
         "([A-Za-z][A-Za-z0-9.+#\\s]{1,30})\\s+(?:for\\s+)?(\\d+)\\s*\\+?\\s*years?",
         Pattern.CASE_INSENSITIVE);
 
-    // Junior-level indicator words in bullets
     private static final List<String> JUNIOR_BULLET_VERBS = List.of(
         "assisted", "helped", "supported", "shadowed", "learned", "was responsible for",
         "participated in", "contributed to", "worked on", "involved in"
     );
 
-    // Senior-level indicator words in bullets
     private static final List<String> SENIOR_BULLET_VERBS = List.of(
         "architected", "designed", "led", "owned", "drove", "established", "defined",
         "mentored", "spearheaded", "pioneered", "transformed", "built from scratch"
     );
 
-    public AnomalyDetector(EscoSkillGraph escoGraph) {
+    public AnomalyDetector(EscoSkillGraph escoGraph, NlpService nlp) {
         this.escoGraph = escoGraph;
+        this.nlp = nlp;
     }
 
     public void detect(List<Skill> skills, List<WorkExperience> experience,
                        String fullText, ResumeSignals signals) {
         detectSkillAgeMismatch(fullText, signals);
         detectTitleInflation(experience, signals);
+        computeBulletQuality(experience, signals);
     }
-
-    // ── Skill age mismatch ────────────────────────────────────────────────────
 
     private void detectSkillAgeMismatch(String text, ResumeSignals signals) {
         if (text == null) return;
-
         int currentYear = LocalDate.now().getYear();
-
-        // Pattern: "10 years of React"
         Matcher m1 = SKILL_YOE_CLAIM.matcher(text);
-        while (m1.find()) {
-            int claimedYears = Integer.parseInt(m1.group(1));
-            String skillName = m1.group(2).trim();
-            checkMismatch(skillName, claimedYears, currentYear, signals);
-        }
-
-        // Pattern: "React for 10 years"
+        while (m1.find()) checkMismatch(m1.group(2).trim(), Integer.parseInt(m1.group(1)), currentYear, signals);
         Matcher m2 = SKILL_YOE_CLAIM_ALT.matcher(text);
-        while (m2.find()) {
-            String skillName = m2.group(1).trim();
-            int claimedYears = Integer.parseInt(m2.group(2));
-            checkMismatch(skillName, claimedYears, currentYear, signals);
-        }
+        while (m2.find()) checkMismatch(m2.group(1).trim(), Integer.parseInt(m2.group(2)), currentYear, signals);
     }
 
     private void checkMismatch(String skillName, int claimedYears, int currentYear, ResumeSignals signals) {
         String canonical = escoGraph.resolve(skillName);
         Integer releaseYear = escoGraph.releaseYearOf(canonical);
-
-        if (releaseYear == null) return; // unknown tech — can't validate
-
-        int maxPossibleYears = currentYear - releaseYear;
-        if (claimedYears > maxPossibleYears + 1) { // +1 for rounding tolerance
+        if (releaseYear == null) return;
+        int maxPossible = currentYear - releaseYear;
+        if (claimedYears > maxPossible + 1) {
             signals.setHasSkillAgeMismatch(true);
-            signals.setSkillAgeMismatchDetail(
-                String.format("Claims %d years of %s, but %s was released in %d (max possible: %d years).",
-                    claimedYears, canonical, canonical, releaseYear, maxPossibleYears));
+            signals.setSkillAgeMismatchDetail(String.format(
+                "Claims %d years of %s, but %s was released in %d (max possible: %d years).",
+                claimedYears, canonical, canonical, releaseYear, maxPossible));
         }
     }
 
-    // ── Title inflation ───────────────────────────────────────────────────────
-
     private void detectTitleInflation(List<WorkExperience> experience, ResumeSignals signals) {
         if (experience == null || experience.isEmpty()) return;
-
-        // Check most recent role only
         WorkExperience recent = experience.get(0);
         if (recent.getTitle() == null || recent.getBullets() == null) return;
+        if (recent.getIcLevel() < 4) return;
 
-        int icLevel = recent.getIcLevel();
-        if (icLevel < 4) return; // only flag senior+ titles
-
-        // Count junior vs senior language in bullets
-        int juniorCount = 0;
-        int seniorCount = 0;
-        int totalBullets = recent.getBullets().size();
-
+        int juniorCount = 0, seniorCount = 0;
+        int total = recent.getBullets().size();
         for (String bullet : recent.getBullets()) {
             String lower = bullet.toLowerCase();
             if (JUNIOR_BULLET_VERBS.stream().anyMatch(lower::contains)) juniorCount++;
             if (SENIOR_BULLET_VERBS.stream().anyMatch(lower::contains)) seniorCount++;
         }
-
-        // Title inflation: senior title but majority of bullets use junior language
-        if (totalBullets >= 3 && juniorCount > seniorCount && juniorCount > totalBullets / 2) {
+        if (total >= 3 && juniorCount > seniorCount && juniorCount > total / 2) {
             signals.setHasTitleInflation(true);
         }
+    }
+
+    /**
+     * Uses NlpService POS tagger to compute bullet quality signals:
+     * - impactVerbRatio: fraction of bullets starting with strong action verbs
+     * - metricDensity: fraction of bullets containing quantified claims
+     */
+    private void computeBulletQuality(List<WorkExperience> experience, ResumeSignals signals) {
+        if (experience == null || experience.isEmpty()) return;
+
+        // Collect bullets from the 2 most recent roles
+        List<String> bullets = experience.stream()
+            .limit(2)
+            .filter(e -> e.getBullets() != null)
+            .flatMap(e -> e.getBullets().stream())
+            .toList();
+
+        if (bullets.isEmpty()) return;
+
+        signals.setImpactVerbRatio(nlp.impactVerbRatio(bullets));
+        signals.setMetricDensity(nlp.metricDensity(bullets));
     }
 }

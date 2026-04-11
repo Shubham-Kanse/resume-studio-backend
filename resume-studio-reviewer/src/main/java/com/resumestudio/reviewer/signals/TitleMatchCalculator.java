@@ -4,6 +4,8 @@ import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.WorkExperience;
 import com.resumestudio.reviewer.model.enums.TitleMatch;
 import com.resumestudio.reviewer.model.enums.TitleProgression;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -14,6 +16,8 @@ import java.util.regex.Pattern;
  */
 @Component
 public class TitleMatchCalculator {
+
+    private static final Logger log = LoggerFactory.getLogger(TitleMatchCalculator.class);
 
     // Role domain groupings for adjacency detection
     private static final Map<String, Set<String>> ROLE_DOMAINS = new HashMap<>();

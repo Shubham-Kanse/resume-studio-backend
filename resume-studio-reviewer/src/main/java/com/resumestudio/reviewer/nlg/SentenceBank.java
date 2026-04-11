@@ -3,6 +3,8 @@ package com.resumestudio.reviewer.nlg;
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.SkillMatchResult;
 import com.resumestudio.reviewer.model.enums.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.List;
  */
 @Component
 public class SentenceBank {
+
+    private static final Logger log = LoggerFactory.getLogger(SentenceBank.class);
 
     // ── Filename sentences ────────────────────────────────────────────────────
 
@@ -102,7 +106,13 @@ public class SentenceBank {
     // ── YOE sentences ─────────────────────────────────────────────────────────
 
     public String yoeObservation(ResumeSignals s) {
-        String yoe = s.getCalculatedYoe() != null ? String.format("%.0f", s.getCalculatedYoe()) : "Unknown";
+        // Use explicit YOE if stated, otherwise calculated
+        double yoeValue = (s.getCalculatedYoe() != null && s.getCalculatedYoe() > 0)
+            ? s.getCalculatedYoe()
+            : (s.getJdYoeMin() != null ? 0 : 0);
+        String yoe = s.getCalculatedYoe() != null && s.getCalculatedYoe() > 0
+            ? String.format("%.1f", s.getCalculatedYoe()).replaceAll("\\.0$", "")
+            : "Unknown";
         String range = buildJdYoeRange(s);
         return switch (s.getYoeFit()) {
             case IN_RANGE -> yoe + " years of experience — within the " + range + " requirement.";

@@ -1,7 +1,11 @@
 package com.resumestudio.reviewer.extraction;
 
+import com.resumestudio.reviewer.extraction.SemanticExtractor;
 import com.resumestudio.reviewer.ingest.RawDocument;
 import com.resumestudio.reviewer.model.Resume;
+import com.resumestudio.reviewer.nlp.NlpService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,6 +22,16 @@ import java.util.regex.Pattern;
 @Component
 public class HeaderExtractor {
 
+    private static final Logger log = LoggerFactory.getLogger(HeaderExtractor.class);
+
+    private final SemanticExtractor semanticExtractor;
+    private final NlpService nlp;
+
+    public HeaderExtractor(SemanticExtractor semanticExtractor, NlpService nlp) {
+        this.semanticExtractor = semanticExtractor;
+        this.nlp = nlp;
+    }
+
     // ── Contact patterns ──────────────────────────────────────────────────────
     private static final Pattern EMAIL = Pattern.compile(
         "[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}");
@@ -33,14 +47,9 @@ public class HeaderExtractor {
         "(?:https?://)?(?:www\\.)?github\\.com/([\\w\\-]+)",
         Pattern.CASE_INSENSITIVE);
 
-    // ── YOE explicit statement ────────────────────────────────────────────────
-    private static final Pattern YOE_EXPLICIT = Pattern.compile(
-        "(\\d+(?:\\.5)?)\\s*\\+?\\s*years?\\s+(?:of\\s+)?(?:experience|exp)",
-        Pattern.CASE_INSENSITIVE);
-
-    private static final Pattern YOE_VAGUE = Pattern.compile(
-        "(several|many|extensive|numerous|multiple|over a decade|decade)\\s+years?",
-        Pattern.CASE_INSENSITIVE);
+    // Location: "City, Country" or "City, State" pattern in header
+    private static final Pattern LOCATION = Pattern.compile(
+        "\\b([A-Z][a-zA-Z\\s]+,\\s*(?:[A-Z][a-zA-Z\\s]+|[A-Z]{2}))\\b");
 
     // ── Company descriptor ────────────────────────────────────────────────────
     // Matches things like "(Series B fintech, 200 engineers)" after a company name
@@ -56,9 +65,8 @@ public class HeaderExtractor {
     public void extract(RawDocument rawDoc, Resume resume) {
         String headerText = rawDoc.getHeaderZoneText();
         if (headerText == null || headerText.isBlank()) {
-            // Fall back to full text top section
             headerText = rawDoc.getFullText() != null
-                ? rawDoc.getFullText().substring(0, Math.min(800, rawDoc.getFullText().length()))
+                ? rawDoc.getFullText().substring(0, Math.min(600, rawDoc.getFullText().length()))
                 : "";
         }
 
@@ -95,6 +103,12 @@ public class HeaderExtractor {
             resume.setGitHubUrl("https://github.com/" + githubMatcher.group(1));
         }
 
+        // Location (e.g. "Galway, Ireland" or "San Francisco, CA")
+        Matcher locationMatcher = LOCATION.matcher(text);
+        if (locationMatcher.find()) {
+            resume.setLocation(locationMatcher.group(1).trim());
+        }
+
         // Name: best heuristic is the largest font block in the header zone,
         // which is typically the first non-email, non-phone line.
         // We extract it from text blocks if available, else first line of header.
@@ -102,8 +116,6 @@ public class HeaderExtractor {
     }
 
     private void extractName(String headerText, Resume resume) {
-        // Try font-size based detection first (largest text block)
-        // Fallback: first line of header that looks like a name
         String[] lines = headerText.split("\n");
         for (String line : lines) {
             String trimmed = line.trim();
@@ -112,9 +124,8 @@ public class HeaderExtractor {
             if (PHONE.matcher(trimmed).find()) continue;
             if (LINKEDIN.matcher(trimmed).find()) continue;
             if (GITHUB.matcher(trimmed).find()) continue;
-            if (trimmed.length() > 60) continue;  // names aren't that long
+            if (trimmed.length() > 60) continue;
 
-            // Looks like a name if it's 2–4 words, each capitalised
             String[] words = trimmed.split("\\s+");
             if (words.length >= 2 && words.length <= 5) {
                 boolean allCapitalised = true;
@@ -130,12 +141,22 @@ public class HeaderExtractor {
                 }
             }
         }
+
+        // NER fallback — use OpenNLP person finder on the header text
+        if (resume.getCandidateName() == null) {
+            List<String> persons = nlp.findPersons(headerText.substring(0, Math.min(300, headerText.length())));
+            if (!persons.isEmpty()) {
+                resume.setCandidateName(persons.get(0));
+            }
+        }
     }
 
     // ── Title and company extraction ──────────────────────────────────────────
 
     private void extractTitleAndCompany(RawDocument rawDoc, Resume resume) {
-        String headerText = rawDoc.getHeaderZoneText();
+        // Use only the first 600 chars of text — strictly the header zone
+        String fullText = rawDoc.getFullText() != null ? rawDoc.getFullText() : "";
+        String headerText = fullText.substring(0, Math.min(600, fullText.length()));
         String[] lines = headerText.split("\n");
 
         boolean nameFound = resume.getCandidateName() != null;
@@ -146,6 +167,9 @@ public class HeaderExtractor {
             if (trimmed.isBlank()) continue;
             if (trimmed.equals(resume.getCandidateName())) { nameFound = true; continue; }
             if (!nameFound) continue;
+
+            // Stop if we hit a section header
+            if (semanticExtractor.classifyHeader(trimmed) != com.resumestudio.reviewer.extraction.SemanticExtractor.SectionType.UNKNOWN) break;
 
             // Skip contact lines
             if (EMAIL.matcher(trimmed).find()) continue;
@@ -160,13 +184,11 @@ public class HeaderExtractor {
                 continue;
             }
 
-            // Next non-contact line after title = likely company
+            // Next non-contact line after title = company (only if it looks like one)
             if (titleFound && resume.getCurrentCompany() == null && looksLikeCompany(trimmed)) {
-                // Check for inline descriptor: "Acme Corp (Series B fintech)"
                 Matcher descriptorMatcher = COMPANY_DESCRIPTOR.matcher(trimmed);
                 if (descriptorMatcher.find()) {
-                    String descriptor = descriptorMatcher.group(1);
-                    resume.setCompanyDescriptor(descriptor);
+                    resume.setCompanyDescriptor(descriptorMatcher.group(1));
                     resume.setCurrentCompany(trimmed.substring(0, descriptorMatcher.start()).trim());
                 } else {
                     resume.setCurrentCompany(trimmed);
@@ -190,10 +212,11 @@ public class HeaderExtractor {
 
     private boolean looksLikeCompany(String line) {
         if (line.length() > 100) return false;
-        // Not a date, not an email, reasonable word count
         String[] words = line.split("\\s+");
-        return words.length >= 1 && words.length <= 8
-            && !line.matches(".*\\d{4}.*–.*\\d{4}.*")   // not a date range
+        // Reject section headers (all-caps short lines like "PROFESSIONAL SUMMARY")
+        boolean isAllCaps = line.equals(line.toUpperCase()) && line.matches("[A-Z\\s]+");
+        return !isAllCaps && words.length >= 1 && words.length <= 8
+            && !line.matches(".*\\d{4}.*[–\\-].*\\d{4}.*")
             && !EMAIL.matcher(line).find();
     }
 
@@ -201,24 +224,11 @@ public class HeaderExtractor {
 
     private void extractYoeStatement(String fullText, Resume resume) {
         if (fullText == null) return;
-
-        // Check first 500 chars (summary zone) for explicit YOE statement
-        String summaryZone = fullText.substring(0, Math.min(500, fullText.length()));
-
-        Matcher explicitMatcher = YOE_EXPLICIT.matcher(summaryZone);
-        if (explicitMatcher.find()) {
+        Double yoe = semanticExtractor.extractYoe(fullText);
+        if (yoe != null) {
             resume.setYoeExplicitInSummary(true);
-            resume.setYoeRawStatement(explicitMatcher.group());
-            try {
-                resume.setTotalYoeYears(Double.parseDouble(explicitMatcher.group(1)));
-            } catch (NumberFormatException ignored) {}
-            return;
-        }
-
-        Matcher vagueMatcher = YOE_VAGUE.matcher(summaryZone);
-        if (vagueMatcher.find()) {
-            resume.setYoeRawStatement(vagueMatcher.group());
-            // Don't set totalYoeYears — it's vague, ExperienceExtractor will calculate from dates
+            resume.setTotalYoeYears(yoe);
+            resume.setYoeRawStatement(yoe + " years");
         }
     }
 

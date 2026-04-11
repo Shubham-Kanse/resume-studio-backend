@@ -2,6 +2,8 @@ package com.resumestudio.reviewer.signals;
 
 import com.resumestudio.reviewer.ingest.RawDocument;
 import com.resumestudio.reviewer.model.ResumeSignals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -13,6 +15,8 @@ import java.util.regex.Pattern;
  */
 @Component
 public class FormatSignalCalculator {
+
+    private static final Logger log = LoggerFactory.getLogger(FormatSignalCalculator.class);
 
     private static final double WALL_OF_TEXT_THRESHOLD = 0.12; // whitespace ratio below this = wall of text
     private static final double MIN_FONT_SIZE = 9.0;

@@ -60,13 +60,31 @@ logs/
 # Environment files (if any)
 .env
 .env.local
+.factorypath
 
 # Test coverage
 coverage/
 *.coverage
 
-#docs
+# ── Binary model / resource files (large, not version-controlled) ─────────
+# ESCO taxonomy index and skill embeddings (~400 MB)
+resume-studio-reviewer/src/main/resources/taxonomy/
+
+# OpenNLP pre-trained models (POS tagger, tokenizer, NER, sentence detector)
+resume-studio-reviewer/src/main/resources/nlp/
+
+# Generic binary model guard — catches any .bin file added under resources
+resume-studio-reviewer/src/main/resources/**/*.bin
+
+# ── Secrets / local config ────────────────────────────────────────────────
+*.env
+*.env.*
+application-local.properties
+application-secret.properties
+application-prod.properties
+
+# ── Docs / conversation exports ───────────────────────────────────────────
 claude-conversation.md
 
-#files
-resume-studio-reviewer/src/main/resources/taxonomy
+# ── IntelliJ bin output ───────────────────────────────────────────────────
+bin/

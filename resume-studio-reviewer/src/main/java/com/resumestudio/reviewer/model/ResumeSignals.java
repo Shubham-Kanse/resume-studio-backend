@@ -80,6 +80,20 @@ public class ResumeSignals {
     private String skillAgeMismatchDetail;
     private boolean hasTitleInflation;
 
+    // ── Bullet quality signals (NLP-derived) ─────────────────
+    private double impactVerbRatio;   // 0–1, fraction of bullets with strong action verbs
+    private double metricDensity;     // 0–1, fraction of bullets with quantified claims
+
+    // ── Location / visa signals ───────────────────────────────
+    private String jdLocation;           // location from JD (null = not specified)
+    private boolean jdLocationStrict;    // true if JD explicitly requires on-site/specific location
+    private String candidateLocation;    // from resume header
+
+    // ── Recent role signals ───────────────────────────────────
+    private String mostRecentRoleTitle;
+    private String mostRecentCompany;
+    private int recentRoleCount;         // number of roles in last 3 years
+
     // ── Getters & Setters ────────────────────────────────────
 
     public boolean isFilenameProfessional() { return filenameProfessional; }
@@ -240,4 +254,24 @@ public class ResumeSignals {
 
     public boolean isHasTitleInflation() { return hasTitleInflation; }
     public void setHasTitleInflation(boolean hasTitleInflation) { this.hasTitleInflation = hasTitleInflation; }
+
+    public double getImpactVerbRatio() { return impactVerbRatio; }
+    public void setImpactVerbRatio(double impactVerbRatio) { this.impactVerbRatio = impactVerbRatio; }
+
+    public double getMetricDensity() { return metricDensity; }
+    public void setMetricDensity(double metricDensity) { this.metricDensity = metricDensity; }
+
+    public String getJdLocation() { return jdLocation; }
+    public void setJdLocation(String jdLocation) { this.jdLocation = jdLocation; }
+    public boolean isJdLocationStrict() { return jdLocationStrict; }
+    public void setJdLocationStrict(boolean jdLocationStrict) { this.jdLocationStrict = jdLocationStrict; }
+    public String getCandidateLocation() { return candidateLocation; }
+    public void setCandidateLocation(String candidateLocation) { this.candidateLocation = candidateLocation; }
+
+    public String getMostRecentRoleTitle() { return mostRecentRoleTitle; }
+    public void setMostRecentRoleTitle(String mostRecentRoleTitle) { this.mostRecentRoleTitle = mostRecentRoleTitle; }
+    public String getMostRecentCompany() { return mostRecentCompany; }
+    public void setMostRecentCompany(String mostRecentCompany) { this.mostRecentCompany = mostRecentCompany; }
+    public int getRecentRoleCount() { return recentRoleCount; }
+    public void setRecentRoleCount(int recentRoleCount) { this.recentRoleCount = recentRoleCount; }
 }

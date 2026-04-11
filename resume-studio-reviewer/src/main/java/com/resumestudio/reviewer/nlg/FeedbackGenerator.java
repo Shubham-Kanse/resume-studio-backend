@@ -2,6 +2,8 @@ package com.resumestudio.reviewer.nlg;
 
 import com.resumestudio.reviewer.model.*;
 import com.resumestudio.reviewer.model.enums.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,6 +21,8 @@ import java.util.List;
  */
 @Component
 public class FeedbackGenerator {
+
+    private static final Logger log = LoggerFactory.getLogger(FeedbackGenerator.class);
 
     private final SentenceBank bank;
 
@@ -70,18 +74,28 @@ public class FeedbackGenerator {
         // 3. Must-have skills visible
         SignalStatus skillsStatus;
         SignalFriction skillsFriction;
+        String skillsObservation;
+        String skillsInterpretation;
         if (signals.isHasMissingMustHaves()) {
             skillsStatus = SignalStatus.FAIL; skillsFriction = SignalFriction.HIGH;
+            long missingCount = signals.getMustHaveResults().stream()
+                .filter(r -> r.getVisibility() == SkillVisibility.MISSING).count();
+            String first = signals.getMustHaveResults().stream()
+                .filter(r -> r.getVisibility() == SkillVisibility.MISSING)
+                .map(SkillMatchResult::getJdSkill).findFirst().orElse("required skill");
+            skillsObservation = first + (missingCount > 1 ? " and " + (missingCount - 1) + " other must-have skills are" : " is") + " not found anywhere on your resume.";
+            skillsInterpretation = "Missing must-have skills are typically a decisive rejection signal. A recruiter scanning for these won't find them.";
         } else if (signals.isHasBuriedMustHaves()) {
             skillsStatus = SignalStatus.WARN; skillsFriction = SignalFriction.MEDIUM;
+            skillsObservation = bank.skillsFormatObservation(signals);
+            skillsInterpretation = bank.skillsFormatInterpretation(signals);
         } else {
             skillsStatus = SignalStatus.PASS; skillsFriction = SignalFriction.NONE;
+            skillsObservation = bank.skillsFormatObservation(signals);
+            skillsInterpretation = bank.skillsFormatInterpretation(signals);
         }
         list.add(new Signal("must_haves_visible", "Must-have skills visible",
-            skillsStatus, skillsFriction,
-            bank.skillsFormatObservation(signals),
-            bank.skillsFormatInterpretation(signals),
-            ImpactLevel.HIGH));
+            skillsStatus, skillsFriction, skillsObservation, skillsInterpretation, ImpactLevel.HIGH));
 
         // 4. Company context
         SignalStatus companyStatus = switch (signals.getCurrentCompanyTier()) {
@@ -255,39 +269,85 @@ public class FeedbackGenerator {
     // ── Summary paragraph ─────────────────────────────────────────────────────
 
     private String buildSummary(ResumeSignals signals, Verdict verdict, List<Fix> fixes) {
+        String yoe = signals.getCalculatedYoe() != null && signals.getCalculatedYoe() > 0
+            ? String.format("%.1f", signals.getCalculatedYoe()).replaceAll("\\.0$", "") : null;
+        String jdTitle = signals.getJdTitle() != null ? signals.getJdTitle() : "this role";
+        String candidateTitle = signals.getCandidateTitle();
+        String jdRange = signals.getJdYoeMin() != null
+            ? (signals.getJdYoeMax() == null ? signals.getJdYoeMin().intValue() + "+" : signals.getJdYoeMin().intValue() + "–" + signals.getJdYoeMax().intValue())
+            : null;
+
+        String topMissingSkill = signals.getMustHaveResults() != null
+            ? signals.getMustHaveResults().stream()
+                .filter(r -> r.getVisibility() == SkillVisibility.MISSING)
+                .map(SkillMatchResult::getJdSkill).findFirst().orElse(null)
+            : null;
+        String topBuriedSkill = signals.getMustHaveResults() != null
+            ? signals.getMustHaveResults().stream()
+                .filter(r -> r.getVisibility() == SkillVisibility.BURIED || r.getVisibility() == SkillVisibility.MID)
+                .map(SkillMatchResult::getJdSkill).findFirst().orElse(null)
+            : null;
+
+        boolean titleOk = signals.getTitleMatch() == TitleMatch.EXACT || signals.getTitleMatch() == TitleMatch.ADJACENT;
+        boolean yoeOk = signals.getYoeFit() == YoeFit.IN_RANGE || signals.getYoeFit() == YoeFit.OVER_RANGE;
+        boolean yoeClose = signals.getYoeFit() == YoeFit.UNDER_RANGE_MINOR;
+
         StringBuilder sb = new StringBuilder();
 
-        // Lead with verdict driver
         switch (verdict) {
-            case STRONG_FIT -> sb.append("The foundation is solid — title, experience, and key skills all align. ");
+            case STRONG_FIT -> {
+                sb.append("The foundation is solid");
+                if (candidateTitle != null) sb.append(" — \"").append(candidateTitle).append("\" aligns directly with the role");
+                if (yoe != null && jdRange != null) sb.append(", ").append(yoe).append(" years of experience is in range");
+                sb.append(", and the must-have skills are visible at a glance.");
+                if (signals.getCurrentCompanyTier() == CompanyTier.FAANG || signals.getCurrentCompanyTier() == CompanyTier.TIER_1) {
+                    sb.append(" The company background adds further credibility.");
+                }
+            }
             case POSSIBLE_FIT -> {
-                if (signals.isHasBuriedMustHaves() && !signals.isHasMissingMustHaves()) {
-                    sb.append("The qualifications are there, but they're not visible at a glance. ");
-                } else if (signals.getTitleMatch() == TitleMatch.ADJACENT) {
-                    sb.append("The title is close and experience is in range, but one or two signals are holding this back. ");
+                if (topBuriedSkill != null && !signals.isHasMissingMustHaves()) {
+                    sb.append("The foundation is there");
+                    if (titleOk) sb.append(" — your title aligns");
+                    if (yoeOk && yoe != null) sb.append(" and ").append(yoe).append(" years of experience is in range");
+                    else if (yoeClose && yoe != null && jdRange != null) sb.append(" and ").append(yoe).append(" years is close to the ").append(jdRange).append(" requirement");
+                    sb.append(". But ").append(topBuriedSkill).append(", a core requirement for ").append(jdTitle);
+                    sb.append(", isn't visible at a glance. A recruiter scanning your skills section right now would not see it and would likely move on. ");
+                    sb.append("This is a presentation problem, not a qualification problem.");
+                } else if (yoeClose && titleOk) {
+                    sb.append("Strong title match");
+                    if (signals.isAllMustHavesVisible()) sb.append(" and skills are well-presented");
+                    sb.append(", but ");
+                    if (yoe != null && jdRange != null) sb.append(yoe).append(" years falls just short of the ").append(jdRange).append(" requirement. ");
+                    sb.append("Close enough that a strong skills section can compensate — recruiters treat YOE as a guideline, not a hard rule.");
+                } else if (!titleOk && signals.isAllMustHavesVisible()) {
+                    sb.append("The skills are there and well-presented, but the title gap is creating hesitation. ");
+                    sb.append("A recruiter can't immediately tell from the header that this is the right profile for ").append(jdTitle).append(".");
                 } else {
-                    sb.append("Some strong signals here, but not enough to be a clear yes. ");
+                    sb.append("Some strong signals here");
+                    if (titleOk) sb.append(" — title aligns");
+                    if (yoeOk) sb.append(yoeOk && titleOk ? ", experience is in range" : " — experience is in range");
+                    sb.append(", but not enough to be a clear yes without further review.");
                 }
             }
             case WEAK_FIT -> {
-                if (signals.isHasMissingMustHaves()) {
-                    sb.append("The missing must-have skills are the decisive gap — this is a qualification mismatch, not a presentation issue. ");
+                if (topMissingSkill != null) {
+                    sb.append(topMissingSkill).append(", the core requirement for ").append(jdTitle);
+                    sb.append(", doesn't appear on this resume.");
+                    if (signals.getMustHaveResults() != null) {
+                        long missingCount = signals.getMustHaveResults().stream()
+                            .filter(r -> r.getVisibility() == SkillVisibility.MISSING).count();
+                        if (missingCount > 1) sb.append(" ").append(missingCount).append(" must-have skills are missing in total.");
+                    }
+                    sb.append(" This is a qualification gap, not a presentation issue.");
                 } else if (signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT) {
-                    sb.append("The experience gap is the primary barrier for this role. ");
+                    sb.append("The experience gap is the primary barrier");
+                    if (yoe != null && jdRange != null) sb.append(" — ").append(yoe).append(" years against a ").append(jdRange).append(" requirement");
+                    sb.append(". Skills alone can't bridge a gap this size in a 10-second pass.");
                 } else {
-                    sb.append("Multiple signals combined to a weak first impression. ");
+                    sb.append("Multiple signals combined to a weak first impression.");
+                    if (!titleOk) sb.append(" The title mismatch is the biggest barrier.");
                 }
             }
-        }
-
-        // Add the pivoting insight — what's fixable vs structural
-        if (verdict == Verdict.POSSIBLE_FIT && signals.isHasBuriedMustHaves()) {
-            sb.append("This is a presentation problem, not a qualification problem — the skills exist but aren't visible where a recruiter looks. ");
-        }
-
-        // Highest-impact fix if any
-        if (!fixes.isEmpty() && fixes.get(0).getImpact() == ImpactLevel.HIGH) {
-            sb.append("The single highest-impact change: ").append(fixes.get(0).getAction().toLowerCase()).append(".");
         }
 
         return sb.toString().trim();

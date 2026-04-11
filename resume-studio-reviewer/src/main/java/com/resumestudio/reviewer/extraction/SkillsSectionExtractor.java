@@ -2,6 +2,8 @@ package com.resumestudio.reviewer.extraction;
 
 import com.resumestudio.reviewer.model.Skill;
 import com.resumestudio.reviewer.model.enums.SkillsFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -16,6 +18,8 @@ import java.util.regex.Pattern;
  */
 @Component
 public class SkillsSectionExtractor {
+
+    private static final Logger log = LoggerFactory.getLogger(SkillsSectionExtractor.class);
 
     // Known soft skills to detect MIXED_SOFT_HARD or GENERIC_ONLY
     private static final Set<String> SOFT_SKILLS = Set.of(

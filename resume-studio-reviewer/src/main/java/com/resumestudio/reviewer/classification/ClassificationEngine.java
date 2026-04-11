@@ -2,6 +2,8 @@ package com.resumestudio.reviewer.classification;
 
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.enums.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ClassificationEngine {
+
+    private static final Logger log = LoggerFactory.getLogger(ClassificationEngine.class);
 
     public ClassificationResult classify(ResumeSignals signals) {
         Verdict verdict = computeVerdict(signals);
@@ -52,13 +56,10 @@ public class ClassificationEngine {
 
         if (titleOk && yoeOk && skillsVisible) return Verdict.STRONG_FIT;
 
-        // ── STRONG FIT boosted — 2 of 3 + very strong company ────────────
         boolean veryStrongCompany = signals.getCurrentCompanyTier() == CompanyTier.FAANG
             || signals.getCurrentCompanyTier() == CompanyTier.TIER_1;
 
         int conditionsMet = (titleOk ? 1 : 0) + (yoeOk ? 1 : 0) + (skillsVisible ? 1 : 0);
-        if (conditionsMet == 3) return Verdict.STRONG_FIT;
-        if (conditionsMet == 2 && veryStrongCompany) return Verdict.STRONG_FIT;
 
         // ── POSSIBLE FIT — 2 of 3 conditions, or special cases ───────────
 

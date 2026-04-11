@@ -4,6 +4,8 @@ import com.resumestudio.reviewer.model.Skill;
 import com.resumestudio.reviewer.model.SkillMatchResult;
 import com.resumestudio.reviewer.model.enums.SkillMatchType;
 import com.resumestudio.reviewer.model.enums.SkillVisibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -23,6 +25,8 @@ import java.util.List;
  */
 @Component
 public class SkillMatchEngine {
+
+    private static final Logger log = LoggerFactory.getLogger(SkillMatchEngine.class);
 
     private final EscoSkillGraph escoGraph;
 
@@ -54,7 +58,9 @@ public class SkillMatchEngine {
             }
 
             // ── Strategy 2: SYNONYM (via ESCO) ────────────────────────────
-            if (jdCanonical.equals(resumeCanonical) && !jdCanonical.equals(jdNormalised)) {
+            // Both skills resolve to the same canonical name but their raw forms differ
+            // (e.g. "PostgreSQL" → "postgresql" and "Postgres" → "postgresql").
+            if (jdCanonical.equals(resumeCanonical) && !jdNormalised.equals(resumeNorm)) {
                 return buildResult(result, resumeSkill, SkillMatchType.SYNONYM, jdCanonical);
             }
 

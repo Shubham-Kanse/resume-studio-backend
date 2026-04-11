@@ -1,6 +1,9 @@
 package com.resumestudio.reviewer.extraction;
 
 import com.resumestudio.reviewer.model.WorkExperience;
+import com.resumestudio.reviewer.nlp.NlpService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -21,6 +24,14 @@ import java.util.regex.Pattern;
  */
 @Component
 public class ExperienceExtractor {
+
+    private static final Logger log = LoggerFactory.getLogger(ExperienceExtractor.class);
+
+    private final NlpService nlp;
+
+    public ExperienceExtractor(NlpService nlp) {
+        this.nlp = nlp;
+    }
 
     // ── Date patterns — ordered from most to least specific ──────────────────
 
@@ -105,23 +116,33 @@ public class ExperienceExtractor {
      * (company/title header pattern).
      */
     private List<String> splitIntoRoleBlocks(String text) {
-        List<String> blocks = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
         String[] lines = text.split("\n");
+        List<String> nonBlank = new ArrayList<>();
+        for (String l : lines) if (!l.isBlank()) nonBlank.add(l.trim());
 
-        for (String line : lines) {
-            String trimmed = line.trim();
-            if (trimmed.isBlank()) continue;
-
-            // A line with a date range and short length = new role header
-            if (containsDateRange(trimmed) && trimmed.length() < 120 && current.length() > 0) {
-                blocks.add(current.toString().trim());
-                current = new StringBuilder();
+        // Find all role start positions: a date-containing line, optionally preceded by a title line
+        List<Integer> starts = new ArrayList<>();
+        for (int i = 0; i < nonBlank.size(); i++) {
+            if (containsDateRange(nonBlank.get(i)) && nonBlank.get(i).length() < 120) {
+                // Include the preceding title line if it looks like a job title
+                int start = (i > 0 && looksLikeTitle(nonBlank.get(i - 1)) && !containsDateRange(nonBlank.get(i - 1)))
+                    ? i - 1 : i;
+                starts.add(start);
             }
-            current.append(trimmed).append("\n");
         }
 
-        if (current.length() > 0) blocks.add(current.toString().trim());
+        if (starts.isEmpty()) return List.of(text.trim());
+
+        List<String> blocks = new ArrayList<>();
+        for (int b = 0; b < starts.size(); b++) {
+            int from = starts.get(b);
+            int to = (b + 1 < starts.size()) ? starts.get(b + 1) : nonBlank.size();
+            // Don't include the title line of the next block
+            if (b + 1 < starts.size() && starts.get(b + 1) < to) to = starts.get(b + 1);
+            StringBuilder sb = new StringBuilder();
+            for (int i = from; i < to; i++) sb.append(nonBlank.get(i)).append("\n");
+            blocks.add(sb.toString().trim());
+        }
         return blocks;
     }
 
@@ -144,9 +165,12 @@ public class ExperienceExtractor {
             if (trimmed.isBlank()) continue;
 
             if (!headerParsed) {
-                // First substantive lines = header (title, company, dates)
                 parseHeaderLine(trimmed, role);
-                if (role.getStartDate() != null || role.getTitle() != null) {
+                // Header is complete when we have dates (company+date line processed)
+                // OR when we hit a bullet point
+                if (BULLET_START.matcher(trimmed).find()) {
+                    headerParsed = true;
+                } else if (role.getStartDate() != null && (role.getTitle() != null || role.getCompany() != null)) {
                     headerParsed = true;
                 }
                 continue;
@@ -177,6 +201,30 @@ public class ExperienceExtractor {
     }
 
     private void parseHeaderLine(String line, WorkExperience role) {
+        // Handle "Company | May 2021 – July 2024" or "Company — May 2021 – July 2024"
+        // Split on pipe or em-dash separator between company and date
+        java.util.regex.Matcher pipeSplit = java.util.regex.Pattern
+            .compile("^(.+?)\\s*[|—]\\s*(.+)$").matcher(line);
+        if (pipeSplit.matches()) {
+            String left = pipeSplit.group(1).trim();
+            String right = pipeSplit.group(2).trim();
+            // If right side contains a date range, left = company, right = dates
+            if (containsDateRange(right) || PRESENT.matcher(right).find()) {
+                assignTitleOrCompany(left, role);
+                Matcher rangeMatcher = DATE_RANGE.matcher(right);
+                if (rangeMatcher.find()) {
+                    role.setStartDate(parseDate(rangeMatcher.group(1).trim(), true));
+                    String endStr = rangeMatcher.group(2).trim();
+                    if (PRESENT.matcher(endStr).find()) {
+                        role.setCurrent(true);
+                    } else {
+                        role.setEndDate(parseDate(endStr, false));
+                    }
+                }
+                return;
+            }
+        }
+
         // Try to extract date range from this line
         Matcher rangeMatcher = DATE_RANGE.matcher(line);
         if (rangeMatcher.find()) {
@@ -191,13 +239,11 @@ public class ExperienceExtractor {
                 role.setEndDate(parseDate(endStr, false));
             }
 
-            // Remove the date portion and treat the remainder as title or company
             String remainder = line.replace(rangeMatcher.group(0), "").trim();
             assignTitleOrCompany(remainder, role);
             return;
         }
 
-        // No date range — try assigning as title or company
         assignTitleOrCompany(line, role);
     }
 
@@ -206,13 +252,17 @@ public class ExperienceExtractor {
         if (role.getTitle() == null && looksLikeTitle(text)) {
             role.setTitle(text);
         } else if (role.getCompany() == null) {
-            // Check for inline descriptor
-            Matcher descriptorMatcher = Pattern.compile("\\(([^)]{5,80})\\)").matcher(text);
+            // Use NER to confirm it's an organisation name
+            String company = text;
+            List<String> orgs = nlp.findOrganizations(text);
+            if (!orgs.isEmpty()) company = orgs.get(0);
+
+            Matcher descriptorMatcher = Pattern.compile("\\(([^)]{5,80})\\)").matcher(company);
             if (descriptorMatcher.find()) {
                 role.setCompanyDescriptor(descriptorMatcher.group(1));
-                role.setCompany(text.substring(0, descriptorMatcher.start()).trim());
+                role.setCompany(company.substring(0, descriptorMatcher.start()).trim());
             } else {
-                role.setCompany(text);
+                role.setCompany(company);
             }
         }
     }

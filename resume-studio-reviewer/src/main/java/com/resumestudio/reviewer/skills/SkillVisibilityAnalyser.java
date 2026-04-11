@@ -3,6 +3,8 @@ package com.resumestudio.reviewer.skills;
 import com.resumestudio.reviewer.model.Skill;
 import com.resumestudio.reviewer.model.WorkExperience;
 import com.resumestudio.reviewer.model.enums.SkillVisibility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.List;
  */
 @Component
 public class SkillVisibilityAnalyser {
+
+    private static final Logger log = LoggerFactory.getLogger(SkillVisibilityAnalyser.class);
 
     private final EscoSkillGraph escoGraph;
 

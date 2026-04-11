@@ -1,6 +1,8 @@
 package com.resumestudio.reviewer.signals;
 
 import com.resumestudio.reviewer.model.ResumeSignals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.regex.Pattern;
@@ -11,6 +13,8 @@ import java.util.regex.Pattern;
  */
 @Component
 public class FilenameSignalCalculator {
+
+    private static final Logger log = LoggerFactory.getLogger(FilenameSignalCalculator.class);
 
     private static final int MAX_FILENAME_LENGTH = 40;
 

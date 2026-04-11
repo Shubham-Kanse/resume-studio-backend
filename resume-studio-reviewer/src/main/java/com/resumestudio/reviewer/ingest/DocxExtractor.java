@@ -2,6 +2,8 @@ package com.resumestudio.reviewer.ingest;
 
 
 import com.resumestudio.reviewer.model.enums.ParseSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
@@ -17,6 +19,8 @@ import java.util.List;
  */
 @Component
 public class DocxExtractor {
+
+    private static final Logger log = LoggerFactory.getLogger(DocxExtractor.class);
 
     public RawDocument extract(InputStream inputStream, String filename) throws IOException {
         try (XWPFDocument document = new XWPFDocument(inputStream)) {

@@ -1,6 +1,8 @@
 package com.resumestudio.reviewer.ingest;
 
 import com.resumestudio.reviewer.model.enums.ParseSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
@@ -19,6 +21,8 @@ import java.util.*;
  */
 @Component
 public class PdfExtractor {
+
+    private static final Logger log = LoggerFactory.getLogger(PdfExtractor.class);
 
     private static final int MIN_TEXT_LENGTH_FOR_NATIVE = 100;
 

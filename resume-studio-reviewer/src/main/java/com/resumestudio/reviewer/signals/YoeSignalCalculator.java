@@ -4,6 +4,8 @@ import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.WorkExperience;
 import com.resumestudio.reviewer.model.enums.YoeFit;
 import com.resumestudio.reviewer.model.enums.YoeState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -20,6 +22,8 @@ import java.util.*;
 @Component
 public class YoeSignalCalculator {
 
+    private static final Logger log = LoggerFactory.getLogger(YoeSignalCalculator.class);
+
     private static final double GAP_THRESHOLD_MONTHS = 6.0;
     private static final double JOB_HOPPER_MAX_MONTHS = 12.0;
     private static final int JOB_HOPPER_MIN_COUNT = 3;
@@ -27,6 +31,12 @@ public class YoeSignalCalculator {
     public void compute(List<WorkExperience> experience, Double explicitYoe,
                         boolean yoeExplicitInSummary, Double jdYoeMin, Double jdYoeMax,
                         ResumeSignals signals) {
+        compute(experience, explicitYoe, yoeExplicitInSummary, jdYoeMin, jdYoeMax, signals, List.of());
+    }
+
+    public void compute(List<WorkExperience> experience, Double explicitYoe,
+                        boolean yoeExplicitInSummary, Double jdYoeMin, Double jdYoeMax,
+                        ResumeSignals signals, List<com.resumestudio.reviewer.model.Education> education) {
 
         signals.setJdYoeMin(jdYoeMin);
         signals.setJdYoeMax(jdYoeMax);
@@ -45,18 +55,20 @@ public class YoeSignalCalculator {
 
         // ── Calculate total YOE from date ranges ──────────────────────────
         double totalYears = calculateTotalYoe(experience);
-        signals.setCalculatedYoe(totalYears);
+
+        // If dates are missing/zero but explicit YOE stated, use explicit
+        double effectiveYoe = (yoeExplicitInSummary && explicitYoe != null) ? explicitYoe : totalYears;
+        signals.setCalculatedYoe(effectiveYoe);
 
         // ── Determine YOE state ───────────────────────────────────────────
         YoeState state = determineState(experience, yoeExplicitInSummary, totalYears);
         signals.setYoeState(state);
 
         // ── YOE fit vs JD requirement ─────────────────────────────────────
-        double effectiveYoe = (yoeExplicitInSummary && explicitYoe != null) ? explicitYoe : totalYears;
         signals.setYoeFit(computeFit(effectiveYoe, jdYoeMin, jdYoeMax));
 
         // ── Detect gaps ───────────────────────────────────────────────────
-        detectGaps(experience, signals);
+        detectGaps(experience, signals, education);
 
         // ── Detect job hopping ────────────────────────────────────────────
         detectJobHopping(experience, signals);
@@ -136,11 +148,11 @@ public class YoeSignalCalculator {
 
     // ── Gap detection ─────────────────────────────────────────────────────────
 
-    private void detectGaps(List<WorkExperience> experience, ResumeSignals signals) {
+    private void detectGaps(List<WorkExperience> experience, ResumeSignals signals,
+                             List<com.resumestudio.reviewer.model.Education> education) {
         List<String> gapDescriptions = new ArrayList<>();
         double longestGap = 0;
 
-        // Sort chronologically
         List<WorkExperience> sorted = experience.stream()
             .filter(e -> e.getStartDate() != null)
             .sorted(Comparator.comparing(WorkExperience::getStartDate))
@@ -156,14 +168,16 @@ public class YoeSignalCalculator {
             if (currentEnd == null || nextStart == null) continue;
 
             double gapMonths = ChronoUnit.DAYS.between(currentEnd, nextStart) / 30.44;
-            if (gapMonths > GAP_THRESHOLD_MONTHS) {
-                longestGap = Math.max(longestGap, gapMonths);
-                String desc = String.format("%.0f-month gap between %s and %s",
-                    gapMonths,
-                    current.getCompany() != null ? current.getCompany() : "previous role",
-                    next.getCompany() != null ? next.getCompany() : "next role");
-                gapDescriptions.add(desc);
-            }
+            if (gapMonths <= GAP_THRESHOLD_MONTHS) continue;
+
+            // Check if gap is covered by an education period
+            if (isCoveredByEducation(currentEnd, nextStart, education)) continue;
+
+            longestGap = Math.max(longestGap, gapMonths);
+            gapDescriptions.add(String.format("%.0f-month gap between %s and %s",
+                gapMonths,
+                current.getCompany() != null ? current.getCompany() : "previous role",
+                next.getCompany() != null ? next.getCompany() : "next role"));
         }
 
         signals.setHasUnexplainedGap(!gapDescriptions.isEmpty());
@@ -171,12 +185,34 @@ public class YoeSignalCalculator {
         signals.setGapDescriptions(gapDescriptions);
     }
 
+    /**
+     * Returns true if the gap period overlaps with any education entry.
+     * A gap during full-time study is expected and should not be flagged.
+     */
+    private boolean isCoveredByEducation(LocalDate gapStart, LocalDate gapEnd,
+                                          List<com.resumestudio.reviewer.model.Education> education) {
+        if (education == null || education.isEmpty()) return false;
+        for (var edu : education) {
+            if (edu.getGraduationYear() == null) continue;
+            LocalDate eduEnd = LocalDate.of(edu.getGraduationYear(), 12, 31);
+            LocalDate eduStart = edu.getStartYear() != null
+                ? LocalDate.of(edu.getStartYear(), 1, 1)
+                : eduEnd.minusYears(4); // assume 4-year degree if no start year
+            // Gap is covered if education overlaps with it
+            if (!eduEnd.isBefore(gapStart) && !eduStart.isAfter(gapEnd)) return true;
+        }
+        return false;
+    }
+
     // ── Job hopping detection ─────────────────────────────────────────────────
 
     private void detectJobHopping(List<WorkExperience> experience, ResumeSignals signals) {
         long shortTenures = experience.stream()
             .filter(e -> !e.isContractOrFreelance())
-            .filter(e -> e.getDurationYears() > 0 && e.getDurationYears() < (JOB_HOPPER_MAX_MONTHS / 12.0))
+            .filter(e -> {
+                double dur = effectiveDuration(e);
+                return dur > 0 && dur < (JOB_HOPPER_MAX_MONTHS / 12.0);
+            })
             .count();
 
         signals.setJobHopper(shortTenures >= JOB_HOPPER_MIN_COUNT);
@@ -184,9 +220,21 @@ public class YoeSignalCalculator {
         // Detect unlabelled contracts: multiple short stints without contract label
         long unlabelledShort = experience.stream()
             .filter(e -> !e.isContractOrFreelance())
-            .filter(e -> e.getDurationYears() > 0 && e.getDurationYears() < 1.0)
+            .filter(e -> {
+                double dur = effectiveDuration(e);
+                return dur > 0 && dur < 1.0;
+            })
             .count();
         signals.setHasUnlabelledContracts(unlabelledShort >= 2 && shortTenures >= 2);
+    }
+
+    /** Returns durationYears if pre-computed, otherwise calculates from start/end dates. */
+    private double effectiveDuration(WorkExperience e) {
+        if (e.getDurationYears() > 0) return e.getDurationYears();
+        LocalDate start = e.getStartDate();
+        LocalDate end = e.isCurrent() ? LocalDate.now() : e.getEndDate();
+        if (start == null || end == null) return 0;
+        return ChronoUnit.DAYS.between(start, end) / 365.25;
     }
 
     // ── Overlap detection ─────────────────────────────────────────────────────

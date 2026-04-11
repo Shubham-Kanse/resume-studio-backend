@@ -1,6 +1,8 @@
 package com.resumestudio.reviewer.extraction;
 
 import com.resumestudio.reviewer.model.JobDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -19,6 +21,8 @@ import java.util.regex.Pattern;
  */
 @Service
 public class JdParserService {
+
+    private static final Logger log = LoggerFactory.getLogger(JdParserService.class);
 
     // ── YOE patterns ──────────────────────────────────────────────────────────
     private static final Pattern YOE_MIN_MAX = Pattern.compile(
@@ -90,7 +94,7 @@ public class JdParserService {
         estimateIcLevel(rawText, jd);
         detectContext(rawText, jd);
 
-        jd.setNormalisedTitle(normalise(jd.getRoleTitle()));
+        jd.setNormalisedTitle(normalise(jd.getRoleTitle() != null ? jd.getRoleTitle() : ""));
         jd.setParseConfidence(computeConfidence(jd));
         jd.setWellStructured(
             MUST_HAVE_SECTION.matcher(rawText).find() || NICE_TO_HAVE_SECTION.matcher(rawText).find()
@@ -205,19 +209,19 @@ public class JdParserService {
 
     private List<String> extractTechTokens(String line) {
         List<String> tokens = new ArrayList<>();
-        // Known tech keyword pattern — extract by matching known tech terms
         Pattern techPattern = Pattern.compile(
-            "\\b(Java|Python|Go|Golang|Rust|Kotlin|TypeScript|JavaScript|C\\+\\+|C#|Scala|" +
+            "(?<![\\w.])(Java|Python|Go|Golang|Rust|Kotlin|TypeScript|JavaScript|C\\+\\+|C#|Scala|" +
             "Spring Boot|Spring|Hibernate|JPA|Quarkus|Micronaut|" +
             "React|Angular|Vue|Next\\.js|Node\\.js|Express|" +
-            "AWS|GCP|Azure|Kubernetes|Docker|Terraform|Ansible|Helm|" +
+            "AWS|GCP|Azure|Kubernetes|k8s|Docker|Terraform|Ansible|Helm|OpenStack|" +
             "PostgreSQL|MySQL|MongoDB|Redis|Cassandra|DynamoDB|Elasticsearch|" +
             "Kafka|RabbitMQ|gRPC|REST|GraphQL|" +
-            "Git|GitHub|GitLab|CI/CD|Jenkins|GitHub Actions|" +
+            "Git|GitHub|GitLab|CI/CD|Jenkins|GitHub Actions|GitOps|" +
             "Linux|Unix|Bash|Shell|" +
             "Microservices|Distributed Systems|System Design|" +
             "Machine Learning|ML|TensorFlow|PyTorch|" +
-            "Swift|Objective-C|Flutter|Dart|Android)\\b",
+            "Prometheus|Grafana|OpenTelemetry|" +
+            "Swift|Objective-C|Flutter|Dart|Android)(?![\\w.])",
             Pattern.CASE_INSENSITIVE
         );
         Matcher m = techPattern.matcher(line);

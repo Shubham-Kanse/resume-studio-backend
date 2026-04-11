@@ -1,6 +1,8 @@
 package com.resumestudio.reviewer;
 
 import com.resumestudio.reviewer.classification.ClassificationEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.resumestudio.reviewer.extraction.*;
 import com.resumestudio.reviewer.ingest.RawDocument;
 import com.resumestudio.reviewer.ingest.ResumeIngestService;
@@ -23,6 +25,8 @@ import java.util.regex.Pattern;
  */
 @Service
 public class ReviewerPipeline {
+
+    private static final Logger log = LoggerFactory.getLogger(ReviewerPipeline.class);
 
     private final ResumeIngestService ingestService;
     private final JdParserService jdParser;

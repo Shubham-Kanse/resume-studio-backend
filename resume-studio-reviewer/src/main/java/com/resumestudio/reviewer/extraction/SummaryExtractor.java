@@ -1,6 +1,8 @@
 package com.resumestudio.reviewer.extraction;
 
 import com.resumestudio.reviewer.model.Resume;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -12,6 +14,8 @@ import java.util.regex.Pattern;
  */
 @Component
 public class SummaryExtractor {
+
+    private static final Logger log = LoggerFactory.getLogger(SummaryExtractor.class);
 
     // Generic/useless summary phrases
     private static final List<Pattern> GENERIC_PHRASES = List.of(

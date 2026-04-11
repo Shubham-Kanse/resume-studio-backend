@@ -1,6 +1,8 @@
 package com.resumestudio.reviewer.ingest;
 
 import com.resumestudio.reviewer.model.enums.ParseSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -25,6 +27,8 @@ import java.util.List;
  */
 @Component
 public class OcrFallbackExtractor {
+
+    private static final Logger log = LoggerFactory.getLogger(OcrFallbackExtractor.class);
 
     @Value("${screener.tesseract.datapath:/usr/share/tesseract-ocr/4.00/tessdata}")
     private String tessDataPath;
