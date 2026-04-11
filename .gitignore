@@ -1,19 +1,69 @@
-# Maven
+# ── Java / Maven ──────────────────────────────────────────
 target/
 *.class
 *.jar
 *.war
 *.ear
+*.nar
+dependency-reduced-pom.xml
 
-# IDE
+# ── IDE ───────────────────────────────────────────────────
+# IntelliJ IDEA
 .idea/
 *.iml
-.vscode/
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
 *.eclipse
 
-# OS
-.DS_Store
-Thumbs.db
+# VS Code
+.vscode/
+*.code-workspace
 
-# Logs
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ── Logs ──────────────────────────────────────────────────
 *.log
+logs/
+*.log.*
+
+# ── AI / Tools ────────────────────────────────────────────
+.kiro/
+
+# ── Application Specific ──────────────────────────────────
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Environment files (if any)
+.env
+.env.local
+
+# Test coverage
+coverage/
+*.coverage
+
+#docs
+claude-conversation.md

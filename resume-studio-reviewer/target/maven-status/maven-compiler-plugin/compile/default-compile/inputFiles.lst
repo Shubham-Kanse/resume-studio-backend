@@ -1,4 +1,7 @@
 /Users/shubhamkanse/Codebase/resume-studio/resume-studio-reviewer/src/main/java/com/resumestudio/reviewer/ResumeStudioApplication.java
+/Users/shubhamkanse/Codebase/resume-studio/resume-studio-reviewer/src/main/java/com/resumestudio/reviewer/ReviewerPipeline.java
+/Users/shubhamkanse/Codebase/resume-studio/resume-studio-reviewer/src/main/java/com/resumestudio/reviewer/api/ResumeReviewRequest.java
+/Users/shubhamkanse/Codebase/resume-studio/resume-studio-reviewer/src/main/java/com/resumestudio/reviewer/api/ResumeReviewerController.java
 /Users/shubhamkanse/Codebase/resume-studio/resume-studio-reviewer/src/main/java/com/resumestudio/reviewer/classification/ClassificationEngine.java
 /Users/shubhamkanse/Codebase/resume-studio/resume-studio-reviewer/src/main/java/com/resumestudio/reviewer/extraction/ExperienceExtractor.java
 /Users/shubhamkanse/Codebase/resume-studio/resume-studio-reviewer/src/main/java/com/resumestudio/reviewer/extraction/HeaderExtractor.java

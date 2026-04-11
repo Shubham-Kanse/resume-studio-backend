@@ -13,58 +13,94 @@ public class FeedbackReport {
 
     private Verdict verdict;
     private Confidence confidence;
-
-    // Role context — for UI display
-    private String roleTitle;
-    private List<String> roleStack;
-
-    // The narrative paragraph that stitches signals together
+    private RoleContext roleContext;
     private String summaryParagraph;
-
-    // Chronological simulation of what the recruiter experienced
-    private List<TimelineEvent> recruiterTimeline;
-
-    // Structured signal breakdown (6 signals, maps to 2x3 grid in UI)
+    private List<TimelineEvent> timeline;
     private List<Signal> signals;
-
-    // Ordered action items
     private List<Fix> fixes;
 
-    // Raw resume info echoed back for reference
-    private String candidateName;
-    private String resumeFilename;
+    public static class RoleContext {
+        private String title;
+        private List<String> stack;
 
-    public FeedbackReport() {}
+        public RoleContext(String title, List<String> stack) {
+            this.title = title;
+            this.stack = stack;
+        }
 
-    // ── Getters & Setters ────────────────────────────────────
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+        public List<String> getStack() { return stack; }
+        public void setStack(List<String> stack) { this.stack = stack; }
+    }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private Verdict verdict;
+        private Confidence confidence;
+        private RoleContext roleContext;
+        private String summaryParagraph;
+        private List<TimelineEvent> timeline;
+        private List<Signal> signals;
+        private List<Fix> fixes;
+
+        public Builder verdict(Verdict verdict) {
+            this.verdict = verdict;
+            return this;
+        }
+
+        public Builder confidence(Confidence confidence) {
+            this.confidence = confidence;
+            return this;
+        }
+
+        public Builder roleContext(RoleContext roleContext) {
+            this.roleContext = roleContext;
+            return this;
+        }
+
+        public Builder summaryParagraph(String summaryParagraph) {
+            this.summaryParagraph = summaryParagraph;
+            return this;
+        }
+
+        public Builder timeline(List<TimelineEvent> timeline) {
+            this.timeline = timeline;
+            return this;
+        }
+
+        public Builder signals(List<Signal> signals) {
+            this.signals = signals;
+            return this;
+        }
+
+        public Builder fixes(List<Fix> fixes) {
+            this.fixes = fixes;
+            return this;
+        }
+
+        public FeedbackReport build() {
+            FeedbackReport report = new FeedbackReport();
+            report.verdict = this.verdict;
+            report.confidence = this.confidence;
+            report.roleContext = this.roleContext;
+            report.summaryParagraph = this.summaryParagraph;
+            report.timeline = this.timeline;
+            report.signals = this.signals;
+            report.fixes = this.fixes;
+            return report;
+        }
+    }
+
+    // Getters
     public Verdict getVerdict() { return verdict; }
-    public void setVerdict(Verdict verdict) { this.verdict = verdict; }
-
     public Confidence getConfidence() { return confidence; }
-    public void setConfidence(Confidence confidence) { this.confidence = confidence; }
-
-    public String getRoleTitle() { return roleTitle; }
-    public void setRoleTitle(String roleTitle) { this.roleTitle = roleTitle; }
-
-    public List<String> getRoleStack() { return roleStack; }
-    public void setRoleStack(List<String> roleStack) { this.roleStack = roleStack; }
-
+    public RoleContext getRoleContext() { return roleContext; }
     public String getSummaryParagraph() { return summaryParagraph; }
-    public void setSummaryParagraph(String summaryParagraph) { this.summaryParagraph = summaryParagraph; }
-
-    public List<TimelineEvent> getRecruiterTimeline() { return recruiterTimeline; }
-    public void setRecruiterTimeline(List<TimelineEvent> recruiterTimeline) { this.recruiterTimeline = recruiterTimeline; }
-
+    public List<TimelineEvent> getTimeline() { return timeline; }
     public List<Signal> getSignals() { return signals; }
-    public void setSignals(List<Signal> signals) { this.signals = signals; }
-
     public List<Fix> getFixes() { return fixes; }
-    public void setFixes(List<Fix> fixes) { this.fixes = fixes; }
-
-    public String getCandidateName() { return candidateName; }
-    public void setCandidateName(String candidateName) { this.candidateName = candidateName; }
-
-    public String getResumeFilename() { return resumeFilename; }
-    public void setResumeFilename(String resumeFilename) { this.resumeFilename = resumeFilename; }
 }

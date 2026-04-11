@@ -206,7 +206,7 @@ public class FeedbackGenerator {
                 "Clarify your years of experience",
                 bank.yoeInterpretation(signals),
                 yoeAction,
-                ImpactLevel.signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT ? ImpactLevel.HIGH : ImpactLevel.MEDIUM));
+                signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT ? ImpactLevel.HIGH : ImpactLevel.MEDIUM));
         }
 
         // Unexplained gap
