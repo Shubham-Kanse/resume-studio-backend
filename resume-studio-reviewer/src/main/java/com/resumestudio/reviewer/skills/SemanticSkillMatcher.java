@@ -1,13 +1,14 @@
 package com.resumestudio.reviewer.skills;
 
-import ai.djl.huggingface.tokenizers.Encoding;
-import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Semantic skill similarity using pre-computed embeddings (primary)
@@ -17,35 +18,27 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SemanticSkillMatcher {
 
     private static final Logger log = LoggerFactory.getLogger(SemanticSkillMatcher.class);
-    private static final float SIMILARITY_THRESHOLD = 0.82f;
+    private static final float DEFAULT_THRESHOLD = 0.82f;
 
     private final SkillEmbeddingIndex embeddingIndex;
-    private HuggingFaceTokenizer tokenizer;
-    private final Map<String, float[]> tokenEmbeddingCache = new ConcurrentHashMap<>();
+    private float semanticMatchThreshold = DEFAULT_THRESHOLD;
 
     public SemanticSkillMatcher(SkillEmbeddingIndex embeddingIndex) {
         this.embeddingIndex = embeddingIndex;
     }
 
-    private synchronized HuggingFaceTokenizer getTokenizer() {
-        if (tokenizer == null) {
-            try {
-                tokenizer = HuggingFaceTokenizer.newInstance("sentence-transformers/all-MiniLM-L6-v2",
-                    Map.of("padding", "true", "truncation", "true", "maxLength", "64"));
-                log.info("SemanticSkillMatcher: MiniLM tokenizer loaded (fallback)");
-            } catch (Exception e) {
-                log.warn("SemanticSkillMatcher: tokenizer unavailable ({})", e.getMessage());
-            }
-        }
-        return tokenizer;
+    @Value("${reviewer.skills.semantic.threshold:0.82}")
+    public void configureSemanticMatchThreshold(float threshold) {
+        setSemanticMatchThreshold(threshold);
     }
 
     public boolean isSemanticallySimilar(String jdSkill, String resumeSkill) {
         if (jdSkill == null || resumeSkill == null) return false;
-        return similarity(jdSkill.toLowerCase().trim(), resumeSkill.toLowerCase().trim()) >= SIMILARITY_THRESHOLD;
+        return similarity(jdSkill.toLowerCase().trim(), resumeSkill.toLowerCase().trim()) >= semanticMatchThreshold;
     }
 
     public float similarity(String a, String b) {
+        if (a == null || b == null) return 0f;
         if (a.equals(b)) return 1.0f;
 
         if (embeddingIndex.isAvailable()) {
@@ -61,41 +54,6 @@ public class SemanticSkillMatcher {
         return jaccard(a, b);
     }
 
-    private float[] tokenEmbed(String text) {
-        return tokenEmbeddingCache.computeIfAbsent(text, t -> {
-            try {
-                HuggingFaceTokenizer tok = getTokenizer();
-                if (tok == null) return new float[0];
-                Encoding enc = tok.encode(t);
-                long[] ids = enc.getIds();
-                float[] vec = new float[ids.length];
-                for (int i = 0; i < ids.length; i++) vec[i] = ids[i];
-                return normalise(vec);
-            } catch (Exception e) {
-                return new float[0];
-            }
-        });
-    }
-
-    private float cosine(float[] a, float[] b) {
-        if (a.length == 0 || b.length == 0) return 0f;
-        int len = Math.min(a.length, b.length);
-        float dot = 0, na = 0, nb = 0;
-        for (int i = 0; i < len; i++) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
-        float denom = (float) (Math.sqrt(na) * Math.sqrt(nb));
-        return denom == 0 ? 0f : dot / denom;
-    }
-
-    private float[] normalise(float[] v) {
-        float norm = 0;
-        for (float x : v) norm += x * x;
-        norm = (float) Math.sqrt(norm);
-        if (norm == 0) return v;
-        float[] out = new float[v.length];
-        for (int i = 0; i < v.length; i++) out[i] = v[i] / norm;
-        return out;
-    }
-
     private float jaccard(String a, String b) {
         Set<String> sa = tokens(a), sb = tokens(b);
         if (sa.isEmpty() || sb.isEmpty()) return 0f;
@@ -105,5 +63,51 @@ public class SemanticSkillMatcher {
 
     private Set<String> tokens(String s) {
         return new HashSet<>(Arrays.asList(s.toLowerCase().replaceAll("[^a-z0-9]", " ").trim().split("\\s+")));
+    }
+
+    /**
+     * Find best semantic match for JD skill among resume skills.
+     */
+    public MatchResult findBestMatch(String jdSkill, List<com.resumestudio.reviewer.model.Skill> resumeSkills) {
+        if (jdSkill == null || resumeSkills == null || resumeSkills.isEmpty()) return null;
+        
+        float bestScore = 0f;
+        com.resumestudio.reviewer.model.Skill bestSkill = null;
+        
+        for (com.resumestudio.reviewer.model.Skill skill : resumeSkills) {
+            float score = similarity(jdSkill, skill.getRawName());
+            if (score > bestScore) {
+                bestScore = score;
+                bestSkill = skill;
+            }
+        }
+
+        return bestScore >= semanticMatchThreshold ? new MatchResult(bestSkill, bestScore) : null;
+    }
+
+    public float getSemanticMatchThreshold() {
+        return semanticMatchThreshold;
+    }
+
+    public void setSemanticMatchThreshold(float threshold) {
+        if (Float.isNaN(threshold) || threshold <= 0f || threshold > 1f) {
+            log.warn("SemanticSkillMatcher: invalid threshold {}. Using default {}", threshold, DEFAULT_THRESHOLD);
+            this.semanticMatchThreshold = DEFAULT_THRESHOLD;
+            return;
+        }
+        this.semanticMatchThreshold = threshold;
+    }
+
+    public static class MatchResult {
+        private final com.resumestudio.reviewer.model.Skill skill;
+        private final float score;
+
+        public MatchResult(com.resumestudio.reviewer.model.Skill skill, float score) {
+            this.skill = skill;
+            this.score = score;
+        }
+
+        public com.resumestudio.reviewer.model.Skill getSkill() { return skill; }
+        public float getScore() { return score; }
     }
 }

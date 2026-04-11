@@ -8,5 +8,7 @@ public enum TimelineEventType {
     YOE,
     COMPANY,
     SKILLS,
+    BULLET,
+    LOCATION,
     VERDICT
 }

@@ -7,5 +7,6 @@ public enum SkillMatchType {
     ABBREVIATION,    // K8s → Kubernetes, JS → JavaScript
     IMPLICIT,        // Inferred from related skill (has Spring Boot → likely has Java)
     PARENT_FRAMEWORK, // JD: Spring Boot, CV: Spring (parent framework)
+    SEMANTIC,        // Fuzzy match via embeddings (Node.js ≈ Express.js)
     MISSING          // Not found by any method
 }

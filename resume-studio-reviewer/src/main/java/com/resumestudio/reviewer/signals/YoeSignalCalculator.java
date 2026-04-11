@@ -24,7 +24,7 @@ public class YoeSignalCalculator {
 
     private static final Logger log = LoggerFactory.getLogger(YoeSignalCalculator.class);
 
-    private static final double GAP_THRESHOLD_MONTHS = 6.0;
+    private static final double GAP_THRESHOLD_MONTHS = 9.0;  // 9 months allows for notice period + break
     private static final double JOB_HOPPER_MAX_MONTHS = 12.0;
     private static final int JOB_HOPPER_MIN_COUNT = 3;
 
@@ -67,8 +67,14 @@ public class YoeSignalCalculator {
         // ── YOE fit vs JD requirement ─────────────────────────────────────
         signals.setYoeFit(computeFit(effectiveYoe, jdYoeMin, jdYoeMax));
 
+        // ── Chronology quality ────────────────────────────────────────────
+        ChronologyAssessment chronology = assessChronology(experience, education);
+        signals.setHasChronologyIssues(!chronology.descriptions().isEmpty());
+        signals.setChronologyUnreliable(chronology.unreliable());
+        signals.setChronologyDescriptions(chronology.descriptions());
+
         // ── Detect gaps ───────────────────────────────────────────────────
-        detectGaps(experience, signals, education);
+        detectGaps(experience, signals, education, chronology);
 
         // ── Detect job hopping ────────────────────────────────────────────
         detectJobHopping(experience, signals);
@@ -83,6 +89,7 @@ public class YoeSignalCalculator {
         // Sum non-overlapping date ranges
         // Sort by start date
         List<WorkExperience> sorted = new ArrayList<>(experience);
+        sorted.removeIf(WorkExperience::isCareerBreak);
         sorted.sort(Comparator.comparing(
             e -> e.getStartDate() != null ? e.getStartDate() : LocalDate.of(2000, 1, 1)));
 
@@ -121,9 +128,13 @@ public class YoeSignalCalculator {
     private YoeState determineState(List<WorkExperience> experience, boolean explicitInSummary, double computed) {
         if (explicitInSummary) return YoeState.EXPLICIT;
 
-        boolean allHaveDates = experience.stream().allMatch(e -> e.getStartDate() != null);
-        boolean someHaveDates = experience.stream().anyMatch(e -> e.getStartDate() != null);
-        boolean hasPartialDates = experience.stream().anyMatch(WorkExperience::isDatesArePartial);
+        List<WorkExperience> professionalExperience = experience.stream()
+            .filter(e -> !e.isCareerBreak())
+            .toList();
+
+        boolean allHaveDates = professionalExperience.stream().allMatch(e -> e.getStartDate() != null);
+        boolean someHaveDates = professionalExperience.stream().anyMatch(e -> e.getStartDate() != null);
+        boolean hasPartialDates = professionalExperience.stream().anyMatch(WorkExperience::isDatesArePartial);
 
         if (!someHaveDates) return YoeState.MISSING;
         if (!allHaveDates) return YoeState.PARTIAL;
@@ -148,12 +159,80 @@ public class YoeSignalCalculator {
 
     // ── Gap detection ─────────────────────────────────────────────────────────
 
+    private ChronologyAssessment assessChronology(List<WorkExperience> experience,
+                                                   List<com.resumestudio.reviewer.model.Education> education) {
+        if (experience == null || experience.isEmpty()) {
+            return new ChronologyAssessment(List.of(), false);
+        }
+
+        List<String> descriptions = new ArrayList<>();
+        int majorIssueCount = 0;
+
+        long professionalRoles = experience.stream().filter(e -> !e.isCareerBreak()).count();
+        long missingStartDates = experience.stream()
+            .filter(e -> !e.isCareerBreak() && e.getStartDate() == null)
+            .count();
+        long partialDates = experience.stream()
+            .filter(e -> !e.isCareerBreak() && e.isDatesArePartial())
+            .count();
+        long currentRoles = experience.stream()
+            .filter(e -> !e.isCareerBreak() && e.isCurrent() && !e.isContractOrFreelance())
+            .count();
+
+        boolean hardChronologyBreak = false;
+
+        if (currentRoles > 1) {
+            descriptions.add("Multiple roles are marked as current/present, so the recent chronology is unclear.");
+            majorIssueCount++;
+            hardChronologyBreak = true;
+        }
+
+        for (WorkExperience role : experience) {
+            if (role.getStartDate() != null && role.getEndDate() != null && role.getEndDate().isBefore(role.getStartDate())) {
+                descriptions.add("At least one role has an end date earlier than its start date.");
+                majorIssueCount++;
+                hardChronologyBreak = true;
+                break;
+            }
+        }
+
+        if (professionalRoles >= 2 && missingStartDates >= Math.ceil(professionalRoles / 2.0)) {
+            descriptions.add("More than half of the work history is missing start dates, so the overall chronology cannot be trusted.");
+            majorIssueCount++;
+        } else if (missingStartDates > 0) {
+            descriptions.add("Some roles are missing start dates, which weakens chronology confidence.");
+        }
+
+        if (professionalRoles >= 2 && partialDates >= Math.ceil(professionalRoles / 2.0)) {
+            descriptions.add("Several roles use year-only dates, so month-level chronology is uncertain.");
+            majorIssueCount++;
+        } else if (partialDates > 0) {
+            descriptions.add("Year-only dates reduce chronology precision.");
+        }
+
+        if (education != null) {
+            for (var edu : education) {
+                if (edu.getStartYear() != null && edu.getGraduationYear() != null
+                    && edu.getStartYear() > edu.getGraduationYear()) {
+                    descriptions.add("At least one education entry has years in the wrong order.");
+                    majorIssueCount++;
+                    break;
+                }
+            }
+        }
+
+        return new ChronologyAssessment(deduplicateDescriptions(descriptions), hardChronologyBreak || majorIssueCount >= 2);
+    }
+
     private void detectGaps(List<WorkExperience> experience, ResumeSignals signals,
-                             List<com.resumestudio.reviewer.model.Education> education) {
+                             List<com.resumestudio.reviewer.model.Education> education,
+                             ChronologyAssessment chronology) {
         List<String> gapDescriptions = new ArrayList<>();
         double longestGap = 0;
+        List<String> chronologyDescriptions = new ArrayList<>(chronology.descriptions());
 
         List<WorkExperience> sorted = experience.stream()
+            .filter(e -> !e.isCareerBreak())
             .filter(e -> e.getStartDate() != null)
             .sorted(Comparator.comparing(WorkExperience::getStartDate))
             .toList();
@@ -170,24 +249,39 @@ public class YoeSignalCalculator {
             double gapMonths = ChronoUnit.DAYS.between(currentEnd, nextStart) / 30.44;
             if (gapMonths <= GAP_THRESHOLD_MONTHS) continue;
 
-            // Check if gap is covered by an education period
-            if (isCoveredByEducation(currentEnd, nextStart, education)) continue;
+            // Check if gap is covered by an education period or an explicit career break
+            if (isCoveredByEducation(currentEnd, nextStart, education)
+                || isCoveredByCareerBreak(currentEnd, nextStart, experience)) {
+                continue;
+            }
+
+            if (current.isDatesArePartial() || next.isDatesArePartial()) {
+                chronologyDescriptions.add(String.format(
+                    "Possible gap between %s and %s, but one or both roles use year-only dates.",
+                    displayName(current),
+                    displayName(next)));
+                continue;
+            }
 
             longestGap = Math.max(longestGap, gapMonths);
             gapDescriptions.add(String.format("%.0f-month gap between %s and %s",
                 gapMonths,
-                current.getCompany() != null ? current.getCompany() : "previous role",
-                next.getCompany() != null ? next.getCompany() : "next role"));
+                displayName(current),
+                displayName(next)));
         }
 
         signals.setHasUnexplainedGap(!gapDescriptions.isEmpty());
         signals.setLongestGapMonths(longestGap);
         signals.setGapDescriptions(gapDescriptions);
+        signals.setChronologyDescriptions(deduplicateDescriptions(chronologyDescriptions));
+        signals.setHasChronologyIssues(!signals.getChronologyDescriptions().isEmpty());
+        signals.setChronologyUnreliable(signals.isChronologyUnreliable() || signals.getChronologyDescriptions().size() >= 2);
     }
 
     /**
      * Returns true if the gap period overlaps with any education entry.
      * A gap during full-time study is expected and should not be flagged.
+     * Also allows 9 months post-graduation for job search (especially for fresh grads).
      */
     private boolean isCoveredByEducation(LocalDate gapStart, LocalDate gapEnd,
                                           List<com.resumestudio.reviewer.model.Education> education) {
@@ -198,8 +292,23 @@ public class YoeSignalCalculator {
             LocalDate eduStart = edu.getStartYear() != null
                 ? LocalDate.of(edu.getStartYear(), 1, 1)
                 : eduEnd.minusYears(4); // assume 4-year degree if no start year
-            // Gap is covered if education overlaps with it
-            if (!eduEnd.isBefore(gapStart) && !eduStart.isAfter(gapEnd)) return true;
+            
+            // Extend education coverage to 9 months post-graduation for job search
+            LocalDate extendedEduEnd = eduEnd.plusMonths(9);
+            
+            // Gap is covered if education (+ post-grad buffer) overlaps with it
+            if (!extendedEduEnd.isBefore(gapStart) && !eduStart.isAfter(gapEnd)) return true;
+        }
+        return false;
+    }
+
+    private boolean isCoveredByCareerBreak(LocalDate gapStart, LocalDate gapEnd, List<WorkExperience> experience) {
+        if (experience == null || experience.isEmpty()) return false;
+        for (WorkExperience role : experience) {
+            if (!role.isCareerBreak() || role.getStartDate() == null) continue;
+            LocalDate breakEnd = role.isCurrent() ? LocalDate.now() : role.getEndDate();
+            if (breakEnd == null) continue;
+            if (!breakEnd.isBefore(gapStart) && !role.getStartDate().isAfter(gapEnd)) return true;
         }
         return false;
     }
@@ -208,6 +317,7 @@ public class YoeSignalCalculator {
 
     private void detectJobHopping(List<WorkExperience> experience, ResumeSignals signals) {
         long shortTenures = experience.stream()
+            .filter(e -> !e.isCareerBreak())
             .filter(e -> !e.isContractOrFreelance())
             .filter(e -> {
                 double dur = effectiveDuration(e);
@@ -219,6 +329,7 @@ public class YoeSignalCalculator {
 
         // Detect unlabelled contracts: multiple short stints without contract label
         long unlabelledShort = experience.stream()
+            .filter(e -> !e.isCareerBreak())
             .filter(e -> !e.isContractOrFreelance())
             .filter(e -> {
                 double dur = effectiveDuration(e);
@@ -237,10 +348,25 @@ public class YoeSignalCalculator {
         return ChronoUnit.DAYS.between(start, end) / 365.25;
     }
 
+    private String displayName(WorkExperience role) {
+        if (role.getCompany() != null && !role.getCompany().isBlank()) {
+            return role.getCompany();
+        }
+        if (role.getTitle() != null && !role.getTitle().isBlank()) {
+            return role.getTitle();
+        }
+        return "role";
+    }
+
+    private List<String> deduplicateDescriptions(List<String> descriptions) {
+        return new ArrayList<>(new LinkedHashSet<>(descriptions));
+    }
+
     // ── Overlap detection ─────────────────────────────────────────────────────
 
     private void detectOverlaps(List<WorkExperience> experience, ResumeSignals signals) {
         List<WorkExperience> sorted = experience.stream()
+            .filter(e -> !e.isCareerBreak())
             .filter(e -> e.getStartDate() != null && (e.getEndDate() != null || e.isCurrent()))
             .sorted(Comparator.comparing(WorkExperience::getStartDate))
             .toList();
@@ -259,4 +385,6 @@ public class YoeSignalCalculator {
             }
         }
     }
+
+    private record ChronologyAssessment(List<String> descriptions, boolean unreliable) {}
 }

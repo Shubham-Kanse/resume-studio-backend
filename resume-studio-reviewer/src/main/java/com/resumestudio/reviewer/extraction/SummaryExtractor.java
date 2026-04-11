@@ -1,11 +1,14 @@
 package com.resumestudio.reviewer.extraction;
 
 import com.resumestudio.reviewer.model.Resume;
+import com.resumestudio.reviewer.skills.EscoSkillGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -17,6 +20,12 @@ public class SummaryExtractor {
 
     private static final Logger log = LoggerFactory.getLogger(SummaryExtractor.class);
 
+    private final EscoSkillGraph escoGraph;
+
+    public SummaryExtractor(EscoSkillGraph escoGraph) {
+        this.escoGraph = escoGraph;
+    }
+
     // Generic/useless summary phrases
     private static final List<Pattern> GENERIC_PHRASES = List.of(
         Pattern.compile("passionate (about|developer|engineer|professional)", Pattern.CASE_INSENSITIVE),
@@ -27,15 +36,7 @@ public class SummaryExtractor {
 
     // YOE mention in summary
     private static final Pattern YOE_IN_SUMMARY = Pattern.compile(
-        "(\\d+)\\s*\\+?\\s*years?", Pattern.CASE_INSENSITIVE);
-
-    // Technical skill mention — any word that looks like a tech term
-    private static final Pattern TECH_TERM = Pattern.compile(
-        "\\b(Java|Python|Go|Rust|Kotlin|TypeScript|JavaScript|C\\+\\+|C#|" +
-        "Spring|React|Node|AWS|GCP|Azure|Kubernetes|Docker|SQL|PostgreSQL|" +
-        "MongoDB|Redis|Kafka|Microservices|API|REST|GraphQL|Machine Learning|" +
-        "DevOps|Cloud|Backend|Frontend|Full[- ]?Stack|Mobile|iOS|Android)\\b",
-        Pattern.CASE_INSENSITIVE);
+        "(\\d+(?:\\.\\d+)?)\\s*\\+?\\s*years?", Pattern.CASE_INSENSITIVE);
 
     public void extract(String summaryText, Resume resume) {
         if (summaryText == null || summaryText.isBlank()) {
@@ -49,7 +50,7 @@ public class SummaryExtractor {
 
     /**
      * Analyses summary quality for signal computation.
-     * Returns a SummaryAnalysis with quality flags.
+     * Uses ESCO skill taxonomy for technical skill detection (SOTA).
      */
     public SummaryAnalysis analyse(String summaryText, String jdTitle) {
         SummaryAnalysis analysis = new SummaryAnalysis();
@@ -64,8 +65,9 @@ public class SummaryExtractor {
         // Check if mentions YOE
         analysis.setMentionsYoe(YOE_IN_SUMMARY.matcher(summaryText).find());
 
-        // Check if mentions tech skills
-        analysis.setMentionsSkills(TECH_TERM.matcher(summaryText).find());
+        // Check if mentions tech skills using ESCO taxonomy (n-gram matching)
+        int skillCount = extractTechnicalSkills(summaryText);
+        analysis.setMentionsSkills(skillCount >= 3); // At least 3 technical skills
 
         // Check if mentions title/role
         if (jdTitle != null) {
@@ -81,9 +83,14 @@ public class SummaryExtractor {
         // Check for generic phrases
         boolean isGeneric = GENERIC_PHRASES.stream()
             .anyMatch(p -> p.matcher(summaryText).find());
+        
+        // Override: if summary has strong technical content (YOE + skills), ignore generic phrases
+        if (isGeneric && analysis.isMentionsYoe() && analysis.isMentionsSkills()) {
+            isGeneric = false;  // Technical substance overrides generic language
+        }
         analysis.setGeneric(isGeneric);
 
-        // A strong summary: present + mentions title + YOE + skills + not generic
+        // A strong summary: present + mentions YOE + skills + not generic
         analysis.setStrong(
             analysis.isPresent()
             && analysis.isMentionsYoe()
@@ -92,6 +99,46 @@ public class SummaryExtractor {
         );
 
         return analysis;
+    }
+
+    /**
+     * Extract technical skills from summary using n-gram matching against ESCO taxonomy.
+     * Uses greedy longest-match to avoid counting overlaps.
+     */
+    private int extractTechnicalSkills(String text) {
+        if (text == null || text.isBlank()) return 0;
+        
+        String[] words = text.toLowerCase().split("[\\s,;.()]+");
+        Set<String> foundSkills = new HashSet<>();
+        boolean[] consumed = new boolean[words.length];
+        
+        // Greedy: try longest n-grams first to avoid overlaps
+        for (int n = 3; n >= 1; n--) {
+            for (int i = 0; i <= words.length - n; i++) {
+                // Skip if any word in this range was already matched
+                boolean alreadyUsed = false;
+                for (int j = i; j < i + n; j++) {
+                    if (consumed[j]) {
+                        alreadyUsed = true;
+                        break;
+                    }
+                }
+                if (alreadyUsed) continue;
+                
+                String candidate = String.join(" ", java.util.Arrays.copyOfRange(words, i, i + n)).trim();
+                if (candidate.length() < 2) continue;
+                
+                if (escoGraph.isKnownSkill(candidate)) {
+                    foundSkills.add(candidate);
+                    // Mark these words as consumed
+                    for (int j = i; j < i + n; j++) {
+                        consumed[j] = true;
+                    }
+                }
+            }
+        }
+        
+        return foundSkills.size();
     }
 
     public static class SummaryAnalysis {

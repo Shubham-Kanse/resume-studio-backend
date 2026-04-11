@@ -31,6 +31,11 @@ public class TimelineEngine {
     private static final Logger log = LoggerFactory.getLogger(TimelineEngine.class);
 
     public List<TimelineEvent> build(ResumeSignals signals, Verdict verdict) {
+        if (signals == null || verdict == null) {
+            log.warn("Null signals or verdict provided to build()");
+            return List.of();
+        }
+        
         List<TimelineEvent> events = new ArrayList<>();
         boolean continueReading = true;
 
@@ -81,7 +86,7 @@ public class TimelineEngine {
             events.add(buildFormatEvent(signals));
         }
 
-        // ── 8. Verdict ────────────────────────────────────────────────────
+        // ── 9. Verdict ────────────────────────────────────────────────────
         events.add(buildVerdictEvent(verdict, continueReading));
 
         assignTimestamps(events);
@@ -93,7 +98,16 @@ public class TimelineEngine {
     private TimelineEvent buildTitleEvent(ResumeSignals signals) {
         String cTitle = signals.getCandidateTitle() != null ? "\"" + signals.getCandidateTitle() + "\"" : "No title found";
         String jTitle = signals.getJdTitle() != null ? "\"" + signals.getJdTitle() + "\"" : "the role";
-        return switch (signals.getTitleMatch()) {
+        
+        TitleMatch titleMatch = signals.getTitleMatch();
+        if (titleMatch == null) {
+            return event(TimelineEventType.TITLE,
+                "No title visible",
+                "Recruiter can't tell what this person does without reading the full document.",
+                TimelineOutcome.FRICTION_FLAG, "NEGATIVE");
+        }
+        
+        return switch (titleMatch) {
             case EXACT -> event(TimelineEventType.TITLE,
                 "Title matched exactly — kept reading",
                 cTitle + " directly matches the role. First filter cleared instantly.",
@@ -149,7 +163,7 @@ public class TimelineEngine {
                 "Required skills exist but only in old job bullets. A recruiter's eye doesn't reach there in 10 seconds.",
                 TimelineOutcome.NEAR_EXIT, "NEGATIVE");
         }
-        if (signals.getSkillsFormat() == SkillsFormat.PROSE) {
+        if (signals.getSkillsFormat() != null && signals.getSkillsFormat() == SkillsFormat.PROSE) {
             return event(TimelineEventType.SKILLS,
                 "Skills written as prose — hard to scan",
                 "Skills in paragraph form require reading rather than scanning. High friction.",
@@ -168,6 +182,16 @@ public class TimelineEngine {
     }
 
     private TimelineEvent buildYoeEvent(ResumeSignals signals) {
+        if (signals.isChronologyUnreliable()) {
+            String detail = !signals.getChronologyDescriptions().isEmpty()
+                ? signals.getChronologyDescriptions().get(0)
+                : "The chronology is too inconsistent to trust.";
+            return event(TimelineEventType.YOE,
+                "Chronology is hard to trust",
+                detail,
+                TimelineOutcome.NEAR_EXIT, "NEGATIVE");
+        }
+
         String yoeStr = signals.getCalculatedYoe() != null
             ? String.format("%.1f", signals.getCalculatedYoe()).replaceAll("\\.0$", "") : "?";
         String jdRange = buildJdYoeRange(signals);
@@ -181,9 +205,17 @@ public class TimelineEngine {
         }
         String hopNote = signals.isJobHopper() ? " Multiple short tenures noted." : "";
 
-        return switch (signals.getYoeFit()) {
+        YoeFit yoeFit = signals.getYoeFit();
+        if (yoeFit == null) {
+            return event(TimelineEventType.YOE,
+                "Experience — could not determine",
+                "No clear experience information available to assess fit.",
+                TimelineOutcome.FRICTION_FLAG, "NEGATIVE");
+        }
+
+        return switch (yoeFit) {
             case IN_RANGE -> {
-                String clarity = signals.getYoeState() == YoeState.EXPLICIT
+                String clarity = signals.getYoeState() != null && signals.getYoeState() == YoeState.EXPLICIT
                     ? "Stated clearly — no calculation needed." : "Dates were clean enough to calculate.";
                 yield event(TimelineEventType.YOE,
                     yoeStr + " years experience — in range",
@@ -204,7 +236,7 @@ public class TimelineEngine {
                 TimelineOutcome.CAUTION, "NEUTRAL");
             case CANNOT_DETERMINE -> event(TimelineEventType.YOE,
                 "Experience — hard to verify",
-                signals.getYoeState() == YoeState.VAGUE
+                signals.getYoeState() != null && signals.getYoeState() == YoeState.VAGUE
                     ? "Vague phrasing forces the recruiter to calculate manually."
                     : "Could not determine total experience from the dates provided.",
                 TimelineOutcome.FRICTION_FLAG, "NEGATIVE");
@@ -219,17 +251,17 @@ public class TimelineEngine {
             boolean likelyMatch = candidateLoc.toLowerCase().contains(jdLoc.toLowerCase())
                 || jdLoc.toLowerCase().contains(candidateLoc.toLowerCase());
             if (likelyMatch) {
-                return event(TimelineEventType.FORMAT,
+                return event(TimelineEventType.LOCATION,
                     "Location — matches requirement",
                     "Candidate is based in " + candidateLoc + ". Aligns with the " + jdLoc + " requirement.",
                     TimelineOutcome.POSITIVE, "POSITIVE");
             }
-            return event(TimelineEventType.FORMAT,
+            return event(TimelineEventType.LOCATION,
                 "Location — potential mismatch",
                 "Role requires " + jdLoc + " but candidate is listed as " + candidateLoc + ". May require relocation or visa.",
                 TimelineOutcome.CAUTION, "NEUTRAL");
         }
-        return event(TimelineEventType.FORMAT,
+        return event(TimelineEventType.LOCATION,
             "Location — not stated on resume",
             "Role requires " + jdLoc + " but no location is visible on the resume. Recruiter will need to verify.",
             TimelineOutcome.MINOR_FLAG, "NEUTRAL");
@@ -237,7 +269,13 @@ public class TimelineEngine {
 
     private TimelineEvent buildCompanyEvent(ResumeSignals signals) {
         String company = signals.getCurrentCompanyName() != null ? signals.getCurrentCompanyName() : "Current company";
-        return switch (signals.getCurrentCompanyTier()) {
+        
+        CompanyTier tier = signals.getCurrentCompanyTier();
+        if (tier == null) {
+            tier = CompanyTier.UNKNOWN;
+        }
+        
+        return switch (tier) {
             case FAANG, TIER_1 -> event(TimelineEventType.COMPANY,
                 "Current company — strong signal",
                 company + " is immediately recognised. Engineering bar and scale are inferred without reading a word.",
@@ -262,18 +300,18 @@ public class TimelineEngine {
         double md = signals.getMetricDensity();
 
         if (ivr >= 0.7 && md >= 0.4) {
-            return event(TimelineEventType.SKILLS, // reuse SKILLS type for bullet quality
+            return event(TimelineEventType.BULLET,
                 "Bullets show impact and scale",
                 "Strong action verbs and quantified results. Recruiter can see the scope of work at a glance.",
                 TimelineOutcome.POSITIVE, "POSITIVE");
         }
         if (ivr < 0.3 || md < 0.1) {
-            return event(TimelineEventType.SKILLS,
+            return event(TimelineEventType.BULLET,
                 "Bullets lack impact and numbers",
                 "Passive language and no quantified results make it hard to gauge the scale of work.",
                 TimelineOutcome.MINOR_FLAG, "NEGATIVE");
         }
-        return event(TimelineEventType.SKILLS,
+        return event(TimelineEventType.BULLET,
             "Bullets — some impact shown",
             "Some strong results visible but more quantification would strengthen the case.",
             TimelineOutcome.NEUTRAL, "NEUTRAL");
@@ -340,6 +378,8 @@ public class TimelineEngine {
                 case SKILLS -> 2;
                 case YOE -> 2;
                 case COMPANY -> 1;
+                case BULLET -> 1;
+                case LOCATION -> 1;
                 case FORMAT -> 1;
                 case VERDICT -> 1;
                 default -> 1;

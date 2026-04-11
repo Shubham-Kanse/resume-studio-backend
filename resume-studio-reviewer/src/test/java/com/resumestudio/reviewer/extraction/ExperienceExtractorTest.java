@@ -74,6 +74,20 @@ class ExperienceExtractorTest {
         assertTrue(roles.get(0).isContractOrFreelance());
     }
 
+    @Test void extract_careerBreak_flagged() {
+        String text = "Career Break\nJan 2023 – Dec 2023\n• Upskilling and family care";
+        List<WorkExperience> roles = extractor.extract(text);
+        assertFalse(roles.isEmpty());
+        assertTrue(roles.get(0).isCareerBreak());
+    }
+
+    @Test void extract_yearOnlyDates_markedPartial() {
+        String text = "Engineer\nAcme | 2020 – 2022\n• Built things";
+        List<WorkExperience> roles = extractor.extract(text);
+        assertFalse(roles.isEmpty());
+        assertTrue(roles.get(0).isDatesArePartial());
+    }
+
     @Test void extract_icLevel_seniorMapsTo4() {
         String text = "Senior Software Engineer\nAcme | Jan 2022 – Present\n• Built things";
         List<WorkExperience> roles = extractor.extract(text);

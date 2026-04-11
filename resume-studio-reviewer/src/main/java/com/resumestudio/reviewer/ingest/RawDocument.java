@@ -18,6 +18,7 @@ public class RawDocument {
     private boolean isScanned;
     private boolean isPasswordProtected;
     private String mimeType;
+    private boolean hasPhoto;                   // photo detected in document
 
     public static class RawPage {
         private int pageNumber;
@@ -81,11 +82,17 @@ public class RawDocument {
     public String getMimeType() { return mimeType; }
     public void setMimeType(String mimeType) { this.mimeType = mimeType; }
 
+    public boolean hasPhoto() { return hasPhoto; }
+    public void setHasPhoto(boolean hasPhoto) { this.hasPhoto = hasPhoto; }
+
     /** Returns text from the top 20% of page 1 — the header zone. */
     public String getHeaderZoneText() {
         if (pages == null || pages.isEmpty()) return "";
         RawPage firstPage = pages.get(0);
-        if (firstPage.getBlocks() == null) return firstPage.getText();
+        if (firstPage.getBlocks() == null || firstPage.getBlocks().isEmpty()) {
+            String text = firstPage.getText();
+            return text != null ? text : ""; // Fix: Null-safe
+        }
 
         // Estimate page height from max Y coordinate
         float maxY = firstPage.getBlocks().stream()

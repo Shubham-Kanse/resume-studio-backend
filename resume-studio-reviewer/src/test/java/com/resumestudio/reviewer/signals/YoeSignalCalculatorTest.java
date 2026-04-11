@@ -27,6 +27,13 @@ class YoeSignalCalculatorTest {
         return w;
     }
 
+    private Education education(Integer startYear, Integer graduationYear) {
+        Education edu = new Education();
+        edu.setStartYear(startYear);
+        edu.setGraduationYear(graduationYear);
+        return edu;
+    }
+
     private WorkExperience currentRole(LocalDate start) {
         WorkExperience w = new WorkExperience();
         w.setStartDate(start);
@@ -190,6 +197,54 @@ class YoeSignalCalculatorTest {
         var r2 = role(LocalDate.of(2021, 1, 1), LocalDate.of(2023, 1, 1)); // overlaps r1
         calculator.compute(List.of(r1, r2), null, false, null, null, s);
         assertTrue(s.isHasConcurrentRoles());
+    }
+
+    @Test void gap_coveredByCareerBreak_notFlagged() {
+        ResumeSignals s = new ResumeSignals();
+        var r1 = role(LocalDate.of(2019, 1, 1), LocalDate.of(2020, 1, 1));
+        var breakRole = role(LocalDate.of(2020, 2, 1), LocalDate.of(2021, 6, 1));
+        breakRole.setCareerBreak(true);
+        breakRole.setTitle("Career Break");
+        var r2 = role(LocalDate.of(2021, 7, 1), LocalDate.of(2024, 1, 1));
+        calculator.compute(List.of(r1, breakRole, r2), null, false, null, null, s);
+        assertFalse(s.isHasUnexplainedGap());
+    }
+
+    @Test void gap_withPartialDates_becomesChronologyIssue_notGap() {
+        ResumeSignals s = new ResumeSignals();
+        var r1 = role(LocalDate.of(2020, 1, 1), LocalDate.of(2020, 12, 31));
+        r1.setDatesArePartial(true);
+        var r2 = role(LocalDate.of(2022, 1, 1), LocalDate.of(2024, 1, 1));
+        calculator.compute(List.of(r1, r2), null, false, null, null, s);
+        assertFalse(s.isHasUnexplainedGap());
+        assertTrue(s.isHasChronologyIssues());
+    }
+
+    @Test void chronology_unreliable_whenMultipleCurrentRoles() {
+        ResumeSignals s = new ResumeSignals();
+        var r1 = currentRole(LocalDate.of(2022, 1, 1));
+        var r2 = currentRole(LocalDate.of(2023, 1, 1));
+        calculator.compute(List.of(r1, r2), null, false, null, null, s);
+        assertTrue(s.isChronologyUnreliable());
+    }
+
+    @Test void chronology_unreliable_whenMostRolesMissingOrPartial() {
+        ResumeSignals s = new ResumeSignals();
+        WorkExperience r1 = new WorkExperience();
+        WorkExperience r2 = role(LocalDate.of(2020, 1, 1), LocalDate.of(2021, 1, 1));
+        r2.setDatesArePartial(true);
+        WorkExperience r3 = role(LocalDate.of(2022, 1, 1), LocalDate.of(2023, 1, 1));
+        r3.setDatesArePartial(true);
+        calculator.compute(List.of(r1, r2, r3), null, false, null, null, s);
+        assertTrue(s.isChronologyUnreliable());
+    }
+
+    @Test void education_plusPostGradBuffer_coversGap() {
+        ResumeSignals s = new ResumeSignals();
+        var r1 = role(LocalDate.of(2018, 1, 1), LocalDate.of(2019, 6, 1));
+        var r2 = role(LocalDate.of(2022, 7, 1), LocalDate.of(2025, 1, 1));
+        calculator.compute(List.of(r1, r2), null, false, null, null, s, List.of(education(2019, 2021)));
+        assertFalse(s.isHasUnexplainedGap());
     }
 
     // ── Overlapping YOE not double-counted ────────────────────────────────────

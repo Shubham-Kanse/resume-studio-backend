@@ -13,6 +13,7 @@ public class WorkExperience {
     private LocalDate endDate;             // null = present
     private boolean isCurrent;
     private boolean isContractOrFreelance;
+    private boolean isCareerBreak;
     private double durationYears;
     private List<String> bullets;
     private List<String> skillsMentioned;  // skills extracted from bullets
@@ -43,6 +44,9 @@ public class WorkExperience {
 
     public boolean isContractOrFreelance() { return isContractOrFreelance; }
     public void setContractOrFreelance(boolean contractOrFreelance) { isContractOrFreelance = contractOrFreelance; }
+
+    public boolean isCareerBreak() { return isCareerBreak; }
+    public void setCareerBreak(boolean careerBreak) { isCareerBreak = careerBreak; }
 
     public double getDurationYears() { return durationYears; }
     public void setDurationYears(double durationYears) { this.durationYears = durationYears; }

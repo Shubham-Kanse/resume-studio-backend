@@ -69,20 +69,36 @@ public class CompanySignalCalculator {
     public void compute(List<WorkExperience> experience, String currentCompany,
                         String companyDescriptor, ResumeSignals signals) {
 
-        signals.setCurrentCompanyName(currentCompany);
-        signals.setCompanyHasDescriptor(companyDescriptor != null && !companyDescriptor.isBlank());
+        // SOTA: Use most recent professional role if no current company
+        // (Recruiters care about last real job, not career breaks/grad school)
+        String relevantCompany = currentCompany;
+        String relevantDescriptor = companyDescriptor;
+        
+        if ((relevantCompany == null || relevantCompany.isBlank()) 
+            && experience != null && !experience.isEmpty()) {
+            // Fall back to most recent work experience
+            WorkExperience mostRecent = experience.stream()
+                .filter(e -> !e.isCareerBreak())
+                .findFirst()
+                .orElse(experience.get(0));
+            relevantCompany = mostRecent.getCompany();
+            relevantDescriptor = mostRecent.getCompanyDescriptor();
+        }
 
-        if (currentCompany == null || currentCompany.isBlank()) {
+        signals.setCurrentCompanyName(relevantCompany);
+        signals.setCompanyHasDescriptor(relevantDescriptor != null && !relevantDescriptor.isBlank());
+
+        if (relevantCompany == null || relevantCompany.isBlank()) {
             signals.setCurrentCompanyTier(CompanyTier.UNKNOWN);
             return;
         }
 
-        // Look up current company tier
-        CompanyTier currentTier = lookupTier(currentCompany);
-        if (currentTier == CompanyTier.UNKNOWN && signals.isCompanyHasDescriptor()) {
-            currentTier = CompanyTier.DESCRIBED;
+        // Look up company tier
+        CompanyTier tier = lookupTier(relevantCompany);
+        if (tier == CompanyTier.UNKNOWN && signals.isCompanyHasDescriptor()) {
+            tier = CompanyTier.DESCRIBED;
         }
-        signals.setCurrentCompanyTier(currentTier);
+        signals.setCurrentCompanyTier(tier);
 
         // Compute trajectory across all roles
         if (experience != null && experience.size() >= 2) {
@@ -107,6 +123,7 @@ public class CompanySignalCalculator {
     private void computeTrajectory(List<WorkExperience> experience, ResumeSignals signals) {
         // experience is sorted most-recent-first; reverse for chronological order
         List<WorkExperience> chronological = new ArrayList<>(experience);
+        chronological.removeIf(WorkExperience::isCareerBreak);
         Collections.reverse(chronological);
 
         List<Integer> tierValues = chronological.stream()

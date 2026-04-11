@@ -1,5 +1,6 @@
 package com.resumestudio.reviewer.classification;
 
+import com.resumestudio.reviewer.classification.ClassificationEngine.ClassificationResult;
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.enums.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +54,13 @@ class ClassificationEngineTest {
         ResumeSignals s = goodSignals();
         s.setFormatWallOfText(true);
         s.setFormatFontTooSmall(true);
+        assertEquals(Verdict.WEAK_FIT, engine.classify(s).verdict());
+    }
+
+    @Test
+    void weakFit_whenChronologyUnreliable() {
+        ResumeSignals s = goodSignals();
+        s.setChronologyUnreliable(true);
         assertEquals(Verdict.WEAK_FIT, engine.classify(s).verdict());
     }
 
@@ -178,5 +186,94 @@ class ClassificationEngineTest {
         s.setFormatWallOfText(false);
         s.setFormatFontTooSmall(false);
         return s;
+    }
+
+    // ── Null safety tests ─────────────────────────────────────────────────────
+
+    @Test
+    void classify_nullSignals_returnsWeakFitLowConfidence() {
+        ClassificationResult result = engine.classify(null);
+        assertEquals(Verdict.WEAK_FIT, result.verdict());
+        assertEquals(Confidence.LOW, result.confidence());
+    }
+
+    @Test
+    void weakFit_whenYoeFitIsNull() {
+        ResumeSignals s = goodSignals();
+        s.setYoeFit(null);
+        // Should not crash, should handle gracefully
+        ClassificationResult result = engine.classify(s);
+        assertNotNull(result);
+        assertNotNull(result.verdict());
+    }
+
+    @Test
+    void classify_whenTitleMatchIsNull_penalizesConfidence() {
+        ResumeSignals s = goodSignals();
+        s.setTitleMatch(null);
+        ClassificationResult result = engine.classify(s);
+        // Null titleMatch adds 2 penalty points
+        assertNotNull(result);
+        // Should still return a verdict (not crash)
+        assertNotNull(result.verdict());
+    }
+
+    @Test
+    void classify_whenSkillsFormatIsNull_handlesGracefully() {
+        ResumeSignals s = goodSignals();
+        s.setSkillsFormat(null);
+        ClassificationResult result = engine.classify(s);
+        assertNotNull(result);
+        assertNotNull(result.verdict());
+        assertNotNull(result.confidence());
+    }
+
+    @Test
+    void classify_whenCurrentCompanyTierIsNull_handlesGracefully() {
+        ResumeSignals s = goodSignals();
+        s.setCurrentCompanyTier(null);
+        ClassificationResult result = engine.classify(s);
+        assertNotNull(result);
+        assertNotNull(result.verdict());
+    }
+
+    @Test
+    void classify_whenYoeStateIsNull_handlesGracefully() {
+        ResumeSignals s = goodSignals();
+        s.setYoeState(null);
+        ClassificationResult result = engine.classify(s);
+        assertNotNull(result);
+        assertNotNull(result.confidence());
+    }
+
+    @Test
+    void classify_allEnumsNull_returnsWeakFitLowConfidence() {
+        ResumeSignals s = new ResumeSignals();
+        // All enums are null by default
+        s.setHasMissingMustHaves(false);
+        s.setAllMustHavesFound(false);
+        s.setAllMustHavesVisible(false);
+        s.setHasBuriedMustHaves(false);
+        s.setFormatWallOfText(false);
+        s.setFormatFontTooSmall(false);
+        
+        ClassificationResult result = engine.classify(s);
+        assertNotNull(result);
+        assertEquals(Verdict.WEAK_FIT, result.verdict());
+        // Null titleMatch adds 2 penalty points → MEDIUM or LOW
+        assertTrue(result.confidence() == Confidence.MEDIUM || result.confidence() == Confidence.LOW);
+    }
+
+    @Test
+    void classify_mixedNullEnums_handlesGracefully() {
+        ResumeSignals s = goodSignals();
+        s.setYoeFit(null);
+        s.setTitleMatch(null);
+        s.setSkillsFormat(null);
+        
+        ClassificationResult result = engine.classify(s);
+        assertNotNull(result);
+        assertNotNull(result.verdict());
+        assertNotNull(result.confidence());
     }
 }

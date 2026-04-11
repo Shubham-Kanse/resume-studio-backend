@@ -1,0 +1,87 @@
+[
+  {
+    "id": "train-strong-1",
+    "split": "train",
+    "resumeText": "John Doe\nSenior Backend Engineer\nAcme Cloud\n\nSummary:\nSenior backend engineer with 8 years of experience building distributed Java systems.\n\nExperience:\nSenior Backend Engineer | Acme Cloud | Jan 2020 - Present\n- Built Java Spring Boot microservices for billing and identity.\n- Improved API latency by 35%.\n\nSkills:\nJava, Spring Boot, Docker, Kafka, AWS, PostgreSQL",
+    "jdText": "Senior Backend Engineer\n\nRequirements\n- Java\n- Spring Boot\n- Docker\n- Kafka\n- AWS\n\n5+ years of experience",
+    "recruiterVerdict": "STRONG_FIT"
+  },
+  {
+    "id": "train-strong-2",
+    "split": "train",
+    "resumeText": "Ava Smith\nBackend Engineer\nScalePay\n\nSummary:\nBackend engineer with 7 years of experience in high-volume payment systems.\n\nExperience:\nBackend Engineer | ScalePay | Mar 2019 - Present\n- Designed Java services and async workflows.\n- Built Kafka-based event processing.\n\nSkills:\nJava, Kafka, Docker, AWS, SQL, Spring Boot",
+    "jdText": "Backend Engineer\n\nRequirements\n- Java\n- Kafka\n- Docker\n- AWS\n\n4-6 years experience",
+    "recruiterVerdict": "STRONG_FIT"
+  },
+  {
+    "id": "train-possible-1",
+    "split": "train",
+    "resumeText": "Liam O'Brien\nBackend Engineer\nFinStack\n\nSummary:\nBackend engineer with 5 years of experience building APIs in Java and Spring Boot.\n\nExperience:\nBackend Engineer | FinStack | Jun 2020 - Present\n- Delivered Java microservices for core payments.\n\nSkills:\nJava, Spring Boot, Docker, AWS, PostgreSQL",
+    "jdText": "Backend Engineer\n\nRequirements\n- Java\n- Spring Boot\n- Docker\n- AWS\n\n6-8 years experience",
+    "recruiterVerdict": "POSSIBLE_FIT"
+  },
+  {
+    "id": "train-weak-1",
+    "split": "train",
+    "resumeText": "Mia Patel\nBackend Engineer\nStartly\n\nSummary:\nBackend engineer with 6 years of experience in Java services.\n\nExperience:\nBackend Engineer | Startly | Apr 2019 - Present\n- Built APIs and integrations.\n\nSkills:\nJava, Spring Boot, Docker, SQL",
+    "jdText": "Backend Engineer\n\nRequirements\n- Java\n- Spring Boot\n- Docker\n- Kubernetes\n\n5+ years experience",
+    "recruiterVerdict": "WEAK_FIT"
+  },
+  {
+    "id": "train-weak-2",
+    "split": "train",
+    "resumeText": "Noah Lee\nJunior QA Engineer\nTestWave\n\nSummary:\nJunior QA engineer with 2 years of experience in manual testing.\n\nExperience:\nQA Engineer | TestWave | Jan 2024 - Present\n- Executed regression test suites.\n\nSkills:\nSelenium, Postman, Jira",
+    "jdText": "Senior Backend Engineer\n\nRequirements\n- Java\n- Spring Boot\n- Docker\n\n5+ years experience",
+    "recruiterVerdict": "WEAK_FIT"
+  },
+  {
+    "id": "train-strong-3",
+    "split": "train",
+    "resumeText": "Emma Quinn\nSenior Data Engineer\nNorthStar\n\nSummary:\nData engineer with 9 years of experience building streaming pipelines.\n\nExperience:\nSenior Data Engineer | NorthStar | Feb 2018 - Present\n- Built Spark and Kafka data pipelines.\n\nSkills:\nPython, Spark, Kafka, Airflow, Snowflake, dbt",
+    "jdText": "Senior Data Engineer\n\nRequirements\n- Spark\n- Kafka\n- Airflow\n- Snowflake\n- dbt\n\n6+ years experience",
+    "recruiterVerdict": "STRONG_FIT"
+  },
+  {
+    "id": "train-possible-2",
+    "split": "train",
+    "resumeText": "Ethan Byrne\nData Engineer\nMetricFlow\n\nSummary:\nData engineer with 4 years of experience in Python ETL systems.\n\nExperience:\nData Engineer | MetricFlow | Jan 2022 - Present\n- Built Airflow DAGs and warehouse models.\n\nSkills:\nPython, Airflow, Snowflake, dbt, SQL",
+    "jdText": "Data Engineer\n\nRequirements\n- Python\n- Airflow\n- Snowflake\n- dbt\n\n5-7 years experience",
+    "recruiterVerdict": "POSSIBLE_FIT"
+  },
+  {
+    "id": "train-weak-3",
+    "split": "train",
+    "resumeText": "Sophia Green\nFrontend Engineer\nStudioX\n\nSummary:\nFrontend engineer with 5 years of experience in React applications.\n\nExperience:\nFrontend Engineer | StudioX | May 2020 - Present\n- Built React UIs for customer portals.\n\nSkills:\nReact, TypeScript, CSS, Jest",
+    "jdText": "Backend Engineer\n\nRequirements\n- Java\n- Spring Boot\n- Kafka\n- Docker\n\n4+ years experience",
+    "recruiterVerdict": "WEAK_FIT"
+  },
+
+  {
+    "id": "blind-strong-1",
+    "split": "blind",
+    "resumeText": "Olivia Ward\nSenior Backend Engineer\nCloudLedger\n\nSummary:\nSenior backend engineer with 10 years of experience on Java distributed systems.\n\nExperience:\nSenior Backend Engineer | CloudLedger | Jan 2017 - Present\n- Led migration to Spring Boot microservices.\n- Improved throughput by 40%.\n\nSkills:\nJava, Spring Boot, Kafka, Docker, AWS, Postgres",
+    "jdText": "Senior Backend Engineer\n\nRequirements\n- Java\n- Spring Boot\n- Kafka\n- Docker\n- AWS\n\n7+ years experience",
+    "recruiterVerdict": "STRONG_FIT"
+  },
+  {
+    "id": "blind-possible-1",
+    "split": "blind",
+    "resumeText": "James Nolan\nPlatform Engineer\nBlueRiver\n\nSummary:\nPlatform engineer with 5 years of experience building backend systems in Java.\n\nExperience:\nPlatform Engineer | BlueRiver | Feb 2021 - Present\n- Built Dockerized services with Spring Boot.\n\nSkills:\nJava, Spring Boot, Docker, AWS, SQL",
+    "jdText": "Backend Engineer\n\nRequirements\n- Java\n- Spring Boot\n- Docker\n- AWS\n\n6+ years experience",
+    "recruiterVerdict": "POSSIBLE_FIT"
+  },
+  {
+    "id": "blind-weak-1",
+    "split": "blind",
+    "resumeText": "Chloe Adams\nSoftware Engineer\nPixelForge\n\nSummary:\nSoftware engineer with 6 years of experience in web development.\n\nExperience:\nSoftware Engineer | PixelForge | Jul 2019 - Present\n- Built frontend applications in React.\n\nSkills:\nReact, TypeScript, Next.js, CSS",
+    "jdText": "Backend Engineer\n\nRequirements\n- Java\n- Spring Boot\n- Kafka\n- Docker\n\n5+ years experience",
+    "recruiterVerdict": "WEAK_FIT"
+  },
+  {
+    "id": "blind-weak-2",
+    "split": "blind",
+    "resumeText": "Henry Scott\nBackend Developer\nFastCart\n\nSummary:\nBackend developer with 2 years of experience building REST APIs.\n\nExperience:\nBackend Developer | FastCart | Jan 2024 - Present\n- Built CRUD APIs and integrations.\n\nSkills:\nJava, Spring Boot, Docker, PostgreSQL",
+    "jdText": "Senior Backend Engineer\n\nRequirements\n- Java\n- Spring Boot\n- Docker\n- PostgreSQL\n\n8+ years experience",
+    "recruiterVerdict": "WEAK_FIT"
+  }
+]

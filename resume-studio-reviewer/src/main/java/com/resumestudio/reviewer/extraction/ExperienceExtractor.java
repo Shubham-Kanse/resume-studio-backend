@@ -47,9 +47,9 @@ public class ExperienceExtractor {
     // "2019" alone (year only)
     private static final Pattern YEAR_ONLY = Pattern.compile("\\b(20\\d{2}|19\\d{2})\\b");
 
-    // "Present", "Current", "Now", "Today"
+    // "Present", "Current", "Now", "Today", "Till date", "To date", "Continuing"
     private static final Pattern PRESENT = Pattern.compile(
-        "\\b(present|current|now|today|ongoing)\\b", Pattern.CASE_INSENSITIVE);
+        "\\b(present|current|now|today|ongoing|continuing|till date|to date)\\b", Pattern.CASE_INSENSITIVE);
 
     // Full date range: date separator date
     private static final Pattern DATE_RANGE = Pattern.compile(
@@ -120,13 +120,21 @@ public class ExperienceExtractor {
         List<String> nonBlank = new ArrayList<>();
         for (String l : lines) if (!l.isBlank()) nonBlank.add(l.trim());
 
-        // Find all role start positions: a date-containing line, optionally preceded by a title line
+        // Find all role start positions: a date-containing line, optionally preceded by title line
         List<Integer> starts = new ArrayList<>();
         for (int i = 0; i < nonBlank.size(); i++) {
             if (containsDateRange(nonBlank.get(i)) && nonBlank.get(i).length() < 120) {
-                // Include the preceding title line if it looks like a job title
-                int start = (i > 0 && looksLikeTitle(nonBlank.get(i - 1)) && !containsDateRange(nonBlank.get(i - 1)))
-                    ? i - 1 : i;
+                // Look back for title (1 line) or company+title (2 lines)
+                int start = i;
+                // Check if previous line is a title
+                if (i > 0 && looksLikeTitle(nonBlank.get(i - 1)) && !containsDateRange(nonBlank.get(i - 1))) {
+                    start = i - 1;
+                }
+                // Check if 2 lines back is a company (only if we already found a title at i-1)
+                else if (i > 1 && looksLikeTitle(nonBlank.get(i - 1)) && looksLikeCompany(nonBlank.get(i - 2)) 
+                         && !containsDateRange(nonBlank.get(i - 1)) && !containsDateRange(nonBlank.get(i - 2))) {
+                    start = i - 2;
+                }
                 starts.add(start);
             }
         }
@@ -176,12 +184,15 @@ public class ExperienceExtractor {
                 continue;
             }
 
-            // Remaining lines = bullets
-            if (BULLET_START.matcher(trimmed).find() || trimmed.length() > 30) {
+            // Remaining lines = bullets (include short lines without markers, but not if they look like titles)
+            if (BULLET_START.matcher(trimmed).find()) {
                 String cleanBullet = BULLET_START.matcher(trimmed).replaceFirst("").trim();
                 if (!cleanBullet.isBlank()) {
                     bullets.add(cleanBullet);
                 }
+            } else if (trimmed.length() > 10 && !trimmed.matches(".*\\d{4}.*") && !looksLikeTitle(trimmed)) {
+                // Include non-date, non-title lines > 10 chars (catches short bullets like "Led team of 5")
+                bullets.add(trimmed);
             }
         }
 
@@ -191,9 +202,14 @@ public class ExperienceExtractor {
             CONTRACT_INDICATOR.matcher(block).find() ||
             (role.getTitle() != null && CONTRACT_INDICATOR.matcher(role.getTitle()).find())
         );
+        role.setCareerBreak(
+            CAREER_BREAK.matcher(block).find() ||
+            (role.getTitle() != null && CAREER_BREAK.matcher(role.getTitle()).find()) ||
+            (role.getCompany() != null && CAREER_BREAK.matcher(role.getCompany()).find())
+        );
 
         // Normalise IC level from title
-        if (role.getTitle() != null) {
+        if (role.getTitle() != null && !role.isCareerBreak()) {
             role.setIcLevel(normaliseIcLevel(role.getTitle()));
         }
 
@@ -214,11 +230,13 @@ public class ExperienceExtractor {
                 Matcher rangeMatcher = DATE_RANGE.matcher(right);
                 if (rangeMatcher.find()) {
                     role.setStartDate(parseDate(rangeMatcher.group(1).trim(), true));
+                    role.setDatesArePartial(role.isDatesArePartial() || isPartialDate(rangeMatcher.group(1).trim()));
                     String endStr = rangeMatcher.group(2).trim();
                     if (PRESENT.matcher(endStr).find()) {
                         role.setCurrent(true);
                     } else {
                         role.setEndDate(parseDate(endStr, false));
+                        role.setDatesArePartial(role.isDatesArePartial() || isPartialDate(endStr));
                     }
                 }
                 return;
@@ -232,11 +250,13 @@ public class ExperienceExtractor {
             String endStr = rangeMatcher.group(2).trim();
 
             role.setStartDate(parseDate(startStr, true));
+            role.setDatesArePartial(role.isDatesArePartial() || isPartialDate(startStr));
             if (PRESENT.matcher(endStr).find()) {
                 role.setCurrent(true);
                 role.setEndDate(null);
             } else {
                 role.setEndDate(parseDate(endStr, false));
+                role.setDatesArePartial(role.isDatesArePartial() || isPartialDate(endStr));
             }
 
             String remainder = line.replace(rangeMatcher.group(0), "").trim();
@@ -249,6 +269,15 @@ public class ExperienceExtractor {
 
     private void assignTitleOrCompany(String text, WorkExperience role) {
         if (text.isBlank()) return;
+        if (CAREER_BREAK.matcher(text).find()) {
+            if (role.getTitle() == null) {
+                role.setTitle(text);
+            } else if (role.getCompany() == null) {
+                role.setCompany(text);
+            }
+            role.setCareerBreak(true);
+            return;
+        }
         if (role.getTitle() == null && looksLikeTitle(text)) {
             role.setTitle(text);
         } else if (role.getCompany() == null) {
@@ -273,7 +302,17 @@ public class ExperienceExtractor {
             || lower.contains("manager") || lower.contains("lead") || lower.contains("analyst")
             || lower.contains("designer") || lower.contains("scientist") || lower.contains("consultant")
             || lower.contains("devops") || lower.contains("qa") || lower.contains("sre")
+            || CAREER_BREAK.matcher(text).find()
             || TITLE_IC_LEVELS.keySet().stream().anyMatch(p -> p.matcher(text).find());
+    }
+
+    private boolean looksLikeCompany(String text) {
+        if (text.length() > 100) return false;
+        String[] words = text.split("\\s+");
+        // Reject section headers (all-caps short lines)
+        boolean isAllCaps = text.equals(text.toUpperCase()) && text.matches("[A-Z\\s]+");
+        return !isAllCaps && words.length >= 1 && words.length <= 8
+            && !text.matches(".*\\d{4}.*[–\\-].*\\d{4}.*");
     }
 
     // ── Date parsing ──────────────────────────────────────────────────────────
@@ -312,7 +351,12 @@ public class ExperienceExtractor {
         return null;
     }
 
+    private boolean isPartialDate(String raw) {
+        return YEAR_ONLY.matcher(raw).find() && !MONTH_YEAR.matcher(raw).find() && !MM_YYYY.matcher(raw).find();
+    }
+
     private int parseMonth(String monthStr) {
+        if (monthStr == null || monthStr.length() < 3) return 1;
         return switch (monthStr.substring(0, 3).toLowerCase()) {
             case "jan" -> 1; case "feb" -> 2; case "mar" -> 3; case "apr" -> 4;
             case "may" -> 5; case "jun" -> 6; case "jul" -> 7; case "aug" -> 8;

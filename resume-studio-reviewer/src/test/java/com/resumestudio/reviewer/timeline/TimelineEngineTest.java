@@ -180,6 +180,22 @@ class TimelineEngineTest {
         assertEquals(TimelineOutcome.NEAR_EXIT, yoeEvent.getOutcome());
     }
 
+    @Test
+    void build_unreliableChronology_prioritisesChronologyOverYoeFit() {
+        ResumeSignals s = baseSignals();
+        s.setChronologyUnreliable(true);
+        s.setChronologyDescriptions(List.of("Multiple roles are marked as current/present."));
+        s.setYoeFit(YoeFit.IN_RANGE);
+
+        List<TimelineEvent> events = engine.build(s, Verdict.WEAK_FIT);
+
+        TimelineEvent yoeEvent = events.stream()
+            .filter(e -> e.getType() == TimelineEventType.YOE)
+            .findFirst().orElseThrow();
+        assertEquals(TimelineOutcome.NEAR_EXIT, yoeEvent.getOutcome());
+        assertTrue(yoeEvent.getDetail().contains("current/present"));
+    }
+
     // ── Company event ─────────────────────────────────────────────────────────
 
     @Test
@@ -377,7 +393,7 @@ class TimelineEngineTest {
 
         List<TimelineEvent> events = engine.build(s, Verdict.STRONG_FIT);
 
-        assertTrue(events.stream().anyMatch(e -> e.getType() == TimelineEventType.FORMAT
+        assertTrue(events.stream().anyMatch(e -> e.getType() == TimelineEventType.LOCATION
             && "POSITIVE".equals(e.getSentiment())));
     }
 
@@ -391,7 +407,7 @@ class TimelineEngineTest {
         List<TimelineEvent> events = engine.build(s, Verdict.POSSIBLE_FIT);
 
         assertTrue(events.stream().anyMatch(e ->
-            e.getType() == TimelineEventType.FORMAT && e.getDetail() != null
+            e.getType() == TimelineEventType.LOCATION && e.getDetail() != null
             && e.getDetail().contains("New York")));
     }
 
@@ -405,7 +421,7 @@ class TimelineEngineTest {
         List<TimelineEvent> events = engine.build(s, Verdict.POSSIBLE_FIT);
 
         assertTrue(events.stream().anyMatch(e ->
-            e.getType() == TimelineEventType.FORMAT && e.getOutcome() == TimelineOutcome.MINOR_FLAG));
+            e.getType() == TimelineEventType.LOCATION && e.getOutcome() == TimelineOutcome.MINOR_FLAG));
     }
 
     // ── Summary edge cases ────────────────────────────────────────────────────
@@ -494,7 +510,7 @@ class TimelineEngineTest {
         List<TimelineEvent> events = engine.build(s, Verdict.POSSIBLE_FIT);
 
         assertTrue(events.stream().anyMatch(e ->
-            e.getType() == TimelineEventType.SKILLS && "NEGATIVE".equals(e.getSentiment())));
+            e.getType() == TimelineEventType.BULLET && "NEGATIVE".equals(e.getSentiment())));
     }
 
     @Test
@@ -578,5 +594,109 @@ class TimelineEngineTest {
         s.setImpactVerbRatio(0.0);
         s.setMetricDensity(0.0);
         return s;
+    }
+
+    // ── Null safety tests ─────────────────────────────────────────────────────
+
+    @Test
+    void build_nullSignals_returnsEmptyList() {
+        List<TimelineEvent> events = engine.build(null, Verdict.WEAK_FIT);
+        assertTrue(events.isEmpty());
+    }
+
+    @Test
+    void build_nullVerdict_returnsEmptyList() {
+        ResumeSignals s = baseSignals();
+        List<TimelineEvent> events = engine.build(s, null);
+        assertTrue(events.isEmpty());
+    }
+
+    @Test
+    void build_nullTitleMatch_handlesGracefully() {
+        ResumeSignals s = baseSignals();
+        s.setTitleMatch(null);
+        
+        List<TimelineEvent> events = engine.build(s, Verdict.WEAK_FIT);
+        
+        assertFalse(events.isEmpty());
+        TimelineEvent titleEvent = events.get(0);
+        assertEquals(TimelineEventType.TITLE, titleEvent.getType());
+        assertEquals(TimelineOutcome.FRICTION_FLAG, titleEvent.getOutcome());
+    }
+
+    @Test
+    void build_nullYoeFit_handlesGracefully() {
+        ResumeSignals s = baseSignals();
+        s.setYoeFit(null);
+        
+        List<TimelineEvent> events = engine.build(s, Verdict.WEAK_FIT);
+        
+        TimelineEvent yoeEvent = events.stream()
+            .filter(e -> e.getType() == TimelineEventType.YOE)
+            .findFirst().orElseThrow();
+        assertEquals(TimelineOutcome.FRICTION_FLAG, yoeEvent.getOutcome());
+    }
+
+    @Test
+    void build_nullCurrentCompanyTier_handlesGracefully() {
+        ResumeSignals s = baseSignals();
+        s.setCurrentCompanyTier(null);
+        s.setCompanyTierImproving(true); // Force company event
+        
+        List<TimelineEvent> events = engine.build(s, Verdict.STRONG_FIT);
+        
+        // Should not crash, company event should handle null tier
+        assertNotNull(events);
+    }
+
+    @Test
+    void build_nullSkillsFormat_handlesGracefully() {
+        ResumeSignals s = baseSignals();
+        s.setSkillsFormat(null);
+        
+        List<TimelineEvent> events = engine.build(s, Verdict.STRONG_FIT);
+        
+        // Should not crash when checking for PROSE format
+        TimelineEvent skillsEvent = events.stream()
+            .filter(e -> e.getType() == TimelineEventType.SKILLS)
+            .findFirst().orElseThrow();
+        assertNotNull(skillsEvent);
+    }
+
+    @Test
+    void build_nullYoeState_handlesGracefully() {
+        ResumeSignals s = baseSignals();
+        s.setYoeState(null);
+        s.setYoeFit(YoeFit.IN_RANGE);
+        
+        List<TimelineEvent> events = engine.build(s, Verdict.STRONG_FIT);
+        
+        TimelineEvent yoeEvent = events.stream()
+            .filter(e -> e.getType() == TimelineEventType.YOE)
+            .findFirst().orElseThrow();
+        // Should not crash when checking yoeState
+        assertNotNull(yoeEvent.getDetail());
+    }
+
+    @Test
+    void build_allEnumsNull_handlesGracefully() {
+        ResumeSignals s = new ResumeSignals();
+        // All enums are null by default
+        s.setHasMissingMustHaves(false);
+        s.setAllMustHavesVisible(false);
+        s.setHasBuriedMustHaves(false);
+        s.setFormatWallOfText(false);
+        s.setFormatTooManyPages(false);
+        s.setFormatHasPhoto(false);
+        s.setJdLocationStrict(false);
+        s.setSummaryPresent(false);
+        s.setCompanyTierImproving(false);
+        
+        List<TimelineEvent> events = engine.build(s, Verdict.WEAK_FIT);
+        
+        // Should not crash, should return at least title and verdict
+        assertTrue(events.size() >= 2);
+        assertEquals(TimelineEventType.TITLE, events.get(0).getType());
+        assertEquals(TimelineEventType.VERDICT, events.get(events.size() - 1).getType());
     }
 }

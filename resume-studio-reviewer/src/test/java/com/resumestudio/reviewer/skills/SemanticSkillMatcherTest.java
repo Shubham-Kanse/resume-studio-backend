@@ -66,4 +66,10 @@ class SemanticSkillMatcherTest {
         when(embeddingIndex.isAvailable()).thenReturn(false);
         assertEquals(0f, matcher.similarity("java", "python"), 0.001f);
     }
+
+    @Test void similarity_nullInputs_returns0() {
+        assertEquals(0f, matcher.similarity(null, "java"), 0.001f);
+        assertEquals(0f, matcher.similarity("java", null), 0.001f);
+        assertEquals(0f, matcher.similarity(null, null), 0.001f);
+    }
 }

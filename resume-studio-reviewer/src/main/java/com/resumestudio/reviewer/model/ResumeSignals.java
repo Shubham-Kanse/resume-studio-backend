@@ -53,6 +53,9 @@ public class ResumeSignals {
     private boolean hasConcurrentRoles;
     private boolean hasUnlabelledContracts;
     private List<String> gapDescriptions = new ArrayList<>();
+    private boolean hasChronologyIssues;
+    private boolean chronologyUnreliable;
+    private List<String> chronologyDescriptions = new ArrayList<>();
 
     // ── Company signals ───────────────────────────────────────
     private CompanyTier currentCompanyTier;
@@ -194,6 +197,15 @@ public class ResumeSignals {
 
     public List<String> getGapDescriptions() { return gapDescriptions; }
     public void setGapDescriptions(List<String> gapDescriptions) { this.gapDescriptions = gapDescriptions; }
+
+    public boolean isHasChronologyIssues() { return hasChronologyIssues; }
+    public void setHasChronologyIssues(boolean hasChronologyIssues) { this.hasChronologyIssues = hasChronologyIssues; }
+
+    public boolean isChronologyUnreliable() { return chronologyUnreliable; }
+    public void setChronologyUnreliable(boolean chronologyUnreliable) { this.chronologyUnreliable = chronologyUnreliable; }
+
+    public List<String> getChronologyDescriptions() { return chronologyDescriptions; }
+    public void setChronologyDescriptions(List<String> chronologyDescriptions) { this.chronologyDescriptions = chronologyDescriptions; }
 
     public CompanyTier getCurrentCompanyTier() { return currentCompanyTier; }
     public void setCurrentCompanyTier(CompanyTier currentCompanyTier) { this.currentCompanyTier = currentCompanyTier; }

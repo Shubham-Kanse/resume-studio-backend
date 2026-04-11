@@ -1,5 +1,6 @@
 package com.resumestudio.reviewer;
 
+import com.resumestudio.reviewer.api.JdFetchService;
 import com.resumestudio.reviewer.classification.ClassificationEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,10 +32,13 @@ public class ReviewerPipeline {
 
     private final ResumeIngestService ingestService;
     private final JdParserService jdParser;
+    private final JdFetchService jdFetchService;
     private final HeaderExtractor headerExtractor;
     private final ExperienceExtractor experienceExtractor;
+    private final EducationExtractor educationExtractor;
     private final SkillsSectionExtractor skillsExtractor;
     private final SummaryExtractor summaryExtractor;
+    private final SemanticExtractor semanticExtractor;
     private final FilenameSignalCalculator filenameCalculator;
     private final FormatSignalCalculator formatCalculator;
     private final TitleMatchCalculator titleCalculator;
@@ -46,13 +51,17 @@ public class ReviewerPipeline {
     private final ClassificationEngine classificationEngine;
     private final TimelineEngine timelineEngine;
     private final FeedbackGenerator feedbackGenerator;
+    private final com.resumestudio.reviewer.nlp.NlpService nlpService;
 
     public ReviewerPipeline(ResumeIngestService ingestService,
                             JdParserService jdParser,
+                            JdFetchService jdFetchService,
                             HeaderExtractor headerExtractor,
                             ExperienceExtractor experienceExtractor,
+                            EducationExtractor educationExtractor,
                             SkillsSectionExtractor skillsExtractor,
                             SummaryExtractor summaryExtractor,
+                            SemanticExtractor semanticExtractor,
                             FilenameSignalCalculator filenameCalculator,
                             FormatSignalCalculator formatCalculator,
                             TitleMatchCalculator titleCalculator,
@@ -64,13 +73,17 @@ public class ReviewerPipeline {
                             AnomalyDetector anomalyDetector,
                             ClassificationEngine classificationEngine,
                             TimelineEngine timelineEngine,
-                            FeedbackGenerator feedbackGenerator) {
+                            FeedbackGenerator feedbackGenerator,
+                            com.resumestudio.reviewer.nlp.NlpService nlpService) {
         this.ingestService = ingestService;
         this.jdParser = jdParser;
+        this.jdFetchService = jdFetchService;
         this.headerExtractor = headerExtractor;
         this.experienceExtractor = experienceExtractor;
+        this.educationExtractor = educationExtractor;
         this.skillsExtractor = skillsExtractor;
         this.summaryExtractor = summaryExtractor;
+        this.semanticExtractor = semanticExtractor;
         this.filenameCalculator = filenameCalculator;
         this.formatCalculator = formatCalculator;
         this.titleCalculator = titleCalculator;
@@ -83,6 +96,7 @@ public class ReviewerPipeline {
         this.classificationEngine = classificationEngine;
         this.timelineEngine = timelineEngine;
         this.feedbackGenerator = feedbackGenerator;
+        this.nlpService = nlpService;
     }
 
     public FeedbackReport review(MultipartFile file, String jdText) {
@@ -90,8 +104,11 @@ public class ReviewerPipeline {
             // Layer 0 — Ingest
             RawDocument raw = ingestService.ingest(file);
 
+            // Layer 0a — Resolve JD (URL or text)
+            String resolvedJdText = jdFetchService.resolve(jdText);
+
             // Layer 0b — Parse JD
-            JobDescription jd = jdParser.parse(jdText);
+            JobDescription jd = jdParser.parse(resolvedJdText);
 
             // Layer 1 & 2 — Extract resume structure
             Resume resume = buildResume(raw);
@@ -123,6 +140,52 @@ public class ReviewerPipeline {
         }
     }
 
+    /**
+     * Evaluation/testing path that skips file ingest and uses plain resume text.
+     * This is intended for blind-label recruiter-agreement evaluation datasets.
+     */
+    public FeedbackReport reviewRawText(String resumeText, String jdText) {
+        try {
+            RawDocument raw = syntheticRawDocument(resumeText);
+            JobDescription jd = jdParser.parse(jdText);
+            Resume resume = buildResume(raw);
+            ResumeSignals signals = computeSignals(resume, jd, raw);
+            ClassificationEngine.ClassificationResult classification = classificationEngine.classify(signals);
+            List<TimelineEvent> timeline = timelineEngine.build(signals, classification.verdict());
+            FeedbackGenerator.FeedbackOutput feedback = feedbackGenerator.generate(signals, classification.verdict());
+
+            return FeedbackReport.builder()
+                .verdict(classification.verdict())
+                .confidence(classification.confidence())
+                .roleContext(new FeedbackReport.RoleContext(jd.getRoleTitle(), jd.getMustHaveSkills()))
+                .summaryParagraph(feedback.summaryParagraph())
+                .timeline(timeline)
+                .signals(feedback.signals())
+                .fixes(feedback.fixes())
+                .build();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to review resume from raw text", e);
+        }
+    }
+
+    private RawDocument syntheticRawDocument(String resumeText) {
+        String text = resumeText != null ? resumeText : "";
+
+        RawDocument.RawPage page = new RawDocument.RawPage();
+        page.setPageNumber(1);
+        page.setText(text);
+        page.setBlocks(new ArrayList<>());
+
+        RawDocument raw = new RawDocument();
+        raw.setFilename("resume.txt");
+        raw.setMimeType("text/plain");
+        raw.setFullText(text);
+        raw.setPages(List.of(page));
+        raw.setScanned(false);
+        raw.setParseConfidence(text.isBlank() ? 0.0 : 0.8);
+        return raw;
+    }
+
     private Resume buildResume(RawDocument raw) {
         Resume resume = new Resume();
         resume.setRawFilename(raw.getFilename());
@@ -132,7 +195,7 @@ public class ReviewerPipeline {
         
         // Extract sections from full text
         String fullText = raw.getFullText();
-        SectionMap sections = extractSections(fullText);
+        SemanticExtractor.SectionMap sections = extractSections(fullText);
         
         // Extract summary
         if (sections.summary != null) {
@@ -143,6 +206,11 @@ public class ReviewerPipeline {
         if (sections.experience != null) {
             List<WorkExperience> experience = experienceExtractor.extract(sections.experience);
             resume.setExperience(experience);
+        }
+
+        if (sections.education != null) {
+            List<Education> education = educationExtractor.extract(sections.education);
+            resume.setEducation(education);
         }
         
         // Extract skills
@@ -167,20 +235,17 @@ public class ReviewerPipeline {
         // Title
         titleCalculator.compute(resume.getCurrentTitle(), jd.getRoleTitle(), resume.getExperience(), signals);
 
-        // Summary
-        if (resume.getSummaryText() != null) {
-            signals.setSummaryPresent(true);
-            String summary = resume.getSummaryText().toLowerCase();
-            signals.setSummaryMentionsTitle(summary.contains(jd.getRoleTitle().toLowerCase()));
-            signals.setSummaryMentionsYoe(summary.matches(".*\\d+\\s*(year|yr).*"));
-            signals.setSummaryMentionsSkills(jd.getMustHaveSkills().stream()
-                .anyMatch(skill -> summary.contains(skill.toLowerCase())));
-            signals.setSummaryIsGeneric(summary.matches(".*(passionate|team player|hard working|dedicated).*"));
-        }
+        // Summary - use SOTA analysis with ESCO taxonomy
+        SummaryExtractor.SummaryAnalysis summaryAnalysis = summaryExtractor.analyse(resume.getSummaryText(), jd.getRoleTitle());
+        signals.setSummaryPresent(summaryAnalysis.isPresent());
+        signals.setSummaryMentionsTitle(summaryAnalysis.isMentionsTitle());
+        signals.setSummaryMentionsYoe(summaryAnalysis.isMentionsYoe());
+        signals.setSummaryMentionsSkills(summaryAnalysis.isMentionsSkills());
+        signals.setSummaryIsGeneric(summaryAnalysis.isGeneric());
 
         // YOE
         yoeCalculator.compute(resume.getExperience(), resume.getTotalYoeYears(), 
-            resume.isYoeExplicitInSummary(), jd.getYoeMin(), jd.getYoeMax(), signals);
+            resume.isYoeExplicitInSummary(), jd.getYoeMin(), jd.getYoeMax(), signals, resume.getEducation());
 
         // Company
         companyCalculator.compute(resume.getExperience(), resume.getCurrentCompany(), 
@@ -200,16 +265,25 @@ public class ReviewerPipeline {
         signals.setMustHaveResults(mustHaveResults);
         signals.setNiceToHaveResults(niceToHaveResults);
 
-        // Compute aggregated skill signals
-        signals.setAllMustHavesFound(mustHaveResults.stream().allMatch(r -> r.getVisibility() != com.resumestudio.reviewer.model.enums.SkillVisibility.MISSING));
-        signals.setAllMustHavesVisible(mustHaveResults.stream().allMatch(r -> 
-            r.getVisibility() == com.resumestudio.reviewer.model.enums.SkillVisibility.SURFACE || 
+        // Compute aggregated skill signals.
+        // Guard: allMatch on an empty list returns true vacuously — treat "no JD skills" as unknown, not passing.
+        boolean hasJdSkills = !mustHaveResults.isEmpty();
+        signals.setAllMustHavesFound(hasJdSkills && mustHaveResults.stream().allMatch(r -> r.getVisibility() != com.resumestudio.reviewer.model.enums.SkillVisibility.MISSING));
+        signals.setAllMustHavesVisible(hasJdSkills && mustHaveResults.stream().allMatch(r ->
+            r.getVisibility() == com.resumestudio.reviewer.model.enums.SkillVisibility.SURFACE ||
             r.getVisibility() == com.resumestudio.reviewer.model.enums.SkillVisibility.MID));
         signals.setHasBuriedMustHaves(mustHaveResults.stream().anyMatch(r -> r.getVisibility() == com.resumestudio.reviewer.model.enums.SkillVisibility.BURIED));
         signals.setHasMissingMustHaves(mustHaveResults.stream().anyMatch(r -> r.getVisibility() == com.resumestudio.reviewer.model.enums.SkillVisibility.MISSING));
 
         // Anomalies
         anomalyDetector.detect(resume.getSkills(), resume.getExperience(), resume.getSummaryText(), signals);
+
+        // Bullet quality (NLP)
+        List<String> allBullets = resume.getExperience().stream()
+            .flatMap(exp -> exp.getBullets().stream())
+            .toList();
+        signals.setImpactVerbRatio(nlpService.impactVerbRatio(allBullets));
+        signals.setMetricDensity(nlpService.metricDensity(allBullets));
 
         return signals;
     }
@@ -226,46 +300,9 @@ public class ReviewerPipeline {
     }
 
     // Simple section extraction using regex
-    private static class SectionMap {
-        String summary;
-        String experience;
-        String skills;
-    }
-
-    private SectionMap extractSections(String fullText) {
-        SectionMap map = new SectionMap();
-        
-        // Summary section (also called Profile, About, Objective)
-        Pattern summaryPattern = Pattern.compile(
-            "(?i)(summary|profile|about|objective|professional summary)\\s*[:\\n]([\\s\\S]{20,500}?)(?=\\n\\s*[A-Z][a-z]+\\s*:|$)",
-            Pattern.CASE_INSENSITIVE
-        );
-        Matcher summaryMatcher = summaryPattern.matcher(fullText);
-        if (summaryMatcher.find()) {
-            map.summary = summaryMatcher.group(2).trim();
-        }
-        
-        // Experience section
-        Pattern expPattern = Pattern.compile(
-            "(?i)(experience|work history|employment|professional experience)\\s*[:\\n]([\\s\\S]{50,}?)(?=\\n\\s*(education|skills|projects|certifications)|$)",
-            Pattern.CASE_INSENSITIVE
-        );
-        Matcher expMatcher = expPattern.matcher(fullText);
-        if (expMatcher.find()) {
-            map.experience = expMatcher.group(2).trim();
-        }
-        
-        // Skills section
-        Pattern skillsPattern = Pattern.compile(
-            "(?i)(skills|technical skills|core competencies|technologies)\\s*[:\\n]([\\s\\S]{20,800}?)(?=\\n\\s*[A-Z][a-z]+\\s*:|$)",
-            Pattern.CASE_INSENSITIVE
-        );
-        Matcher skillsMatcher = skillsPattern.matcher(fullText);
-        if (skillsMatcher.find()) {
-            map.skills = skillsMatcher.group(2).trim();
-        }
-        
-        return map;
+    private SemanticExtractor.SectionMap extractSections(String fullText) {
+        // Use semantic section detection instead of rigid regex
+        return semanticExtractor.extractSections(fullText);
     }
 
     private List<String> extractAllBullets(String text) {
@@ -278,4 +315,3 @@ public class ReviewerPipeline {
         return bullets;
     }
 }
-

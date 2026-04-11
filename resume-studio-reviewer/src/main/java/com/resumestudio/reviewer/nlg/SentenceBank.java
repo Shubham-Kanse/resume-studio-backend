@@ -3,11 +3,7 @@ package com.resumestudio.reviewer.nlg;
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.SkillMatchResult;
 import com.resumestudio.reviewer.model.enums.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * Rule-based NLG sentence bank.
@@ -21,8 +17,6 @@ import java.util.List;
  */
 @Component
 public class SentenceBank {
-
-    private static final Logger log = LoggerFactory.getLogger(SentenceBank.class);
 
     // ── Filename sentences ────────────────────────────────────────────────────
 
@@ -72,7 +66,8 @@ public class SentenceBank {
     }
 
     public String titleAction(ResumeSignals s) {
-        if (s.getTitleMatch() == TitleMatch.MISS || s.getTitleMatch() == TitleMatch.RELATED) {
+        TitleMatch titleMatch = s.getTitleMatch();
+        if (titleMatch != null && (titleMatch == TitleMatch.MISS || titleMatch == TitleMatch.RELATED)) {
             return "If you do this work under a different title, bridge the gap explicitly in your summary. "
                 + "E.g. 'Backend Engineer with 5 years of " + (s.getJdTitle() != null ? s.getJdTitle() : "relevant") + " experience.'";
         }
@@ -106,50 +101,77 @@ public class SentenceBank {
     // ── YOE sentences ─────────────────────────────────────────────────────────
 
     public String yoeObservation(ResumeSignals s) {
-        // Use explicit YOE if stated, otherwise calculated
-        double yoeValue = (s.getCalculatedYoe() != null && s.getCalculatedYoe() > 0)
-            ? s.getCalculatedYoe()
-            : (s.getJdYoeMin() != null ? 0 : 0);
+        if (s.isChronologyUnreliable()) {
+            if (!s.getChronologyDescriptions().isEmpty()) {
+                return s.getChronologyDescriptions().get(0);
+            }
+            return "The work/education chronology is too inconsistent to trust.";
+        }
         String yoe = s.getCalculatedYoe() != null && s.getCalculatedYoe() > 0
             ? String.format("%.1f", s.getCalculatedYoe()).replaceAll("\\.0$", "")
             : "Unknown";
         String range = buildJdYoeRange(s);
-        return switch (s.getYoeFit()) {
+        
+        YoeFit yoeFit = s.getYoeFit();
+        if (yoeFit == null) {
+            return "Experience level could not be determined.";
+        }
+        
+        return switch (yoeFit) {
             case IN_RANGE -> yoe + " years of experience — within the " + range + " requirement.";
             case UNDER_RANGE_MINOR -> yoe + " years of experience — the role asks for " + range + ".";
             case UNDER_RANGE_SIGNIFICANT -> yoe + " years of experience against a " + range + " year requirement.";
             case OVER_RANGE -> yoe + " years of experience for a role asking " + range + " years.";
             case CANNOT_DETERMINE -> {
-                if (s.getYoeState() == YoeState.VAGUE) yield "Your experience is described vaguely, not as a specific number.";
-                if (s.getYoeState() == YoeState.MISSING) yield "No experience dates were found on your resume.";
+                YoeState yoeState = s.getYoeState();
+                if (yoeState == YoeState.VAGUE) yield "Your experience is described vaguely, not as a specific number.";
+                if (yoeState == YoeState.MISSING) yield "No experience dates were found on your resume.";
                 yield "Total experience could not be determined from the dates provided.";
             }
         };
     }
 
     public String yoeInterpretation(ResumeSignals s) {
-        return switch (s.getYoeFit()) {
-            case IN_RANGE -> s.getYoeState() == YoeState.EXPLICIT
-                ? "Stated clearly — no calculation needed. Passes without friction."
-                : "The dates were clean enough to calculate quickly.";
+        if (s.isChronologyUnreliable()) {
+            return "If the chronology can't be trusted, recruiters also won't trust the years-of-experience calculation.";
+        }
+        YoeFit yoeFit = s.getYoeFit();
+        if (yoeFit == null) {
+            return "Experience level could not be assessed.";
+        }
+        
+        return switch (yoeFit) {
+            case IN_RANGE -> {
+                YoeState yoeState = s.getYoeState();
+                yield (yoeState == YoeState.EXPLICIT)
+                    ? "Stated clearly — no calculation needed. Passes without friction."
+                    : "The dates were clean enough to calculate quickly.";
+            }
             case UNDER_RANGE_MINOR -> "Close enough that strong skills visibility can compensate. Recruiters treat YOE as a guideline, not a hard rule.";
             case UNDER_RANGE_SIGNIFICANT -> "This is a significant gap. Most recruiters will stop here unless something else stands out strongly.";
             case OVER_RANGE -> "Recruiters may question salary expectations or interest level in a more junior scope.";
             case CANNOT_DETERMINE -> {
-                if (s.getYoeState() == YoeState.VAGUE) yield "A recruiter can't validate 'several years' — they have to calculate manually, adding friction.";
+                YoeState yoeState = s.getYoeState();
+                if (yoeState == YoeState.VAGUE) yield "A recruiter can't validate 'several years' — they have to calculate manually, adding friction.";
                 yield "Missing dates mean the recruiter cannot verify experience level. A significant credibility gap.";
             }
         };
     }
 
     public String yoeAction(ResumeSignals s) {
-        if (s.getYoeState() == YoeState.VAGUE || s.getYoeState() == YoeState.MISSING) {
+        if (s.isChronologyUnreliable()) {
+            return "Standardise all dates to Month Year – Month Year and ensure work, education, and career breaks appear in a coherent timeline.";
+        }
+        YoeState yoeState = s.getYoeState();
+        if (yoeState != null && (yoeState == YoeState.VAGUE || yoeState == YoeState.MISSING)) {
             return "Add explicit dates to every role (Month Year – Month Year). State your total YOE clearly in your summary.";
         }
-        if (s.getYoeFit() == YoeFit.UNDER_RANGE_MINOR) {
+        
+        YoeFit yoeFit = s.getYoeFit();
+        if (yoeFit == YoeFit.UNDER_RANGE_MINOR) {
             return "Lead with quality over duration in your summary. Frame your experience around impact and skills, not years.";
         }
-        if (s.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT) {
+        if (yoeFit == YoeFit.UNDER_RANGE_SIGNIFICANT) {
             return "Target roles requiring " + (s.getCalculatedYoe() != null ? Math.round(s.getCalculatedYoe()) : "your level") + " years of experience where you are competitive.";
         }
         return null;
@@ -259,8 +281,8 @@ public class SentenceBank {
     }
 
     public String companyAction(ResumeSignals s) {
-        if (s.getCurrentCompanyTier() == CompanyTier.UNKNOWN
-            || s.getCurrentCompanyTier() == CompanyTier.STARTUP) {
+        CompanyTier tier = s.getCurrentCompanyTier();
+        if (tier != null && (tier == CompanyTier.UNKNOWN || tier == CompanyTier.STARTUP)) {
             return "Add a brief descriptor after your company name in brackets: e.g. Acme Corp (Series B fintech, 150 engineers). "
                 + "This gives the recruiter instant context even for an unknown company.";
         }
@@ -277,6 +299,23 @@ public class SentenceBank {
     public String gapAction() {
         return "Label career gaps explicitly: 'Career break — upskilling / personal / parental leave'. "
             + "A labelled gap raises no flags. An unexplained gap does.";
+    }
+
+    public String chronologyObservation(ResumeSignals s) {
+        if (!s.getChronologyDescriptions().isEmpty()) {
+            return s.getChronologyDescriptions().get(0);
+        }
+        return "The overall chronology is hard to verify from the dates provided.";
+    }
+
+    public String chronologyInterpretation(ResumeSignals s) {
+        return s.isChronologyUnreliable()
+            ? "The work and education timeline does not form a trustworthy chronology. Recruiters will question all downstream experience claims."
+            : "The chronology is partially ambiguous, which adds friction to experience verification.";
+    }
+
+    public String chronologyAction() {
+        return "Align work, education, and career breaks into one clear timeline. Use Month Year – Month Year consistently and label non-work periods explicitly.";
     }
 
     // ── Anomaly sentences ─────────────────────────────────────────────────────

@@ -21,6 +21,7 @@ import java.util.List;
 public class DocxExtractor {
 
     private static final Logger log = LoggerFactory.getLogger(DocxExtractor.class);
+    private static final float ESTIMATED_PAGE_HEIGHT = 792f; // Fix #8: Estimate page breaks (11" at 72 DPI)
 
     public RawDocument extract(InputStream inputStream, String filename) throws IOException {
         try (XWPFDocument document = new XWPFDocument(inputStream)) {
@@ -32,9 +33,10 @@ public class DocxExtractor {
             rawDoc.setScanned(false);
 
             StringBuilder fullText = new StringBuilder();
-            List<RawDocument.RawTextBlock> blocks = new ArrayList<>();
+            List<RawDocument.RawTextBlock> allBlocks = new ArrayList<>();
 
             float yPosition = 0f;
+            int currentPage = 1;
 
             for (XWPFParagraph paragraph : document.getParagraphs()) {
                 String paraText = paragraph.getText();
@@ -58,27 +60,45 @@ public class DocxExtractor {
                     break;
                 }
 
+                // Fix #8: Estimate page breaks based on Y position
+                if (yPosition > ESTIMATED_PAGE_HEIGHT) {
+                    currentPage++;
+                    yPosition = 0f;
+                }
+
                 RawDocument.RawTextBlock block = new RawDocument.RawTextBlock();
                 block.setText(paraText);
                 block.setY(yPosition);
                 block.setX(0f);
                 block.setFontSize(fontSize);
                 block.setBold(isBold || isHeading);
-                block.setPageNumber(1); // DOCX doesn't expose page breaks easily
-                blocks.add(block);
+                block.setPageNumber(currentPage);
+                allBlocks.add(block);
 
                 fullText.append(paraText).append("\n");
                 yPosition += fontSize + 4f;
             }
 
-            // Wrap into a single page
-            RawDocument.RawPage page = new RawDocument.RawPage();
-            page.setPageNumber(1);
-            page.setText(fullText.toString());
-            page.setBlocks(blocks);
+            // Fix #8: Split blocks into pages
+            List<RawDocument.RawPage> pages = new ArrayList<>();
+            for (int pageNum = 1; pageNum <= currentPage; pageNum++) {
+                final int page = pageNum;
+                List<RawDocument.RawTextBlock> pageBlocks = allBlocks.stream()
+                    .filter(b -> b.getPageNumber() == page)
+                    .toList();
+
+                StringBuilder pageText = new StringBuilder();
+                pageBlocks.forEach(b -> pageText.append(b.getText()).append("\n"));
+
+                RawDocument.RawPage rawPage = new RawDocument.RawPage();
+                rawPage.setPageNumber(page);
+                rawPage.setText(pageText.toString());
+                rawPage.setBlocks(pageBlocks);
+                pages.add(rawPage);
+            }
 
             rawDoc.setFullText(fullText.toString());
-            rawDoc.setPages(List.of(page));
+            rawDoc.setPages(pages);
             rawDoc.setParseConfidence(fullText.length() > 200 ? 0.85 : 0.5);
 
             return rawDoc;

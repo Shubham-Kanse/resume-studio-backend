@@ -65,8 +65,9 @@ public class HeaderExtractor {
     public void extract(RawDocument rawDoc, Resume resume) {
         String headerText = rawDoc.getHeaderZoneText();
         if (headerText == null || headerText.isBlank()) {
-            headerText = rawDoc.getFullText() != null
-                ? rawDoc.getFullText().substring(0, Math.min(600, rawDoc.getFullText().length()))
+            String fullText = rawDoc.getFullText();
+            headerText = fullText != null
+                ? fullText.substring(0, Math.min(600, fullText.length()))
                 : "";
         }
 
@@ -168,8 +169,11 @@ public class HeaderExtractor {
             if (trimmed.equals(resume.getCandidateName())) { nameFound = true; continue; }
             if (!nameFound) continue;
 
-            // Stop if we hit a section header
-            if (semanticExtractor.classifyHeader(trimmed) != com.resumestudio.reviewer.extraction.SemanticExtractor.SectionType.UNKNOWN) break;
+            // Stop if we hit a section header (but only after we've found title AND company, or exhausted attempts)
+            if (semanticExtractor.classifyHeader(trimmed) != com.resumestudio.reviewer.extraction.SemanticExtractor.SectionType.UNKNOWN) {
+                // Only stop if we've already extracted both title and company
+                if (titleFound && resume.getCurrentCompany() != null) break;
+            }
 
             // Skip contact lines
             if (EMAIL.matcher(trimmed).find()) continue;

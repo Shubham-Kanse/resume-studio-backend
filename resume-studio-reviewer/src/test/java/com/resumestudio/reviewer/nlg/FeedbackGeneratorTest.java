@@ -42,6 +42,16 @@ class FeedbackGeneratorTest {
     }
 
     @Test
+    void signals_chronologyIncluded_whenChronologyHasIssues() {
+        ResumeSignals s = strongSignals();
+        s.setHasChronologyIssues(true);
+        s.setChronologyUnreliable(true);
+        s.setChronologyDescriptions(List.of("Multiple roles are marked current."));
+        FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
+        assertTrue(out.signals().stream().anyMatch(sig -> "chronology".equals(sig.getId())));
+    }
+
+    @Test
     void signals_titlePass_whenExactMatch() {
         ResumeSignals s = strongSignals();
         s.setTitleMatch(TitleMatch.EXACT);
@@ -167,6 +177,19 @@ class FeedbackGeneratorTest {
         for (int i = 0; i < out.fixes().size(); i++) {
             assertEquals(i + 1, out.fixes().get(i).getRank());
         }
+    }
+
+    @Test
+    void fixes_unreliableChronology_prefersChronologyFix_overGapFix() {
+        ResumeSignals s = strongSignals();
+        s.setHasChronologyIssues(true);
+        s.setChronologyUnreliable(true);
+        s.setChronologyDescriptions(List.of("Multiple roles are marked current."));
+        s.setHasUnexplainedGap(true);
+        s.setGapDescriptions(List.of("18-month gap between A and B"));
+        FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
+        assertTrue(out.fixes().stream().anyMatch(f -> f.getExample().contains("Align work, education, and career breaks")));
+        assertFalse(out.fixes().stream().anyMatch(f -> "Label your career gap".equals(f.getAction())));
     }
 
     // ── Summary paragraph ─────────────────────────────────────────────────────

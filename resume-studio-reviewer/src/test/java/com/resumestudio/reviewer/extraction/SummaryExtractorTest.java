@@ -1,18 +1,31 @@
 package com.resumestudio.reviewer.extraction;
 
 import com.resumestudio.reviewer.model.Resume;
+import com.resumestudio.reviewer.skills.EscoSkillGraph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class SummaryExtractorTest {
 
     private SummaryExtractor extractor;
+    private EscoSkillGraph escoGraph;
 
     @BeforeEach
     void setUp() {
-        extractor = new SummaryExtractor();
+        escoGraph = mock(EscoSkillGraph.class);
+        // Mock common technical skills
+        when(escoGraph.isKnownSkill("java")).thenReturn(true);
+        when(escoGraph.isKnownSkill("spring")).thenReturn(true);
+        when(escoGraph.isKnownSkill("spring boot")).thenReturn(true);
+        when(escoGraph.isKnownSkill("kubernetes")).thenReturn(true);
+        when(escoGraph.isKnownSkill("react")).thenReturn(true);
+        when(escoGraph.isKnownSkill("node")).thenReturn(true);
+        when(escoGraph.isKnownSkill("node.js")).thenReturn(true);
+        when(escoGraph.isKnownSkill("postgresql")).thenReturn(true);
+        extractor = new SummaryExtractor(escoGraph);
     }
 
     // ── extract() ────────────────────────────────────────────────────────────

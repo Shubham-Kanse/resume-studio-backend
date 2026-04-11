@@ -19,9 +19,10 @@ import java.util.List;
  *   2. SYNONYM       — resolved via ESCO graph
  *   3. ABBREVIATION  — known abbreviation expansion
  *   4. VERSION_STRIPPED — matched after removing version number
- *   5. PARENT_FRAMEWORK — JD: "Spring Boot", CV has "Spring"
- *   6. IMPLICIT      — inferred from related skill
- *   7. MISSING       — not found by any method
+ *   5. SEMANTIC      — embedding-based cosine similarity (BGE-base, 768-dim)
+ *   6. PARENT_FRAMEWORK — JD: "Spring Boot", CV has "Spring" (word boundary)
+ *   7. IMPLICIT      — inferred from related skill
+ *   8. MISSING       — not found by any method
  */
 @Component
 public class SkillMatchEngine {
@@ -29,12 +30,15 @@ public class SkillMatchEngine {
     private static final Logger log = LoggerFactory.getLogger(SkillMatchEngine.class);
 
     private final EscoSkillGraph escoGraph;
+    private final SemanticSkillMatcher semanticMatcher;
 
-    public SkillMatchEngine(EscoSkillGraph escoGraph) {
+    public SkillMatchEngine(EscoSkillGraph escoGraph, SemanticSkillMatcher semanticMatcher) {
         this.escoGraph = escoGraph;
+        this.semanticMatcher = semanticMatcher;
     }
 
     public List<SkillMatchResult> matchAll(List<String> jdSkills, List<Skill> resumeSkills, boolean isMustHave) {
+        if (jdSkills == null || jdSkills.isEmpty()) return List.of();
         List<SkillMatchResult> results = new ArrayList<>();
         for (String jdSkill : jdSkills) {
             results.add(match(jdSkill, resumeSkills, isMustHave));
@@ -43,17 +47,38 @@ public class SkillMatchEngine {
     }
 
     public SkillMatchResult match(String jdSkill, List<Skill> resumeSkills, boolean isMustHave) {
+        if (jdSkill == null || jdSkill.isBlank()) {
+            SkillMatchResult result = new SkillMatchResult(jdSkill, isMustHave);
+            result.setMatchType(SkillMatchType.MISSING);
+            result.setVisibility(SkillVisibility.MISSING);
+            result.setCanonicalName("");
+            return result;
+        }
+
         SkillMatchResult result = new SkillMatchResult(jdSkill, isMustHave);
 
         String jdNormalised = normalise(jdSkill);
-        String jdCanonical = escoGraph.resolve(jdSkill).toLowerCase();
+        String resolved = escoGraph.resolve(jdSkill);
+        String jdCanonical = resolved != null ? resolved.toLowerCase() : jdNormalised;
+
+        if (resumeSkills == null || resumeSkills.isEmpty()) {
+            result.setMatchType(SkillMatchType.MISSING);
+            result.setVisibility(SkillVisibility.MISSING);
+            result.setCanonicalName(jdCanonical);
+            return result;
+        }
 
         for (Skill resumeSkill : resumeSkills) {
-            String resumeNorm = normalise(resumeSkill.getRawName());
-            String resumeCanonical = escoGraph.resolve(resumeSkill.getRawName()).toLowerCase();
+            String rawName = resumeSkill.getRawName();
+            if (rawName == null || rawName.isBlank()) continue;
+            
+            String resumeNorm = normalise(rawName);
+            String resolvedResume = escoGraph.resolve(rawName);
+            String resumeCanonical = resolvedResume != null ? resolvedResume.toLowerCase() : resumeNorm;
 
             // ── Strategy 1: EXACT ──────────────────────────────────────────
             if (jdNormalised.equals(resumeNorm)) {
+                log.debug("EXACT match: '{}' → '{}'", jdSkill, resumeSkill.getRawName());
                 return buildResult(result, resumeSkill, SkillMatchType.EXACT, jdCanonical);
             }
 
@@ -61,6 +86,7 @@ public class SkillMatchEngine {
             // Both skills resolve to the same canonical name but their raw forms differ
             // (e.g. "PostgreSQL" → "postgresql" and "Postgres" → "postgresql").
             if (jdCanonical.equals(resumeCanonical) && !jdNormalised.equals(resumeNorm)) {
+                log.debug("SYNONYM match: '{}' → '{}' (canonical: '{}')", jdSkill, resumeSkill.getRawName(), jdCanonical);
                 return buildResult(result, resumeSkill, SkillMatchType.SYNONYM, jdCanonical);
             }
 
@@ -69,6 +95,7 @@ public class SkillMatchEngine {
                 String expanded = normalise(resumeSkill.getStrippedName() != null
                     ? resumeSkill.getStrippedName() : resumeSkill.getRawName());
                 if (jdNormalised.equals(expanded) || jdCanonical.equals(expanded)) {
+                    log.debug("ABBREVIATION match: '{}' → '{}'", jdSkill, resumeSkill.getRawName());
                     result.setAbbreviationMismatch(true);
                     return buildResult(result, resumeSkill, SkillMatchType.ABBREVIATION, jdCanonical);
                 }
@@ -78,24 +105,47 @@ public class SkillMatchEngine {
             if (resumeSkill.isHasVersionNumber() && resumeSkill.getStrippedName() != null) {
                 String stripped = normalise(resumeSkill.getStrippedName());
                 if (jdNormalised.equals(stripped) || jdCanonical.equals(stripped)) {
+                    log.debug("VERSION_STRIPPED match: '{}' → '{}'", jdSkill, resumeSkill.getRawName());
                     return buildResult(result, resumeSkill, SkillMatchType.VERSION_STRIPPED, jdCanonical);
                 }
             }
+        }
 
-            // ── Strategy 5: PARENT_FRAMEWORK ──────────────────────────────
-            // JD asks for "Spring Boot", CV has "Spring" (parent)
-            if (jdNormalised.contains(resumeNorm) && resumeNorm.length() > 3) {
+        // ── Strategy 5: SEMANTIC (embeddings) ─────────────────────────────
+        // Use BGE embeddings for fuzzy semantic matching
+        SemanticSkillMatcher.MatchResult semantic = semanticMatcher.findBestMatch(jdSkill, resumeSkills);
+        if (semantic != null) {
+            log.debug("SEMANTIC match: '{}' → '{}' (score: {:.2f})", jdSkill, semantic.getSkill().getRawName(), semantic.getScore());
+            SkillMatchResult semanticResult = buildResult(result, semantic.getSkill(), SkillMatchType.SEMANTIC, jdCanonical);
+            semanticResult.setSemanticScore((double) semantic.getScore());
+            return semanticResult;
+        }
+
+        // ── Strategy 6: PARENT_FRAMEWORK ──────────────────────────────────
+        // JD asks for "Spring Boot", CV has "Spring" (parent)
+        // Use word boundary to avoid false positives (e.g., "Java" in "JavaScript")
+        for (Skill resumeSkill : resumeSkills) {
+            String rawName = resumeSkill.getRawName();
+            if (rawName == null || rawName.isBlank()) continue;
+            
+            String resumeNorm = normalise(rawName);
+            if (resumeNorm.length() > 4 && jdNormalised.matches(".*\\b" + java.util.regex.Pattern.quote(resumeNorm) + "\\b.*")) {
+                log.debug("PARENT_FRAMEWORK match: '{}' → '{}'", jdSkill, rawName);
                 return buildResult(result, resumeSkill, SkillMatchType.PARENT_FRAMEWORK, jdCanonical);
             }
         }
 
-        // ── Strategy 6: IMPLICIT ──────────────────────────────────────────
+        // ── Strategy 7: IMPLICIT ──────────────────────────────────────────
         // Check if any resume skill implies the JD skill via ESCO relations
         for (Skill resumeSkill : resumeSkills) {
-            List<String> related = escoGraph.relatedSkills(resumeSkill.getCanonicalName() != null
-                ? resumeSkill.getCanonicalName() : resumeSkill.getRawName());
+            String skillForLookup = resumeSkill.getCanonicalName() != null
+                ? resumeSkill.getCanonicalName() : resumeSkill.getRawName();
+            if (skillForLookup == null) continue;
+            
+            List<String> related = escoGraph.relatedSkills(skillForLookup);
             for (String rel : related) {
                 if (normalise(rel).equals(jdNormalised) || normalise(rel).equals(jdCanonical)) {
+                    log.debug("IMPLICIT match: '{}' implied by '{}' via '{}'", jdSkill, resumeSkill.getRawName(), rel);
                     SkillMatchResult implicit = buildResult(result, resumeSkill, SkillMatchType.IMPLICIT, jdCanonical);
                     implicit.setVisibility(SkillVisibility.MISSING); // implicit = not surfaced
                     return implicit;
@@ -103,7 +153,8 @@ public class SkillMatchEngine {
             }
         }
 
-        // ── Strategy 7: MISSING ───────────────────────────────────────────
+        // ── Strategy 8: MISSING ───────────────────────────────────────────
+        log.debug("MISSING: '{}' not found in resume", jdSkill);
         result.setMatchType(SkillMatchType.MISSING);
         result.setVisibility(SkillVisibility.MISSING);
         result.setCanonicalName(jdCanonical);

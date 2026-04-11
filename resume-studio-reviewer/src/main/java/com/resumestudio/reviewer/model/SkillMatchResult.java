@@ -16,6 +16,7 @@ public class SkillMatchResult {
     private SkillVisibility visibility;    // where it was found on resume
     private boolean isMustHave;
     private boolean isAbbreviationMismatch; // JD: "PostgreSQL", CV: "PG"
+    private Double semanticScore;          // 0.0-1.0 for SEMANTIC matches
 
     public SkillMatchResult() {}
 
@@ -50,4 +51,7 @@ public class SkillMatchResult {
 
     public boolean isAbbreviationMismatch() { return isAbbreviationMismatch; }
     public void setAbbreviationMismatch(boolean abbreviationMismatch) { isAbbreviationMismatch = abbreviationMismatch; }
+
+    public Double getSemanticScore() { return semanticScore; }
+    public void setSemanticScore(Double semanticScore) { this.semanticScore = semanticScore; }
 }

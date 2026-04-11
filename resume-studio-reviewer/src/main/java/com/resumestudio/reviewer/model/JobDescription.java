@@ -1,7 +1,9 @@
 package com.resumestudio.reviewer.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Structured representation of a job description after parsing.
@@ -22,6 +24,15 @@ public class JobDescription {
     private List<String> mustHaveSkills = new ArrayList<>();
     private List<String> niceToHaveSkills = new ArrayList<>();
     private List<String> impliedSkills = new ArrayList<>();  // inferred from must-haves
+    
+    // Skill importance weights (0.0-1.0)
+    private Map<String, Double> skillWeights = new HashMap<>();
+    
+    // Skill-specific YOE requirements
+    private Map<String, Double> skillYoeRequirements = new HashMap<>();
+    
+    // Parse warnings/issues
+    private List<String> parseWarnings = new ArrayList<>();
 
     private String companyCulture;         // "fast-paced startup", "enterprise" etc.
     private boolean isRemote;
@@ -62,6 +73,15 @@ public class JobDescription {
 
     public List<String> getImpliedSkills() { return impliedSkills; }
     public void setImpliedSkills(List<String> impliedSkills) { this.impliedSkills = impliedSkills; }
+
+    public Map<String, Double> getSkillWeights() { return skillWeights; }
+    public void setSkillWeights(Map<String, Double> skillWeights) { this.skillWeights = skillWeights; }
+
+    public Map<String, Double> getSkillYoeRequirements() { return skillYoeRequirements; }
+    public void setSkillYoeRequirements(Map<String, Double> skillYoeRequirements) { this.skillYoeRequirements = skillYoeRequirements; }
+
+    public List<String> getParseWarnings() { return parseWarnings; }
+    public void setParseWarnings(List<String> parseWarnings) { this.parseWarnings = parseWarnings; }
 
     public String getCompanyCulture() { return companyCulture; }
     public void setCompanyCulture(String companyCulture) { this.companyCulture = companyCulture; }

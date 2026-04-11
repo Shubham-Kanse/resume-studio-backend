@@ -25,7 +25,10 @@ public class JdFetchService {
     private static final Logger log = LoggerFactory.getLogger(JdFetchService.class);
 
     private static final Pattern URL_PATTERN = Pattern.compile(
-        "^https?://[\\w\\-.]+(:\\d+)?(/.*)?$", Pattern.CASE_INSENSITIVE);
+        "^https?://[^\\s]+$", Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern JINA_TITLE_PATTERN = Pattern.compile(
+        "(?m)^Title:\\s*(.+)$");
 
     private final HttpClient httpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.NORMAL)
@@ -44,10 +47,6 @@ public class JdFetchService {
         try {
             String text = fetchViaJina(trimmed);
             log.info("JD fetched: {} chars from {}", text.length(), trimmed);
-            if (text.length() < 50) {
-                throw new RuntimeException(
-                    "Could not extract content from this URL. Please paste the JD text directly.");
-            }
             return text;
         } catch (RuntimeException e) {
             throw e;
@@ -69,6 +68,91 @@ public class JdFetchService {
         if (response.statusCode() >= 400) {
             throw new IOException("Jina Reader returned HTTP " + response.statusCode());
         }
-        return response.body().trim();
+        
+        String body = response.body();
+        if (body == null) {
+            throw new IOException("Jina Reader returned null body");
+        }
+        
+        // Strip Jina Reader metadata and extract only markdown content
+        String cleaned = cleanJinaResponse(body);
+        
+        if (cleaned.length() < 50) {
+            throw new IOException("Jina Reader returned insufficient content (" + cleaned.length() + " chars)");
+        }
+        
+        return cleaned;
+    }
+    
+    /**
+     * Clean Jina Reader response by removing metadata headers.
+     * Jina returns: Title, URL Source, Published Time, Warning, then Markdown Content.
+     */
+    private String cleanJinaResponse(String jinaOutput) {
+        String extractedTitle = extractJinaTitle(jinaOutput);
+
+        // Find "Markdown Content:" marker
+        int contentStart = jinaOutput.indexOf("Markdown Content:");
+        if (contentStart != -1) {
+            // Skip the "Markdown Content:" line itself
+            int actualStart = jinaOutput.indexOf('\n', contentStart);
+            if (actualStart != -1) {
+                return prependTitle(extractedTitle, jinaOutput.substring(actualStart + 1).trim());
+            }
+        }
+        
+        // Fallback: Remove common Jina metadata lines
+        String[] lines = jinaOutput.split("\n");
+        StringBuilder cleaned = new StringBuilder();
+        boolean inContent = false;
+        
+        for (String line : lines) {
+            String trimmed = line.trim();
+            
+            // Skip metadata lines
+            if (trimmed.startsWith("Title:") || 
+                trimmed.startsWith("URL Source:") ||
+                trimmed.startsWith("Published Time:") ||
+                trimmed.startsWith("Warning:") ||
+                trimmed.equals("Markdown Content:")) {
+                inContent = trimmed.equals("Markdown Content:");
+                continue;
+            }
+            
+            // Include everything after metadata
+            if (inContent || cleaned.length() > 0) {
+                cleaned.append(line).append("\n");
+            }
+        }
+        
+        return prependTitle(extractedTitle, cleaned.toString().trim());
+    }
+
+    private String extractJinaTitle(String jinaOutput) {
+        var matcher = JINA_TITLE_PATTERN.matcher(jinaOutput);
+        if (!matcher.find()) {
+            return null;
+        }
+
+        String title = matcher.group(1).trim();
+        if (title.isBlank() || title.equalsIgnoreCase("Untitled") || title.startsWith("http")) {
+            return null;
+        }
+
+        return title;
+    }
+
+    private String prependTitle(String title, String content) {
+        String trimmedContent = content == null ? "" : content.trim();
+        if (title == null || title.isBlank()) {
+            return trimmedContent;
+        }
+        if (trimmedContent.isBlank()) {
+            return title;
+        }
+        if (trimmedContent.startsWith(title)) {
+            return trimmedContent;
+        }
+        return title + "\n\n" + trimmedContent;
     }
 }

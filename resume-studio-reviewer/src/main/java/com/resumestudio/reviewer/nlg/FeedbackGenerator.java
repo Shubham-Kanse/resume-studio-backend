@@ -31,6 +31,11 @@ public class FeedbackGenerator {
     }
 
     public FeedbackOutput generate(ResumeSignals signals, Verdict verdict) {
+        if (signals == null || verdict == null) {
+            log.warn("Null signals or verdict provided to generate()");
+            return new FeedbackOutput(List.of(), List.of(), "Unable to generate feedback due to missing data.");
+        }
+        
         List<Signal> signalList = buildSignals(signals);
         List<Fix> fixes = buildFixes(signals);
         String summary = buildSummary(signals, verdict, fixes);
@@ -44,12 +49,18 @@ public class FeedbackGenerator {
         List<Signal> list = new ArrayList<>();
 
         // 1. Title match
-        SignalStatus titleStatus = switch (signals.getTitleMatch()) {
-            case EXACT, ADJACENT -> SignalStatus.PASS;
-            case RELATED -> SignalStatus.WARN;
-            case MISS -> SignalStatus.FAIL;
-            default -> SignalStatus.WARN;
-        };
+        TitleMatch titleMatch = signals.getTitleMatch();
+        SignalStatus titleStatus;
+        if (titleMatch == null) {
+            titleStatus = SignalStatus.WARN;
+        } else {
+            titleStatus = switch (titleMatch) {
+                case EXACT, ADJACENT -> SignalStatus.PASS;
+                case RELATED -> SignalStatus.WARN;
+                case MISS -> SignalStatus.FAIL;
+                default -> SignalStatus.WARN;
+            };
+        }
         list.add(new Signal("title_match", "Title match", titleStatus,
             SignalFriction.NONE,
             bank.titleObservation(signals),
@@ -57,17 +68,36 @@ public class FeedbackGenerator {
             ImpactLevel.HIGH));
 
         // 2. YOE fit
-        SignalStatus yoeStatus = switch (signals.getYoeFit()) {
-            case IN_RANGE -> SignalStatus.PASS;
-            case UNDER_RANGE_MINOR, OVER_RANGE -> SignalStatus.WARN;
-            case UNDER_RANGE_SIGNIFICANT, CANNOT_DETERMINE -> SignalStatus.FAIL;
-        };
-        SignalFriction yoeFriction = switch (signals.getYoeState()) {
-            case EXPLICIT -> SignalFriction.NONE;
-            case CALCULABLE -> SignalFriction.LOW;
-            case PARTIAL, INCONSISTENT_FORMAT -> SignalFriction.MEDIUM;
-            default -> SignalFriction.HIGH;
-        };
+        YoeFit yoeFit = signals.getYoeFit();
+        SignalStatus yoeStatus;
+        if (signals.isChronologyUnreliable()) {
+            yoeStatus = SignalStatus.FAIL;
+        } else if (yoeFit == null) {
+            yoeStatus = SignalStatus.FAIL;
+        } else {
+            yoeStatus = switch (yoeFit) {
+                case IN_RANGE -> SignalStatus.PASS;
+                case UNDER_RANGE_MINOR, OVER_RANGE -> SignalStatus.WARN;
+                case UNDER_RANGE_SIGNIFICANT, CANNOT_DETERMINE -> SignalStatus.FAIL;
+            };
+        }
+        
+        YoeState yoeState = signals.getYoeState();
+        SignalFriction yoeFriction;
+        if (signals.isChronologyUnreliable()) {
+            yoeFriction = SignalFriction.HIGH;
+        } else if (signals.isHasChronologyIssues()) {
+            yoeFriction = SignalFriction.MEDIUM;
+        } else if (yoeState == null) {
+            yoeFriction = SignalFriction.HIGH;
+        } else {
+            yoeFriction = switch (yoeState) {
+                case EXPLICIT -> SignalFriction.NONE;
+                case CALCULABLE -> SignalFriction.LOW;
+                case PARTIAL, INCONSISTENT_FORMAT -> SignalFriction.MEDIUM;
+                default -> SignalFriction.HIGH;
+            };
+        }
         list.add(new Signal("yoe_fit", "Years of experience", yoeStatus, yoeFriction,
             bank.yoeObservation(signals), bank.yoeInterpretation(signals), ImpactLevel.HIGH));
 
@@ -76,7 +106,13 @@ public class FeedbackGenerator {
         SignalFriction skillsFriction;
         String skillsObservation;
         String skillsInterpretation;
-        if (signals.isHasMissingMustHaves()) {
+        boolean hasJdSkills = signals.getMustHaveResults() != null && !signals.getMustHaveResults().isEmpty();
+        if (!hasJdSkills) {
+            // No JD skills were parsed — can't do skill matching
+            skillsStatus = SignalStatus.WARN; skillsFriction = SignalFriction.NONE;
+            skillsObservation = "No must-have skills could be extracted from the job description.";
+            skillsInterpretation = "Paste a well-structured JD (with a Requirements section) to get targeted skill gap analysis.";
+        } else if (signals.isHasMissingMustHaves()) {
             skillsStatus = SignalStatus.FAIL; skillsFriction = SignalFriction.HIGH;
             long missingCount = signals.getMustHaveResults().stream()
                 .filter(r -> r.getVisibility() == SkillVisibility.MISSING).count();
@@ -117,7 +153,14 @@ public class FeedbackGenerator {
             bank.summaryObservation(signals), bank.summaryInterpretation(signals), ImpactLevel.MEDIUM));
 
         // 6. Title progression / format (pick most relevant)
-        if (signals.isFormatWallOfText() || signals.isFormatHasPhoto() || signals.isFormatTooManyPages()) {
+        if (signals.isHasChronologyIssues()) {
+            SignalStatus chronologyStatus = signals.isChronologyUnreliable() ? SignalStatus.FAIL : SignalStatus.WARN;
+            SignalFriction chronologyFriction = signals.isChronologyUnreliable() ? SignalFriction.HIGH : SignalFriction.MEDIUM;
+            list.add(new Signal("chronology", "Career chronology", chronologyStatus, chronologyFriction,
+                bank.chronologyObservation(signals),
+                bank.chronologyInterpretation(signals),
+                ImpactLevel.MEDIUM));
+        } else if (signals.isFormatWallOfText() || signals.isFormatHasPhoto() || signals.isFormatTooManyPages()) {
             SignalStatus formatStatus = SignalStatus.WARN;
             list.add(new Signal("format_quality", "Layout & formatting", formatStatus, SignalFriction.MEDIUM,
                 "Formatting issues detected that increase scan friction.",
@@ -217,14 +260,22 @@ public class FeedbackGenerator {
         String yoeAction = bank.yoeAction(signals);
         if (yoeAction != null) {
             fixes.add(new Fix(rank++, "yoe_fit",
-                "Clarify your years of experience",
-                bank.yoeInterpretation(signals),
-                yoeAction,
+                signals.isChronologyUnreliable() ? "Fix the chronology of your resume" : "Clarify your years of experience",
+                signals.isChronologyUnreliable() ? bank.chronologyInterpretation(signals) : bank.yoeInterpretation(signals),
+                signals.isChronologyUnreliable() ? bank.chronologyAction() : yoeAction,
                 signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT ? ImpactLevel.HIGH : ImpactLevel.MEDIUM));
         }
 
+        if (signals.isHasChronologyIssues() && !signals.isChronologyUnreliable() && yoeAction == null) {
+            fixes.add(new Fix(rank++, "yoe_fit",
+                "Tighten the chronology of your resume",
+                bank.chronologyInterpretation(signals),
+                bank.chronologyAction(),
+                ImpactLevel.MEDIUM));
+        }
+
         // Unexplained gap
-        if (signals.isHasUnexplainedGap()) {
+        if (signals.isHasUnexplainedGap() && !signals.isChronologyUnreliable()) {
             fixes.add(new Fix(rank++, "yoe_fit",
                 "Label your career gap",
                 bank.gapObservation(signals),
@@ -259,6 +310,24 @@ public class FeedbackGenerator {
                 ImpactLevel.HIGH));
         }
 
+        // Bullet quality - weak verbs
+        if (signals.getImpactVerbRatio() < 0.5) {
+            fixes.add(new Fix(rank++, "bullet_quality",
+                String.format("Only %.0f%% of your bullets start with impact verbs", signals.getImpactVerbRatio() * 100),
+                "Weak verbs like 'responsible for' or 'worked on' don't convey ownership or results. Recruiters scan for action and impact.",
+                "Rewrite bullets to start with strong verbs: Built, Designed, Led, Reduced, Increased, Automated, Migrated, Scaled.",
+                ImpactLevel.MEDIUM));
+        }
+
+        // Bullet quality - no metrics
+        if (signals.getMetricDensity() < 0.3) {
+            fixes.add(new Fix(rank++, "bullet_quality",
+                String.format("Only %.0f%% of your bullets include quantified results", signals.getMetricDensity() * 100),
+                "Unquantified claims are vague. Numbers make impact concrete and memorable.",
+                "Add metrics: '...reduced latency by 75%', '...serving 5M daily transactions', '...adopted by 40% more clients'.",
+                ImpactLevel.MEDIUM));
+        }
+
         // Sort by impact
         fixes.sort(Comparator.comparingInt(f -> impactOrder(f.getImpact())));
         for (int i = 0; i < fixes.size(); i++) fixes.get(i).setRank(i + 1);
@@ -288,9 +357,11 @@ public class FeedbackGenerator {
                 .map(SkillMatchResult::getJdSkill).findFirst().orElse(null)
             : null;
 
-        boolean titleOk = signals.getTitleMatch() == TitleMatch.EXACT || signals.getTitleMatch() == TitleMatch.ADJACENT;
-        boolean yoeOk = signals.getYoeFit() == YoeFit.IN_RANGE || signals.getYoeFit() == YoeFit.OVER_RANGE;
-        boolean yoeClose = signals.getYoeFit() == YoeFit.UNDER_RANGE_MINOR;
+        boolean titleOk = signals.getTitleMatch() != null && 
+            (signals.getTitleMatch() == TitleMatch.EXACT || signals.getTitleMatch() == TitleMatch.ADJACENT);
+        boolean yoeOk = signals.getYoeFit() != null && 
+            (signals.getYoeFit() == YoeFit.IN_RANGE || signals.getYoeFit() == YoeFit.OVER_RANGE);
+        boolean yoeClose = signals.getYoeFit() != null && signals.getYoeFit() == YoeFit.UNDER_RANGE_MINOR;
 
         StringBuilder sb = new StringBuilder();
 
@@ -300,7 +371,8 @@ public class FeedbackGenerator {
                 if (candidateTitle != null) sb.append(" — \"").append(candidateTitle).append("\" aligns directly with the role");
                 if (yoe != null && jdRange != null) sb.append(", ").append(yoe).append(" years of experience is in range");
                 sb.append(", and the must-have skills are visible at a glance.");
-                if (signals.getCurrentCompanyTier() == CompanyTier.FAANG || signals.getCurrentCompanyTier() == CompanyTier.TIER_1) {
+                CompanyTier tier = signals.getCurrentCompanyTier();
+                if (tier != null && (tier == CompanyTier.FAANG || tier == CompanyTier.TIER_1)) {
                     sb.append(" The company background adds further credibility.");
                 }
             }
@@ -330,7 +402,9 @@ public class FeedbackGenerator {
                 }
             }
             case WEAK_FIT -> {
-                if (topMissingSkill != null) {
+                if (signals.isChronologyUnreliable()) {
+                    sb.append("The chronology is the primary barrier. The work and education dates do not form a timeline a recruiter can trust.");
+                } else if (topMissingSkill != null) {
                     sb.append(topMissingSkill).append(", the core requirement for ").append(jdTitle);
                     sb.append(", doesn't appear on this resume.");
                     if (signals.getMustHaveResults() != null) {
@@ -339,7 +413,7 @@ public class FeedbackGenerator {
                         if (missingCount > 1) sb.append(" ").append(missingCount).append(" must-have skills are missing in total.");
                     }
                     sb.append(" This is a qualification gap, not a presentation issue.");
-                } else if (signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT) {
+                } else if (signals.getYoeFit() != null && signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT) {
                     sb.append("The experience gap is the primary barrier");
                     if (yoe != null && jdRange != null) sb.append(" — ").append(yoe).append(" years against a ").append(jdRange).append(" requirement");
                     sb.append(". Skills alone can't bridge a gap this size in a 10-second pass.");
