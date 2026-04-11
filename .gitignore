@@ -67,3 +67,6 @@ coverage/
 
 #docs
 claude-conversation.md
+
+#files
+resume-studio-reviewer/src/main/resources/taxonomy

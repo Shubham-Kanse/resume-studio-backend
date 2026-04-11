@@ -37,7 +37,7 @@ public class EscoSkillGraph {
 
     private static final Logger log = LoggerFactory.getLogger(EscoSkillGraph.class);
 
-    @Value("${screener.esco.path:classpath:taxonomy/esco.bin}")
+    @Value("${reviewer.esco.path:classpath:taxonomy/esco-index-v1.bin}")
     private String escoPath;
 
     // Primary index: canonical name (lowercase) → node

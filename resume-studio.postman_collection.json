@@ -1,0 +1,53 @@
+{
+  "info": {
+    "name": "Resume Studio",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "Review Resume",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/review",
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "resume",
+              "type": "file",
+              "src": "",
+              "description": "PDF or DOCX resume file"
+            },
+            {
+              "key": "jobDescription",
+              "type": "text",
+              "value": "We are looking for a Senior Software Engineer with 5+ years of experience in Java and Spring Boot. The ideal candidate has strong knowledge of microservices, REST APIs, and cloud platforms such as AWS.",
+              "description": "Raw job description text"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - FeedbackReport",
+          "status": "OK",
+          "code": 200,
+          "header": [{ "key": "Content-Type", "value": "application/json" }],
+          "body": "{\n  \"verdict\": \"STRONG_YES\",\n  \"confidence\": \"HIGH\",\n  \"roleContext\": {\n    \"title\": \"Senior Software Engineer\",\n    \"stack\": [\"Java\", \"Spring Boot\", \"AWS\"]\n  },\n  \"summaryParagraph\": \"Strong match for the role. Candidate demonstrates relevant experience and skill alignment.\",\n  \"timeline\": [\n    {\n      \"type\": \"WORK\",\n      \"label\": \"Senior Engineer @ Acme Corp\",\n      \"start\": \"2020-01\",\n      \"end\": \"2024-01\",\n      \"outcome\": \"POSITIVE\"\n    }\n  ],\n  \"signals\": [\n    {\n      \"name\": \"Years of Experience\",\n      \"status\": \"PASS\",\n      \"friction\": \"NONE\"\n    }\n  ],\n  \"fixes\": [\n    {\n      \"priority\": \"LOW\",\n      \"message\": \"Consider quantifying impact in bullet points.\"\n    }\n  ]\n}"
+        },
+        {
+          "name": "400 Bad Request",
+          "status": "Bad Request",
+          "code": 400,
+          "body": ""
+        }
+      ]
+    }
+  ]
+}
