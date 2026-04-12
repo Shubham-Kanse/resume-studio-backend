@@ -234,12 +234,23 @@ public class TimelineEngine {
                 "Overqualified signal",
                 yoeStr + " years for a role asking " + jdRange + ". Recruiter may question fit.",
                 TimelineOutcome.CAUTION, "NEUTRAL");
-            case CANNOT_DETERMINE -> event(TimelineEventType.YOE,
-                "Experience — hard to verify",
-                signals.getYoeState() != null && signals.getYoeState() == YoeState.VAGUE
-                    ? "Vague phrasing forces the recruiter to calculate manually."
-                    : "Could not determine total experience from the dates provided.",
-                TimelineOutcome.FRICTION_FLAG, "NEGATIVE");
+            case CANNOT_DETERMINE -> {
+                // For fresher roles (0-2 YOE required), no experience is expected — neutral
+                boolean isFresherRole = signals.getJdYoeMin() == null
+                    || (signals.getJdYoeMin() <= 0 && (signals.getJdYoeMax() == null || signals.getJdYoeMax() <= 2));
+                if (isFresherRole) {
+                    yield event(TimelineEventType.YOE,
+                        "Entry-level role — experience not required",
+                        "This role targets early-career candidates. Experience level is not a barrier.",
+                        TimelineOutcome.NEUTRAL, "NEUTRAL");
+                }
+                yield event(TimelineEventType.YOE,
+                    "Experience — hard to verify",
+                    signals.getYoeState() != null && signals.getYoeState() == YoeState.VAGUE
+                        ? "Vague phrasing forces the recruiter to calculate manually."
+                        : "Could not determine total experience from the dates provided.",
+                    TimelineOutcome.FRICTION_FLAG, "NEGATIVE");
+            }
         };
     }
 
@@ -352,6 +363,10 @@ public class TimelineEngine {
                 "Moved to the maybe pile",
                 "Not rejected. Not prioritised. Will be revisited if the strong pile runs thin.",
                 TimelineOutcome.NEUTRAL, "NEUTRAL");
+            case NO_FIT -> event(TimelineEventType.VERDICT,
+                "Rejected immediately",
+                "No meaningful signal found. Review ended before a full scan.",
+                TimelineOutcome.HARD_STOP, "NEGATIVE");
             case WEAK_FIT -> fullRead
                 ? event(TimelineEventType.VERDICT,
                     "Passed on after full scan",
@@ -367,22 +382,21 @@ public class TimelineEngine {
     // ── Utilities ─────────────────────────────────────────────────────────────
 
     private void assignTimestamps(List<TimelineEvent> events) {
-        // Weights reflect cognitive time per event type
+        // Weights spread across 15-20s window (per AI-integration.md)
         int elapsed = 0;
-        for (int i = 0; i < events.size(); i++) {
-            events.get(i).setTimeLabel(elapsed + "s");
-            TimelineEventType type = events.get(i).getType();
-            elapsed += switch (type) {
-                case TITLE -> 1;
-                case SUMMARY -> 1;
-                case SKILLS -> 2;
-                case YOE -> 2;
-                case COMPANY -> 1;
-                case BULLET -> 1;
-                case LOCATION -> 1;
-                case FORMAT -> 1;
+        for (TimelineEvent event : events) {
+            event.setTimeLabel(elapsed + "s");
+            elapsed += switch (event.getType()) {
+                case TITLE -> 2;
+                case SUMMARY -> 2;
+                case SKILLS -> 4;
+                case YOE -> 3;
+                case COMPANY -> 2;
+                case BULLET -> 2;
+                case LOCATION -> 2;
+                case FORMAT -> 2;
                 case VERDICT -> 1;
-                default -> 1;
+                default -> 2;
             };
         }
     }

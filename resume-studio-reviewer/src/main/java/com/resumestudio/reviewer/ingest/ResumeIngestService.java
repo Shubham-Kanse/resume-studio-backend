@@ -75,6 +75,9 @@ public class ResumeIngestService {
         } else if (isDocx(filename, contentType)) {
             rawDoc = docxExtractor.extract(new ByteArrayInputStream(fileBytes), filename);
 
+        } else if (filename.toLowerCase().endsWith(".doc")) {
+            throw new UnsupportedFileTypeException(
+                "Legacy .doc format is not supported. Please save as .docx and re-upload.");
         } else {
             throw new UnsupportedFileTypeException(
                 "Unsupported file type: " + filename + ". Please upload a PDF or Word document.");
@@ -82,7 +85,26 @@ public class ResumeIngestService {
 
         // Fix #6: Cache the result
         documentCache.put(fileBytes, rawDoc);
+
+        // Cover letter detection
+        if (isLikelyCoverLetter(rawDoc.getFullText())) {
+            throw new UnsupportedFileTypeException(
+                "This looks like a cover letter, not a resume. Please upload your resume (CV) instead.");
+        }
+
         return rawDoc;
+    }
+
+    private boolean isLikelyCoverLetter(String text) {
+        if (text == null || text.length() < 50) return false;
+        String lower = text.toLowerCase();
+        // Cover letters typically start with "Dear" or "To whom" and have no skills/experience sections
+        boolean hasCoverLetterOpening = lower.contains("dear hiring") || lower.contains("dear recruiter")
+            || lower.contains("to whom it may concern") || lower.contains("i am writing to")
+            || lower.contains("i am applying for") || lower.contains("i would like to apply");
+        boolean hasNoExperienceSection = !lower.contains("experience") && !lower.contains("work history")
+            && !lower.contains("employment");
+        return hasCoverLetterOpening && hasNoExperienceSection;
     }
 
     private boolean isPdf(String filename, String contentType) {

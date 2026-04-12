@@ -45,7 +45,30 @@ public class SkillVisibilityAnalyser {
             String canonical = escoGraph.resolve(skill.getRawName());
             skill.setCanonicalName(canonical);
             skill.setCategory(escoGraph.categoryOf(canonical));
+
+            // Recency weight per AI-integration.md Layer 2b
+            skill.setRecencyWeight(computeRecencyWeight(skill, experience));
         }
+    }
+
+    /**
+     * Recency weight per doc:
+     *   Role ending < 12 months ago → 1.0
+     *   Role ending 1–3 years ago   → 0.7
+     *   Role ending 3+ years ago    → 0.4
+     *   Only in skills section      → 0.5
+     */
+    private float computeRecencyWeight(Skill skill, List<WorkExperience> experience) {
+        if (skill.isInSkillsSection() && skill.getBulletOccurrences() == 0) return 0.5f;
+        int roleIdx = skill.getMostRecentRoleIndex();
+        if (roleIdx < 0 || experience == null || roleIdx >= experience.size()) return 0.5f;
+        WorkExperience role = experience.get(roleIdx);
+        java.time.LocalDate end = role.isCurrent() ? java.time.LocalDate.now() : role.getEndDate();
+        if (end == null) return 0.7f;
+        long monthsAgo = java.time.temporal.ChronoUnit.MONTHS.between(end, java.time.LocalDate.now());
+        if (monthsAgo < 12) return 1.0f;
+        if (monthsAgo < 36) return 0.7f;
+        return 0.4f;
     }
 
     /**

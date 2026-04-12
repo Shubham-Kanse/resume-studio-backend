@@ -47,7 +47,13 @@ public class SentenceBank {
         String candidate = s.getCandidateTitle() != null ? "\"" + s.getCandidateTitle() + "\"" : "your title";
         String jd = s.getJdTitle() != null ? "\"" + s.getJdTitle() + "\"" : "the role";
         return switch (s.getTitleMatch()) {
-            case EXACT -> candidate + " matches " + jd + " exactly.";
+            case EXACT -> {
+                String ct = s.getCandidateTitle();
+                String jt = s.getJdTitle();
+                yield (ct != null && jt != null && ct.equalsIgnoreCase(jt))
+                    ? "Your title is an exact match for this role — no ambiguity."
+                    : candidate + " matches " + jd + " exactly.";
+            }
             case ADJACENT -> candidate + " is adjacent to " + jd + ".";
             case RELATED -> candidate + " is in a related but different domain to " + jd + ".";
             case MISS -> candidate + " doesn't immediately read as " + jd + ".";
@@ -119,7 +125,7 @@ public class SentenceBank {
         
         return switch (yoeFit) {
             case IN_RANGE -> yoe + " years of experience — within the " + range + " requirement.";
-            case UNDER_RANGE_MINOR -> yoe + " years of experience — the role asks for " + range + ".";
+            case UNDER_RANGE_MINOR -> yoe + " years of experience — the role requires " + range + ".";
             case UNDER_RANGE_SIGNIFICANT -> yoe + " years of experience against a " + range + " year requirement.";
             case OVER_RANGE -> yoe + " years of experience for a role asking " + range + " years.";
             case CANNOT_DETERMINE -> {

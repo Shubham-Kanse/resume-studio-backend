@@ -40,8 +40,9 @@ class JdFetchServiceTest {
     }
     
     @Test void resolve_urlWithQueryParams_isRecognizedAsUrl() {
-        // URL with query params should be recognized as URL (not plain text)
-        String url = "https://linkedin.com/jobs/view/123?refId=xyz&source=email";
+        // URL with query params — the regex requires no whitespace, query params are fine
+        // It will attempt to fetch and throw since the domain doesn't exist
+        String url = "https://jobs.example-nonexistent-xyz.com/job/123?refId=abc&source=email";
         assertThrows(RuntimeException.class, () -> service.resolve(url));
     }
     

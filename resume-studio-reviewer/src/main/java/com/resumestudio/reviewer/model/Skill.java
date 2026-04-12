@@ -17,9 +17,10 @@ public class Skill {
     private boolean inSummary;
     private int bulletOccurrences;       // how many job bullets mention this skill
     private int mostRecentRoleIndex;     // 0 = most recent; -1 = not in any bullet
-    private boolean isAbbreviation;      // "K8s", "PG", "JS"
-    private boolean hasVersionNumber;    // "Java 17", "Spring Boot 3.x"
-    private String strippedName;         // version stripped: "Java 17" → "Java"
+    private boolean isAbbreviation;
+    private boolean hasVersionNumber;
+    private String strippedName;
+    private float recencyWeight = 1.0f;  // 1.0 = recent, 0.7 = 1-3 years ago, 0.4 = 3+ years ago
 
     public Skill() {}
 
@@ -61,6 +62,9 @@ public class Skill {
 
     public String getStrippedName() { return strippedName; }
     public void setStrippedName(String strippedName) { this.strippedName = strippedName; }
+
+    public float getRecencyWeight() { return recencyWeight; }
+    public void setRecencyWeight(float recencyWeight) { this.recencyWeight = recencyWeight; }
 
     /** Returns best name to use for display — canonical if resolved, otherwise raw. */
     public String getDisplayName() {

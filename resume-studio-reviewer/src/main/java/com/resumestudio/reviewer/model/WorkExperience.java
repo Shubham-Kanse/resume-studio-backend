@@ -14,6 +14,9 @@ public class WorkExperience {
     private boolean isCurrent;
     private boolean isContractOrFreelance;
     private boolean isCareerBreak;
+    private boolean isPartTime;           // part-time role — YOE counted at 0.5x
+    private boolean isSabbatical;         // sabbatical / travel break — treated as explained gap
+    private boolean isParentalLeave;      // parental/caregiving leave — treated as explained gap
     private double durationYears;
     private List<String> bullets;
     private List<String> skillsMentioned;  // skills extracted from bullets
@@ -47,6 +50,15 @@ public class WorkExperience {
 
     public boolean isCareerBreak() { return isCareerBreak; }
     public void setCareerBreak(boolean careerBreak) { isCareerBreak = careerBreak; }
+
+    public boolean isPartTime() { return isPartTime; }
+    public void setPartTime(boolean partTime) { isPartTime = partTime; }
+
+    public boolean isSabbatical() { return isSabbatical; }
+    public void setSabbatical(boolean sabbatical) { isSabbatical = sabbatical; }
+
+    public boolean isParentalLeave() { return isParentalLeave; }
+    public void setParentalLeave(boolean parentalLeave) { isParentalLeave = parentalLeave; }
 
     public double getDurationYears() { return durationYears; }
     public void setDurationYears(double durationYears) { this.durationYears = durationYears; }

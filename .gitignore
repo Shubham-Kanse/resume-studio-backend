@@ -88,3 +88,6 @@ claude-conversation.md
 
 # ── IntelliJ bin output ───────────────────────────────────────────────────
 bin/
+
+# Local secrets
+**/application-local.properties

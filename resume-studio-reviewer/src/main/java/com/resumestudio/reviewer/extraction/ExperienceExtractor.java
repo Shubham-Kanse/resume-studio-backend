@@ -208,6 +208,19 @@ public class ExperienceExtractor {
             (role.getCompany() != null && CAREER_BREAK.matcher(role.getCompany()).find())
         );
 
+        // Part-time detection
+        boolean partTime = block.toLowerCase().contains("part-time") || block.toLowerCase().contains("part time")
+            || (role.getTitle() != null && role.getTitle().toLowerCase().contains("part"));
+        role.setPartTime(partTime);
+
+        // Sabbatical / parental leave — more specific than generic career break
+        String blockLower = block.toLowerCase();
+        role.setSabbatical(blockLower.contains("sabbatical") || blockLower.contains("travel break")
+            || blockLower.contains("personal leave") || blockLower.contains("study leave"));
+        role.setParentalLeave(blockLower.contains("parental") || blockLower.contains("maternity")
+            || blockLower.contains("paternity") || blockLower.contains("caregiving")
+            || blockLower.contains("family leave"));
+
         // Normalise IC level from title
         if (role.getTitle() != null && !role.isCareerBreak()) {
             role.setIcLevel(normaliseIcLevel(role.getTitle()));

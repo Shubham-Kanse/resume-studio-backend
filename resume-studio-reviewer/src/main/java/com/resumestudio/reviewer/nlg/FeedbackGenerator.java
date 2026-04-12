@@ -61,11 +61,7 @@ public class FeedbackGenerator {
                 default -> SignalStatus.WARN;
             };
         }
-        list.add(new Signal("title_match", "Title match", titleStatus,
-            SignalFriction.NONE,
-            bank.titleObservation(signals),
-            bank.titleInterpretation(signals),
-            ImpactLevel.HIGH));
+        list.add(signal("title_match", "Title match", titleStatus, SignalFriction.NONE, bank.titleObservation(signals), bank.titleInterpretation(signals), ImpactLevel.HIGH));
 
         // 2. YOE fit
         YoeFit yoeFit = signals.getYoeFit();
@@ -98,8 +94,7 @@ public class FeedbackGenerator {
                 default -> SignalFriction.HIGH;
             };
         }
-        list.add(new Signal("yoe_fit", "Years of experience", yoeStatus, yoeFriction,
-            bank.yoeObservation(signals), bank.yoeInterpretation(signals), ImpactLevel.HIGH));
+        list.add(signal("yoe_fit", "Years of experience", yoeStatus, yoeFriction, bank.yoeObservation(signals), bank.yoeInterpretation(signals), ImpactLevel.HIGH));
 
         // 3. Must-have skills visible
         SignalStatus skillsStatus;
@@ -119,7 +114,9 @@ public class FeedbackGenerator {
             String first = signals.getMustHaveResults().stream()
                 .filter(r -> r.getVisibility() == SkillVisibility.MISSING)
                 .map(SkillMatchResult::getJdSkill).findFirst().orElse("required skill");
-            skillsObservation = first + (missingCount > 1 ? " and " + (missingCount - 1) + " other must-have skills are" : " is") + " not found anywhere on your resume.";
+            skillsObservation = missingCount > 1
+                ? first + " and " + (missingCount - 1) + " other must-have skills don't appear anywhere on your resume."
+                : first + " doesn't appear anywhere on your resume.";
             skillsInterpretation = "Missing must-have skills are typically a decisive rejection signal. A recruiter scanning for these won't find them.";
         } else if (signals.isHasBuriedMustHaves()) {
             skillsStatus = SignalStatus.WARN; skillsFriction = SignalFriction.MEDIUM;
@@ -130,8 +127,7 @@ public class FeedbackGenerator {
             skillsObservation = bank.skillsFormatObservation(signals);
             skillsInterpretation = bank.skillsFormatInterpretation(signals);
         }
-        list.add(new Signal("must_haves_visible", "Must-have skills visible",
-            skillsStatus, skillsFriction, skillsObservation, skillsInterpretation, ImpactLevel.HIGH));
+        list.add(signal("must_haves_visible", "Must-have skills visible", skillsStatus, skillsFriction, skillsObservation, skillsInterpretation, ImpactLevel.HIGH));
 
         // 4. Company context
         SignalStatus companyStatus = switch (signals.getCurrentCompanyTier()) {
@@ -140,8 +136,7 @@ public class FeedbackGenerator {
             case STARTUP -> SignalStatus.WARN;
             case UNKNOWN -> SignalStatus.WARN;
         };
-        list.add(new Signal("company_context", "Company context", companyStatus, SignalFriction.NONE,
-            bank.companyObservation(signals), bank.companyInterpretation(signals), ImpactLevel.MEDIUM));
+        list.add(signal("company_context", "Company context", companyStatus, SignalFriction.NONE, bank.companyObservation(signals), bank.companyInterpretation(signals), ImpactLevel.MEDIUM));
 
         // 5. Summary present and quality
         SignalStatus summaryStatus;
@@ -149,32 +144,45 @@ public class FeedbackGenerator {
         else if (signals.isSummaryIsGeneric()) summaryStatus = SignalStatus.WARN;
         else if (signals.isSummaryMentionsYoe() && signals.isSummaryMentionsSkills()) summaryStatus = SignalStatus.PASS;
         else summaryStatus = SignalStatus.WARN;
-        list.add(new Signal("summary_quality", "Summary section", summaryStatus, SignalFriction.NONE,
-            bank.summaryObservation(signals), bank.summaryInterpretation(signals), ImpactLevel.MEDIUM));
+        list.add(signal("summary_quality", "Summary section", summaryStatus, SignalFriction.NONE, bank.summaryObservation(signals), bank.summaryInterpretation(signals), ImpactLevel.MEDIUM));
 
         // 6. Title progression / format (pick most relevant)
         if (signals.isHasChronologyIssues()) {
             SignalStatus chronologyStatus = signals.isChronologyUnreliable() ? SignalStatus.FAIL : SignalStatus.WARN;
             SignalFriction chronologyFriction = signals.isChronologyUnreliable() ? SignalFriction.HIGH : SignalFriction.MEDIUM;
-            list.add(new Signal("chronology", "Career chronology", chronologyStatus, chronologyFriction,
-                bank.chronologyObservation(signals),
-                bank.chronologyInterpretation(signals),
-                ImpactLevel.MEDIUM));
+            list.add(signal("chronology", "Career chronology", chronologyStatus, chronologyFriction, bank.chronologyObservation(signals), bank.chronologyInterpretation(signals), ImpactLevel.MEDIUM));
         } else if (signals.isFormatWallOfText() || signals.isFormatHasPhoto() || signals.isFormatTooManyPages()) {
             SignalStatus formatStatus = SignalStatus.WARN;
-            list.add(new Signal("format_quality", "Layout & formatting", formatStatus, SignalFriction.MEDIUM,
-                "Formatting issues detected that increase scan friction.",
-                "Layout problems make the document harder to read at speed.",
-                ImpactLevel.MEDIUM));
+            list.add(signal("format_quality", "Layout & formatting", formatStatus, SignalFriction.MEDIUM, "Formatting issues detected that increase scan friction.", "Layout problems make the document harder to read at speed.", ImpactLevel.MEDIUM));
         } else {
             TitleProgression prog = signals.getTitleProgression();
-            SignalStatus progressionStatus = prog == TitleProgression.GROWING ? SignalStatus.PASS
-                : prog == TitleProgression.FLAT ? SignalStatus.WARN : SignalStatus.WARN;
-            String progObs = prog == TitleProgression.GROWING ? "Your career shows an upward title trajectory."
-                : prog == TitleProgression.FLAT ? "Your title has remained at the same level across roles."
-                : "Career trajectory could not be determined from available information.";
-            list.add(new Signal("title_progression", "Career trajectory", progressionStatus, SignalFriction.NONE,
-                progObs, "Recruiters look for growth. An upward trajectory builds confidence.", ImpactLevel.LOW));
+            SignalStatus progressionStatus;
+            String progObs;
+            String progInterp;
+            switch (prog == null ? TitleProgression.UNKNOWN : prog) {
+                case GROWING -> {
+                    progressionStatus = SignalStatus.PASS;
+                    progObs = "Your career shows an upward title trajectory.";
+                    progInterp = "Title growth is a positive trust signal — it shows a recruiter you've earned more responsibility over time.";
+                }
+                case FLAT -> {
+                    progressionStatus = SignalStatus.WARN;
+                    progObs = "Your title has remained at the same level across roles.";
+                    progInterp = "Flat progression isn't disqualifying, but a recruiter will expect to see growing scope or impact in the bullet points instead.";
+                }
+                case REGRESSION -> {
+                    progressionStatus = SignalStatus.WARN;
+                    progObs = "Your most recent title is lower than a previous one.";
+                    progInterp = "A step down in title raises questions without context. If it was intentional (pivot, move abroad, company stage), address it briefly in your summary.";
+                }
+                default -> {
+                    // UNKNOWN: not enough roles with readable seniority markers
+                    progressionStatus = SignalStatus.WARN;
+                    progObs = "Only one substantive role on record — trajectory can't be established from a single position.";
+                    progInterp = "This isn't a negative signal at your career stage. As you add more roles, showing upward progression will matter increasingly.";
+                }
+            }
+            list.add(signal("title_progression", "Career trajectory", progressionStatus, SignalFriction.NONE, progObs, progInterp, ImpactLevel.LOW));
         }
 
         return list;
@@ -193,11 +201,7 @@ public class FeedbackGenerator {
             if (!missing.isEmpty()) {
                 String skillList = missing.stream().map(SkillMatchResult::getJdSkill)
                     .reduce((a, b) -> a + ", " + b).orElse("required skills");
-                fixes.add(new Fix(rank++, "must_haves_visible",
-                    "Add these missing must-have skills: " + skillList,
-                    "These are the primary technical requirements for this role. Their absence is typically a decisive rejection signal.",
-                    "Only add skills you genuinely have. If these are gaps, consider targeting roles that match your current stack.",
-                    ImpactLevel.HIGH));
+                fixes.add(fix(rank++, "must_haves_visible", "Add these missing must-have skills: " + skillList, "These are the primary technical requirements for this role. Their absence is typically a decisive rejection signal.", "Only add skills you genuinely have. If these are gaps, consider targeting roles that match your current stack.", ImpactLevel.HIGH));
             }
         }
 
@@ -208,124 +212,72 @@ public class FeedbackGenerator {
             if (!buried.isEmpty()) {
                 String skillList = buried.stream().map(SkillMatchResult::getJdSkill)
                     .reduce((a, b) -> a + ", " + b).orElse("key skills");
-                fixes.add(new Fix(rank++, "must_haves_visible",
-                    "Move these skills to your skills section: " + skillList,
-                    bank.skillVisibilityInterpretation(buried.get(0)),
-                    "Add them to your skills section. Example: 'Programming: " + buried.get(0).getJdSkill() + ", ...'",
-                    ImpactLevel.HIGH));
+                fixes.add(fix(rank++, "must_haves_visible", "Move these skills to your skills section: " + skillList, bank.skillVisibilityInterpretation(buried.get(0)), "Add them to your skills section. Example: 'Programming: " + buried.get(0).getJdSkill() + ", ...'", ImpactLevel.HIGH));
             }
         }
 
         // Summary missing or weak
         String summaryAction = bank.summaryAction(signals);
         if (summaryAction != null) {
-            fixes.add(new Fix(rank++, "summary_quality",
-                !signals.isSummaryPresent() ? "Add a professional summary at the top of your resume" : "Rewrite your summary with technical specifics",
-                bank.summaryInterpretation(signals),
-                summaryAction,
-                ImpactLevel.HIGH));
+            fixes.add(fix(rank++, "summary_quality", !signals.isSummaryPresent() ? "Add a professional summary at the top of your resume" : "Rewrite your summary with technical specifics", bank.summaryInterpretation(signals), summaryAction, ImpactLevel.HIGH));
         }
 
         // Skills format
         String formatAction = bank.skillsFormatAction(signals);
         if (formatAction != null) {
-            fixes.add(new Fix(rank++, "must_haves_visible",
-                "Restructure your skills section",
-                bank.skillsFormatInterpretation(signals),
-                formatAction,
-                ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "must_haves_visible", "Restructure your skills section", bank.skillsFormatInterpretation(signals), formatAction, ImpactLevel.MEDIUM));
         }
 
         // Company no context
         String companyAction = bank.companyAction(signals);
         if (companyAction != null) {
-            fixes.add(new Fix(rank++, "company_context",
-                "Add a descriptor to your current company",
-                bank.companyInterpretation(signals),
-                companyAction,
-                ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "company_context", "Add a descriptor to your current company", bank.companyInterpretation(signals), companyAction, ImpactLevel.MEDIUM));
         }
 
         // Title mismatch
         String titleAction = bank.titleAction(signals);
         if (titleAction != null) {
-            fixes.add(new Fix(rank++, "title_match",
-                "Bridge the title gap in your summary",
-                bank.titleInterpretation(signals),
-                titleAction,
-                ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "title_match", "Bridge the title gap in your summary", bank.titleInterpretation(signals), titleAction, ImpactLevel.MEDIUM));
         }
 
         // YOE issues
         String yoeAction = bank.yoeAction(signals);
         if (yoeAction != null) {
-            fixes.add(new Fix(rank++, "yoe_fit",
-                signals.isChronologyUnreliable() ? "Fix the chronology of your resume" : "Clarify your years of experience",
-                signals.isChronologyUnreliable() ? bank.chronologyInterpretation(signals) : bank.yoeInterpretation(signals),
-                signals.isChronologyUnreliable() ? bank.chronologyAction() : yoeAction,
-                signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT ? ImpactLevel.HIGH : ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "yoe_fit", signals.isChronologyUnreliable() ? "Fix the chronology of your resume" : "Clarify your years of experience", signals.isChronologyUnreliable() ? bank.chronologyInterpretation(signals) : bank.yoeInterpretation(signals), signals.isChronologyUnreliable() ? bank.chronologyAction() : yoeAction, signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT ? ImpactLevel.HIGH : ImpactLevel.MEDIUM));
         }
 
         if (signals.isHasChronologyIssues() && !signals.isChronologyUnreliable() && yoeAction == null) {
-            fixes.add(new Fix(rank++, "yoe_fit",
-                "Tighten the chronology of your resume",
-                bank.chronologyInterpretation(signals),
-                bank.chronologyAction(),
-                ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "yoe_fit", "Tighten the chronology of your resume", bank.chronologyInterpretation(signals), bank.chronologyAction(), ImpactLevel.MEDIUM));
         }
 
         // Unexplained gap
         if (signals.isHasUnexplainedGap() && !signals.isChronologyUnreliable()) {
-            fixes.add(new Fix(rank++, "yoe_fit",
-                "Label your career gap",
-                bank.gapObservation(signals),
-                bank.gapAction(),
-                ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "yoe_fit", "Label your career gap", bank.gapObservation(signals), bank.gapAction(), ImpactLevel.MEDIUM));
         }
 
         // Filename
         if (!signals.isFilenameProfessional()) {
-            fixes.add(new Fix(rank++, "filename",
-                "Rename your resume file",
-                bank.filenameInterpretation(signals),
-                bank.filenameAction(),
-                ImpactLevel.LOW));
+            fixes.add(fix(rank++, "filename", "Rename your resume file", bank.filenameInterpretation(signals), bank.filenameAction(), ImpactLevel.LOW));
         }
 
         // Formatting issues
         if (signals.isFormatHasPhoto()) {
-            fixes.add(new Fix(rank++, "format_quality",
-                "Remove the photo from your resume",
-                "Photos are non-standard for tech roles in most markets and introduce unconscious bias risk. Most ATS systems strip them anyway.",
-                "Remove the photo. Your work speaks for itself.",
-                ImpactLevel.LOW));
+            fixes.add(fix(rank++, "format_quality", "Remove the photo from your resume", "Photos are non-standard for tech roles in most markets and introduce unconscious bias risk. Most ATS systems strip them anyway.", "Remove the photo. Your work speaks for itself.", ImpactLevel.LOW));
         }
 
         // Skill age mismatch
         if (signals.isHasSkillAgeMismatch()) {
-            fixes.add(new Fix(rank++, "skill_age_mismatch",
-                "Correct your stated years of experience for a skill",
-                "An impossible years-of-experience claim undermines credibility immediately.",
-                bank.skillAgeMismatchAction(signals),
-                ImpactLevel.HIGH));
+            fixes.add(fix(rank++, "skill_age_mismatch", "Correct your stated years of experience for a skill", "An impossible years-of-experience claim undermines credibility immediately.", bank.skillAgeMismatchAction(signals), ImpactLevel.HIGH));
         }
 
         // Bullet quality - weak verbs
         if (signals.getImpactVerbRatio() < 0.5) {
-            fixes.add(new Fix(rank++, "bullet_quality",
-                String.format("Only %.0f%% of your bullets start with impact verbs", signals.getImpactVerbRatio() * 100),
-                "Weak verbs like 'responsible for' or 'worked on' don't convey ownership or results. Recruiters scan for action and impact.",
-                "Rewrite bullets to start with strong verbs: Built, Designed, Led, Reduced, Increased, Automated, Migrated, Scaled.",
-                ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "bullet_quality", String.format("Only %.0f%% of your bullets start with impact verbs", signals.getImpactVerbRatio() * 100), "Weak verbs like 'responsible for' or 'worked on' don't convey ownership or results. Recruiters scan for action and impact.", "Rewrite bullets to start with strong verbs: Built, Designed, Led, Reduced, Increased, Automated, Migrated, Scaled.", ImpactLevel.MEDIUM));
         }
 
         // Bullet quality - no metrics
         if (signals.getMetricDensity() < 0.3) {
-            fixes.add(new Fix(rank++, "bullet_quality",
-                String.format("Only %.0f%% of your bullets include quantified results", signals.getMetricDensity() * 100),
-                "Unquantified claims are vague. Numbers make impact concrete and memorable.",
-                "Add metrics: '...reduced latency by 75%', '...serving 5M daily transactions', '...adopted by 40% more clients'.",
-                ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "bullet_quality", String.format("Only %.0f%% of your bullets include quantified results", signals.getMetricDensity() * 100), "Unquantified claims are vague. Numbers make impact concrete and memorable.", "Add metrics: '...reduced latency by 75%', '...serving 5M daily transactions', '...adopted by 40% more clients'.", ImpactLevel.MEDIUM));
         }
 
         // Sort by impact
@@ -405,14 +357,29 @@ public class FeedbackGenerator {
                 if (signals.isChronologyUnreliable()) {
                     sb.append("The chronology is the primary barrier. The work and education dates do not form a timeline a recruiter can trust.");
                 } else if (topMissingSkill != null) {
-                    sb.append(topMissingSkill).append(", the core requirement for ").append(jdTitle);
-                    sb.append(", doesn't appear on this resume.");
-                    if (signals.getMustHaveResults() != null) {
-                        long missingCount = signals.getMustHaveResults().stream()
-                            .filter(r -> r.getVisibility() == SkillVisibility.MISSING).count();
-                        if (missingCount > 1) sb.append(" ").append(missingCount).append(" must-have skills are missing in total.");
+                    List<String> missingSkills = signals.getMustHaveResults().stream()
+                        .filter(r -> r.getVisibility() == SkillVisibility.MISSING)
+                        .map(SkillMatchResult::getJdSkill)
+                        .toList();
+                    int missingCount = missingSkills.size();
+                    int totalCount = signals.getMustHaveResults().size();
+
+                    if (missingCount == 1) {
+                        sb.append(topMissingSkill).append(", a core requirement for ").append(jdTitle);
+                        sb.append(", doesn't appear on this resume. This is a qualification gap, not a presentation issue.");
+                    } else {
+                        int limit = missingCount <= 5 ? missingCount : 4;
+                        List<String> named = missingSkills.stream().limit(limit).toList();
+                        String skillList = named.stream().reduce((a, b) -> a + ", " + b).orElse(topMissingSkill);
+                        if (missingCount > limit) skillList += ", and " + (missingCount - limit) + " more";
+                        sb.append("This resume is missing the required stack for ").append(jdTitle).append(": ")
+                          .append(skillList).append(".");
+                        if (totalCount > 0) {
+                            sb.append(" ").append(missingCount).append(" of ").append(totalCount)
+                              .append(" required skills are absent.");
+                        }
+                        sb.append(" This is a qualification gap, not a presentation issue.");
                     }
-                    sb.append(" This is a qualification gap, not a presentation issue.");
                 } else if (signals.getYoeFit() != null && signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT) {
                     sb.append("The experience gap is the primary barrier");
                     if (yoe != null && jdRange != null) sb.append(" — ").append(yoe).append(" years against a ").append(jdRange).append(" requirement");
@@ -431,7 +398,35 @@ public class FeedbackGenerator {
         return switch (level) { case HIGH -> 0; case MEDIUM -> 1; case LOW -> 2; };
     }
 
+    /** Convenience factory — mirrors the old positional constructor signature. */
+    private static Fix fix(int rank, String signalId, String action, String reason, String example, ImpactLevel impact) {
+        Fix f = new Fix();
+        f.setRank(rank);
+        f.setSignalId(signalId);
+        f.setAction(action);
+        f.setReason(reason);
+        f.setBeforeAfter(new Fix.BeforeAfter(example, null));
+        f.setImpact(impact);
+        return f;
+    }
+
+    /** Convenience factory — mirrors the old positional Signal constructor signature. */
+    private static Signal signal(String id, String label, SignalStatus status, SignalFriction friction,
+                                  String observation, String interpretation, ImpactLevel impact) {
+        Signal s = new Signal();
+        s.setId(id);
+        s.setLabel(label);
+        s.setStatus(status);
+        s.setFriction(friction);
+        s.setObservation(observation);
+        s.setInterpretation(interpretation);
+        s.setImpact(impact);
+        // Confidence: PASS signals are HIGH, WARN are MEDIUM, FAIL are HIGH (we're confident it's a problem)
+        s.setConfidence(status == SignalStatus.WARN ? Confidence.MEDIUM : Confidence.HIGH);
+        return s;
+    }
+
     // ── Output record ─────────────────────────────────────────────────────────
 
-    public record FeedbackOutput(List<Signal> signals, List<Fix> fixes, String summaryParagraph) {}
+    public record FeedbackOutput(List<Signal> signals, List<Fix> fixes, String summaryLine) {}
 }

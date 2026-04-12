@@ -2,6 +2,7 @@ package com.resumestudio.reviewer.skills;
 
 import com.resumestudio.reviewer.model.Skill;
 import com.resumestudio.reviewer.model.SkillMatchResult;
+import com.resumestudio.reviewer.model.enums.AbsenceReason;
 import com.resumestudio.reviewer.model.enums.SkillMatchType;
 import com.resumestudio.reviewer.model.enums.SkillVisibility;
 import org.slf4j.Logger;
@@ -135,30 +136,58 @@ public class SkillMatchEngine {
             }
         }
 
-        // ── Strategy 7: IMPLICIT ──────────────────────────────────────────
-        // Check if any resume skill implies the JD skill via ESCO relations
+        // ── Strategy 7: ESCO equivalence ──────────────────────────────────
+        for (Skill resumeSkill : resumeSkills) {
+            if (escoGraph.areEquivalent(jdSkill, resumeSkill.getRawName())) {
+                log.debug("ESCO_EQUIVALENT match: '{}' ≈ '{}'", jdSkill, resumeSkill.getRawName());
+                return buildResult(result, resumeSkill, SkillMatchType.IMPLICIT, jdCanonical);
+            }
+        }
+
+        // ── Strategy 8: IMPLICIT (MIND implied graph) ─────────────────────
         for (Skill resumeSkill : resumeSkills) {
             String skillForLookup = resumeSkill.getCanonicalName() != null
                 ? resumeSkill.getCanonicalName() : resumeSkill.getRawName();
             if (skillForLookup == null) continue;
-            
             List<String> related = escoGraph.relatedSkills(skillForLookup);
             for (String rel : related) {
                 if (normalise(rel).equals(jdNormalised) || normalise(rel).equals(jdCanonical)) {
                     log.debug("IMPLICIT match: '{}' implied by '{}' via '{}'", jdSkill, resumeSkill.getRawName(), rel);
                     SkillMatchResult implicit = buildResult(result, resumeSkill, SkillMatchType.IMPLICIT, jdCanonical);
-                    implicit.setVisibility(SkillVisibility.MISSING); // implicit = not surfaced
+                    implicit.setVisibility(SkillVisibility.MISSING);
                     return implicit;
                 }
             }
         }
 
-        // ── Strategy 8: MISSING ───────────────────────────────────────────
+        // ── Strategy 9: MISSING — classify absence reason ─────────────────
         log.debug("MISSING: '{}' not found in resume", jdSkill);
         result.setMatchType(SkillMatchType.MISSING);
         result.setVisibility(SkillVisibility.MISSING);
         result.setCanonicalName(jdCanonical);
+        result.setAbsenceReason(classifyAbsenceReason(jdNormalised, resumeSkills));
         return result;
+    }
+
+    private AbsenceReason classifyAbsenceReason(String jdNorm, List<Skill> resumeSkills) {
+        for (Skill s : resumeSkills) {
+            String rn = normalise(s.getRawName());
+            if (rn.contains(jdNorm) || jdNorm.contains(rn)) return AbsenceReason.UNLABELLED;
+        }
+        for (Skill s : resumeSkills) {
+            // OMITTED: in skills section but never appears in any bullet
+            if (s.isInSkillsSection() && s.getBulletOccurrences() == 0) {
+                String rn = normalise(s.getRawName());
+                if (rn.equals(jdNorm)) return AbsenceReason.OMITTED;
+            }
+        }
+        for (Skill s : resumeSkills) {
+            List<String> implied = escoGraph.relatedSkills(
+                s.getCanonicalName() != null ? s.getCanonicalName() : s.getRawName());
+            if (implied.stream().anyMatch(i -> normalise(i).equals(jdNorm)))
+                return AbsenceReason.IMPLIED;
+        }
+        return AbsenceReason.GENUINE_GAP;
     }
 
     private SkillMatchResult buildResult(SkillMatchResult result, Skill resumeSkill,
@@ -167,6 +196,18 @@ public class SkillMatchEngine {
         result.setResumeSkill(resumeSkill.getRawName());
         result.setCanonicalName(canonical);
         result.setVisibility(resumeSkill.getVisibility() != null ? resumeSkill.getVisibility() : SkillVisibility.SURFACE);
+
+        // Apply recency weight: finalConfidence = matchConfidence * recencyWeight
+        float matchConfidence = switch (matchType) {
+            case EXACT, SYNONYM, ABBREVIATION, VERSION_STRIPPED -> 1.0f;
+            case PARENT_FRAMEWORK -> 0.9f;
+            case SEMANTIC -> result.getSemanticScore() != null ? result.getSemanticScore().floatValue() : 0.75f;
+            case IMPLICIT -> 0.8f;
+            default -> 0.5f;
+        };
+        float recency = resumeSkill.getRecencyWeight();
+        result.setRecencyWeight(recency);
+        result.setFinalConfidence(matchConfidence * recency);
         return result;
     }
 

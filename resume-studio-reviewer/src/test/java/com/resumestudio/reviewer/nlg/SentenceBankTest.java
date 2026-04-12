@@ -58,7 +58,7 @@ class SentenceBankTest {
         s.setTitleMatch(TitleMatch.EXACT);
         s.setCandidateTitle("Backend Engineer");
         s.setJdTitle("Backend Engineer");
-        assertTrue(bank.titleObservation(s).contains("exactly"));
+        assertTrue(bank.titleObservation(s).contains("exact"));
     }
 
     @Test

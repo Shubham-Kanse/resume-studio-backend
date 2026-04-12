@@ -33,10 +33,10 @@ public class OcrFallbackExtractor {
     private static final Logger log = LoggerFactory.getLogger(OcrFallbackExtractor.class);
     private final ExecutorService executor = Executors.newFixedThreadPool(4); // Fix: Instance-level, not static
 
-    @Value("${screener.tesseract.datapath:/usr/share/tesseract-ocr/4.00/tessdata}")
+    @Value("${reviewer.tesseract.datapath:/usr/share/tesseract-ocr/4.00/tessdata}")
     private String tessDataPath;
 
-    @Value("${screener.tesseract.psm:6}") // Fix #9: Configurable PSM mode (6 = uniform block)
+    @Value("${reviewer.tesseract.psm:6}") // Fix #9: Configurable PSM mode (6 = uniform block)
     private int pageSegMode;
 
     public RawDocument extract(InputStream inputStream, String filename) throws IOException {

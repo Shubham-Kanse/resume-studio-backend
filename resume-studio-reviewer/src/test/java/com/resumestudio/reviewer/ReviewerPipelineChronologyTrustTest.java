@@ -99,6 +99,6 @@ class ReviewerPipelineChronologyTrustTest {
         assertTrue(report.getSignals().stream().anyMatch(s -> "chronology".equals(s.getId())));
         assertTrue(report.getFixes().stream().anyMatch(f -> "Fix the chronology of your resume".equals(f.getAction())));
         assertTrue(report.getFixes().stream().noneMatch(f -> "Label your career gap".equals(f.getAction())));
-        assertTrue(report.getSummaryParagraph().toLowerCase().contains("chronology"));
+        assertTrue(report.getSummaryLine().toLowerCase().contains("chronology"));
     }
 }

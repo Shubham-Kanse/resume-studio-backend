@@ -9,10 +9,11 @@ import com.resumestudio.reviewer.ingest.RawDocument;
 import com.resumestudio.reviewer.ingest.ResumeIngestService;
 import com.resumestudio.reviewer.model.*;
 import com.resumestudio.reviewer.model.enums.SkillsFormat;
+import com.resumestudio.reviewer.nlg.AiReviewService;
 import com.resumestudio.reviewer.nlg.FeedbackGenerator;
 import com.resumestudio.reviewer.signals.*;
+import com.resumestudio.reviewer.signals.CoherenceEngine;
 import com.resumestudio.reviewer.skills.*;
-import com.resumestudio.reviewer.timeline.TimelineEngine;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,9 +50,12 @@ public class ReviewerPipeline {
     private final SkillsFormatAnalyser formatAnalyser;
     private final AnomalyDetector anomalyDetector;
     private final ClassificationEngine classificationEngine;
-    private final TimelineEngine timelineEngine;
+    private final CoherenceEngine coherenceEngine;
     private final FeedbackGenerator feedbackGenerator;
+    private final AiReviewService aiReviewService;
+    private final OutcomeTracker outcomeTracker;
     private final com.resumestudio.reviewer.nlp.NlpService nlpService;
+    private final com.resumestudio.reviewer.nlp.BulletEnricher bulletEnricher;
 
     public ReviewerPipeline(ResumeIngestService ingestService,
                             JdParserService jdParser,
@@ -72,9 +76,12 @@ public class ReviewerPipeline {
                             SkillsFormatAnalyser formatAnalyser,
                             AnomalyDetector anomalyDetector,
                             ClassificationEngine classificationEngine,
-                            TimelineEngine timelineEngine,
+                            CoherenceEngine coherenceEngine,
                             FeedbackGenerator feedbackGenerator,
-                            com.resumestudio.reviewer.nlp.NlpService nlpService) {
+                            AiReviewService aiReviewService,
+                            OutcomeTracker outcomeTracker,
+                            com.resumestudio.reviewer.nlp.NlpService nlpService,
+                            com.resumestudio.reviewer.nlp.BulletEnricher bulletEnricher) {
         this.ingestService = ingestService;
         this.jdParser = jdParser;
         this.jdFetchService = jdFetchService;
@@ -94,9 +101,12 @@ public class ReviewerPipeline {
         this.formatAnalyser = formatAnalyser;
         this.anomalyDetector = anomalyDetector;
         this.classificationEngine = classificationEngine;
-        this.timelineEngine = timelineEngine;
+        this.coherenceEngine = coherenceEngine;
         this.feedbackGenerator = feedbackGenerator;
+        this.aiReviewService = aiReviewService;
+        this.outcomeTracker = outcomeTracker;
         this.nlpService = nlpService;
+        this.bulletEnricher = bulletEnricher;
     }
 
     public FeedbackReport review(MultipartFile file, String jdText) {
@@ -113,28 +123,60 @@ public class ReviewerPipeline {
             // Layer 1 & 2 — Extract resume structure
             Resume resume = buildResume(raw);
 
+            // Non-English detection — warn but continue
+            if (isLikelyNonEnglish(raw.getFullText())) {
+                log.warn("Resume appears to be non-English — signal quality may be reduced");
+                // Surface as a red flag in the report (added post-coherence)
+            }
+
             // Layer 3–5 — Compute all signals
             ResumeSignals signals = computeSignals(resume, jd, raw);
 
+            // Layer 5 — Coherence
+            CoherenceEngine.CoherenceResult coherence = coherenceEngine.check(signals);
+
             // Layer 6 — Classification
-            ClassificationEngine.ClassificationResult classification = classificationEngine.classify(signals);
+            ClassificationEngine.ClassificationResult classification = classificationEngine.classify(signals, coherence);
 
-            // Layer 7 — Timeline
-            List<TimelineEvent> timeline = timelineEngine.build(signals, classification.verdict());
+            // Layer 7+8+9 — AI enrichment + assembly
+            FeedbackReport.RoleContext roleContext = new FeedbackReport.RoleContext();
+            roleContext.setTitle(jd.getRoleTitle());
+            roleContext.setRequired(jd.getMustHaveSkills());
+            roleContext.setPreferred(jd.getNiceToHaveSkills());
+            roleContext.setInferred(jd.getImpliedSkills());
+            roleContext.setDomain(inferDomain(jd.getRoleTitle()));
 
-            // Layer 8 — Feedback
-            FeedbackGenerator.FeedbackOutput feedback = feedbackGenerator.generate(signals, classification.verdict());
+            // Build redFlags from coherence + JD quality warnings
+            List<FeedbackReport.RedFlag> redFlags = new java.util.ArrayList<>(coherence.flags().stream()
+                .map(f -> new FeedbackReport.RedFlag(f.type(), f.severity(), f.detail()))
+                .toList());
+            if (classification.jdClarity() == com.resumestudio.reviewer.model.enums.JdClarity.LOW) {
+                redFlags.add(new FeedbackReport.RedFlag("JD_CLARITY_LOW",
+                    com.resumestudio.reviewer.model.enums.ImpactLevel.MEDIUM,
+                    "The job description is vague or missing a requirements section. Results may be less accurate — consider pasting a more detailed JD."));
+            }
+            if (jd.getMustHaveSkills().isEmpty()) {
+                redFlags.add(new FeedbackReport.RedFlag("NO_SKILLS_IN_JD",
+                    com.resumestudio.reviewer.model.enums.ImpactLevel.HIGH,
+                    "No technical skills could be extracted from the job description. Skill matching is unavailable for this review."));
+            }
 
-            // Assemble final report
-            return FeedbackReport.builder()
+            FeedbackReport.Builder builder = FeedbackReport.builder()
                 .verdict(classification.verdict())
                 .confidence(classification.confidence())
-                .roleContext(new FeedbackReport.RoleContext(jd.getRoleTitle(), jd.getMustHaveSkills()))
-                .summaryParagraph(feedback.summaryParagraph())
-                .timeline(timeline)
-                .signals(feedback.signals())
-                .fixes(feedback.fixes())
-                .build();
+                .interviewLikelihood(classification.interviewLikelihood())
+                .scanDuration(classification.scanDuration())
+                .seniorityCalibration(classification.seniorityCalibration())
+                .tailoringScore(classification.tailoringScore())
+                .jdClarity(classification.jdClarity())
+                .recruiterType(classification.recruiterType())
+                .competitiveContext(classification.competitiveContext())
+                .roleContext(roleContext)
+                .redFlags(redFlags);
+
+            FeedbackReport report = aiReviewService.enrich(builder, signals, classification, jd, resume, coherence).build();
+            outcomeTracker.track(report, signals); // Layer 10 — async, non-blocking
+            return report;
         } catch (Exception e) {
             throw new RuntimeException("Failed to review resume", e);
         }
@@ -150,19 +192,46 @@ public class ReviewerPipeline {
             JobDescription jd = jdParser.parse(jdText);
             Resume resume = buildResume(raw);
             ResumeSignals signals = computeSignals(resume, jd, raw);
-            ClassificationEngine.ClassificationResult classification = classificationEngine.classify(signals);
-            List<TimelineEvent> timeline = timelineEngine.build(signals, classification.verdict());
-            FeedbackGenerator.FeedbackOutput feedback = feedbackGenerator.generate(signals, classification.verdict());
+            CoherenceEngine.CoherenceResult coherence = coherenceEngine.check(signals);
+            ClassificationEngine.ClassificationResult classification = classificationEngine.classify(signals, coherence);
 
-            return FeedbackReport.builder()
+            FeedbackReport.RoleContext roleContext = new FeedbackReport.RoleContext();
+            roleContext.setTitle(jd.getRoleTitle());
+            roleContext.setRequired(jd.getMustHaveSkills());
+            roleContext.setPreferred(jd.getNiceToHaveSkills());
+            roleContext.setInferred(jd.getImpliedSkills());
+            roleContext.setDomain(inferDomain(jd.getRoleTitle()));
+
+            List<FeedbackReport.RedFlag> redFlags = new java.util.ArrayList<>(coherence.flags().stream()
+                .map(f -> new FeedbackReport.RedFlag(f.type(), f.severity(), f.detail()))
+                .toList());
+            if (classification.jdClarity() == com.resumestudio.reviewer.model.enums.JdClarity.LOW) {
+                redFlags.add(new FeedbackReport.RedFlag("JD_CLARITY_LOW",
+                    com.resumestudio.reviewer.model.enums.ImpactLevel.MEDIUM,
+                    "The job description is vague or missing a requirements section. Results may be less accurate."));
+            }
+            if (jd.getMustHaveSkills().isEmpty()) {
+                redFlags.add(new FeedbackReport.RedFlag("NO_SKILLS_IN_JD",
+                    com.resumestudio.reviewer.model.enums.ImpactLevel.HIGH,
+                    "No technical skills could be extracted from the job description. Skill matching is unavailable for this review."));
+            }
+
+            FeedbackReport.Builder builder = FeedbackReport.builder()
                 .verdict(classification.verdict())
                 .confidence(classification.confidence())
-                .roleContext(new FeedbackReport.RoleContext(jd.getRoleTitle(), jd.getMustHaveSkills()))
-                .summaryParagraph(feedback.summaryParagraph())
-                .timeline(timeline)
-                .signals(feedback.signals())
-                .fixes(feedback.fixes())
-                .build();
+                .interviewLikelihood(classification.interviewLikelihood())
+                .scanDuration(classification.scanDuration())
+                .seniorityCalibration(classification.seniorityCalibration())
+                .tailoringScore(classification.tailoringScore())
+                .jdClarity(classification.jdClarity())
+                .recruiterType(classification.recruiterType())
+                .competitiveContext(classification.competitiveContext())
+                .roleContext(roleContext)
+                .redFlags(redFlags);
+
+            FeedbackReport report = aiReviewService.enrich(builder, signals, classification, jd, resume, coherence).build();
+            outcomeTracker.track(report, signals);
+            return report;
         } catch (Exception e) {
             throw new RuntimeException("Failed to review resume from raw text", e);
         }
@@ -215,9 +284,17 @@ public class ReviewerPipeline {
         
         // Extract skills
         if (sections.skills != null) {
-            SkillsSectionExtractor.ExtractionResult skillResult = 
+            SkillsSectionExtractor.ExtractionResult skillResult =
                 skillsExtractor.extract(sections.skills, extractAllBullets(fullText));
-            resume.setSkills(skillResult.getSkills());
+            // Deduplicate by canonical name (case-insensitive) — keep first occurrence
+            List<Skill> deduped = new java.util.ArrayList<>();
+            java.util.Set<String> seen = new java.util.LinkedHashSet<>();
+            for (Skill s : skillResult.getSkills()) {
+                String key = (s.getCanonicalName() != null ? s.getCanonicalName() : s.getRawName())
+                    .toLowerCase().trim();
+                if (seen.add(key)) deduped.add(s);
+            }
+            resume.setSkills(deduped);
         }
         
         return resume;
@@ -278,12 +355,32 @@ public class ReviewerPipeline {
         // Anomalies
         anomalyDetector.detect(resume.getSkills(), resume.getExperience(), resume.getSummaryText(), signals);
 
-        // Bullet quality (NLP)
+        // Bullet quality (NLP) + Layer 2b enrichment
         List<String> allBullets = resume.getExperience().stream()
             .flatMap(exp -> exp.getBullets().stream())
             .toList();
         signals.setImpactVerbRatio(nlpService.impactVerbRatio(allBullets));
         signals.setMetricDensity(nlpService.metricDensity(allBullets));
+
+        // Layer 2b — full bullet enrichment (scope, specificity, duplicates, top-5 scoring)
+        com.resumestudio.reviewer.nlp.BulletEnricher.EnrichmentResult enrichment =
+            bulletEnricher.enrich(resume.getExperience(), jd.getMustHaveSkills());
+        resume.setTopBullets(enrichment.topBullets());
+
+        // JD quality
+        if (jd.getJdClarity() != null) signals.setJdClarity(jd.getJdClarity());
+
+        // Projects section — relevant for bootcamp/self-taught candidates
+        boolean hasProjects = resume.getProjects() != null && !resume.getProjects().isEmpty();
+        signals.setHasProjectsSection(hasProjects);
+
+        // For junior/fresher roles: if candidate has no formal experience but has projects,
+        // treat as CANNOT_DETERMINE (not penalised) rather than MISSING
+        boolean isFresherRole = jd.getYoeMin() == null || jd.getYoeMin() <= 1.0;
+        if (isFresherRole && hasProjects && signals.getYoeFit() == com.resumestudio.reviewer.model.enums.YoeFit.CANNOT_DETERMINE) {
+            // Projects count as evidence — don't penalise further
+            signals.setYoeState(com.resumestudio.reviewer.model.enums.YoeState.CALCULABLE);
+        }
 
         return signals;
     }
@@ -313,5 +410,31 @@ public class ReviewerPipeline {
             bullets.add(matcher.group(1).trim());
         }
         return bullets;
+    }
+
+    /**
+     * Heuristic: if > 30% of characters are non-ASCII, likely non-English.
+     * Doesn't block processing — just flags for logging/warning.
+     */
+    private boolean isLikelyNonEnglish(String text) {
+        if (text == null || text.length() < 100) return false;
+        long nonAscii = text.chars().filter(c -> c > 127).count();
+        return (double) nonAscii / text.length() > 0.30;
+    }
+
+    private String inferDomain(String roleTitle) {
+        if (roleTitle == null) return null;
+        String lower = roleTitle.toLowerCase();
+        if (lower.contains("backend") || lower.contains("java") || lower.contains("python") || lower.contains("api")) return "Backend Engineering";
+        if (lower.contains("frontend") || lower.contains("react") || lower.contains("ui")) return "Frontend Engineering";
+        if (lower.contains("full stack") || lower.contains("fullstack")) return "Full Stack Engineering";
+        if (lower.contains("devops") || lower.contains("sre") || lower.contains("platform") || lower.contains("infrastructure")) return "DevOps / Platform";
+        if (lower.contains("data") || lower.contains("ml") || lower.contains("machine learning") || lower.contains("ai")) return "Data / ML";
+        if (lower.contains("mobile") || lower.contains("ios") || lower.contains("android")) return "Mobile Engineering";
+        if (lower.contains("security") || lower.contains("infosec")) return "Security";
+        if (lower.contains("qa") || lower.contains("test") || lower.contains("sdet")) return "Quality Engineering";
+        if (lower.contains("product")) return "Product Management";
+        if (lower.contains("manager") || lower.contains("director")) return "Engineering Management";
+        return "Software Engineering";
     }
 }

@@ -190,7 +190,8 @@ public class JdParserService {
         jd.setWellStructured(
             MUST_HAVE_SECTION.matcher(rawText).find() || NICE_TO_HAVE_SECTION.matcher(rawText).find()
         );
-
+        jd.setJdClarity(computeJdClarity(rawText, jd));
+        jd.setTrimmedText(buildTrimmedText(rawText, jd));
         return jd;
     }
     
@@ -233,11 +234,16 @@ public class JdParserService {
         "stakeholders", "customer", "customers", "business", "software", "engineering"
     );
 
-    private static final Set<String> AMBIGUOUS_SINGLE_WORD_SKILLS = Set.of("go", "r");
+    private static final Set<String> AMBIGUOUS_SINGLE_WORD_SKILLS = Set.of("go", "r", "solid", "crypto");
 
     private void extractTitle(String text, JobDescription jd) {
+        // Work on markdown-stripped text for pattern matching
+        String strippedText = text.replaceAll("\\*\\*([^*]+)\\*\\*", "$1")
+                                  .replaceAll("\\*([^*]+)\\*", "$1")
+                                  .replaceAll("`([^`]+)`", "$1");
+
         // Pass 1: explicit label ("Position: Senior Backend Engineer")
-        Matcher explicitMatcher = ROLE_TITLE_EXPLICIT.matcher(text);
+        Matcher explicitMatcher = ROLE_TITLE_EXPLICIT.matcher(strippedText);
         if (explicitMatcher.find()) {
             String title = cleanTitle(explicitMatcher.group(1));
             if (validateTitle(title)) {
@@ -247,7 +253,7 @@ public class JdParserService {
         }
 
         // Pass 2: narrative seeking phrase ("We're looking for a Senior Backend Engineer")
-        Matcher seekingMatcher = ROLE_TITLE_SEEKING.matcher(text);
+        Matcher seekingMatcher = ROLE_TITLE_SEEKING.matcher(strippedText);
         if (seekingMatcher.find()) {
             String title = cleanTitle(seekingMatcher.group(1));
             if (validateTitle(title)) {
@@ -257,7 +263,7 @@ public class JdParserService {
         }
         
         // Pass 3: Semantic similarity - first 5 lines vs "job title" query
-        String[] lines = text.split("\n");
+        String[] lines = strippedText.split("\n");
         String titleQuery = "job title position role";
         double maxSim = 0.0;
         String bestMatch = null;
@@ -463,6 +469,19 @@ public class JdParserService {
 
     // ── Skills extraction ─────────────────────────────────────────────────────
 
+    /**
+     * Strip markdown formatting from a line so skill extraction works on clean text.
+     * Handles bold (**text**), italic (*text*), inline code (`text`), and header prefixes (### ).
+     */
+    private String stripMarkdown(String line) {
+        return line
+            .replaceAll("^#{1,6}\\s+", "")       // ### Header → Header
+            .replaceAll("\\*\\*([^*]+)\\*\\*", "$1") // **bold** → bold
+            .replaceAll("\\*([^*]+)\\*", "$1")    // *italic* → italic
+            .replaceAll("`([^`]+)`", "$1")         // `code` → code
+            .trim();
+    }
+
     private void extractSkills(String text, JobDescription jd) {
         String[] lines = text.split("\n");
         SectionContext context = SectionContext.UNKNOWN;
@@ -470,7 +489,7 @@ public class JdParserService {
         List<SkillWithContext> skillsWithContext = new ArrayList<>();
 
         for (String line : lines) {
-            String trimmed = line.trim();
+            String trimmed = stripMarkdown(line.trim());
             if (trimmed.isBlank()) continue;
 
             // Detect section transitions with semantic similarity
@@ -593,17 +612,23 @@ public class JdParserService {
      */
     private IntensityLevel detectIntensity(String text, String skill) {
         String lower = text.toLowerCase();
-        
+
+        // "or" between skills → preferred (either/or, not both required)
+        if (lower.matches(".*\\b" + java.util.regex.Pattern.quote(skill.toLowerCase()) + "\\b.*\\bor\\b.*")
+            || lower.matches(".*\\bor\\b.*\\b" + java.util.regex.Pattern.quote(skill.toLowerCase()) + "\\b.*")) {
+            return IntensityLevel.LOW;
+        }
+
         // High intensity (must-have indicators)
         if (lower.matches(".*\\b(strong|expert|proficient|solid|deep|extensive|proven|required|must|essential)\\b.*")) {
             return IntensityLevel.HIGH;
         }
-        
+
         // Low intensity (nice-to-have indicators)
         if (lower.matches(".*\\b(familiarity|exposure|knowledge|understanding|bonus|plus|preferred|nice|optional)\\b.*")) {
             return IntensityLevel.LOW;
         }
-        
+
         return IntensityLevel.MEDIUM;
     }
     
@@ -646,12 +671,19 @@ public class JdParserService {
      * Filters out verb phrases and action words using POS tagging.
      */
     private List<String> extractTechTokens(String line, String fullContext) {
+        // Pre-process: handle "or" between skills and slash-separated skills
+        // "React or Angular" → "React, Angular"
+        // "Python/Java/Go" → "Python, Java, Go"
+        String preprocessed = line
+            .replaceAll("(?i)\\s+or\\s+", ", ")   // "React or Angular" → "React, Angular"
+            .replaceAll("/", ", ");                 // "Python/Java/Go" → "Python, Java, Go"
+
         // N-gram matching against ESCO + MIND-tech taxonomies
-        String[] raw = line.split("[\\s,;|()\\[\\]]+");
+        String[] raw = preprocessed.split("[\\s,;|()\\[\\]]+");
         List<String> words = new ArrayList<>();
         for (String w : raw) {
-            String cleaned = w.replaceAll("^[^\\w.#+/-]+", "")
-                               .replaceAll("[.,;!?:]+$", "")
+            String cleaned = w.replaceAll("^[^\\w.#+\\-]+", "")
+                               .replaceAll("[.,;!?:*]+$", "")
                                .trim();
             if (!cleaned.isEmpty()) words.add(cleaned);
         }
@@ -1001,5 +1033,34 @@ public class JdParserService {
             this.intensity = intensity;
             this.sourceText = sourceText;
         }
+    }
+
+    // ── jdClarity scoring (Layer 0b Step 10) ─────────────────────────────────
+
+    private com.resumestudio.reviewer.model.enums.JdClarity computeJdClarity(String rawText, JobDescription jd) {
+        int score = 0;
+        if (!jd.getMustHaveSkills().isEmpty()) score += 2;
+        if (jd.getYoeMin() != null) score += 1;
+        if (jd.isWellStructured()) score += 2;
+        if (MUST_HAVE_SECTION.matcher(rawText).find()) score += 2;
+        if (!jd.getNiceToHaveSkills().isEmpty()) score += 1;
+        if (jd.getIcLevel() > 0 && jd.getIcLevel() < 6) score += 1;
+        jd.setJdClarityScore(score);
+        if (score >= 7) return com.resumestudio.reviewer.model.enums.JdClarity.HIGH;
+        if (score >= 4) return com.resumestudio.reviewer.model.enums.JdClarity.MEDIUM;
+        return com.resumestudio.reviewer.model.enums.JdClarity.LOW;
+    }
+
+    /** Strips boilerplate, keeps requirements + tech stack. ~150 tokens for AI prompt. */
+    private String buildTrimmedText(String rawText, JobDescription jd) {
+        StringBuilder sb = new StringBuilder();
+        if (jd.getRoleTitle() != null) sb.append("Role: ").append(jd.getRoleTitle()).append("\n");
+        if (!jd.getMustHaveSkills().isEmpty())
+            sb.append("Required: ").append(String.join(", ", jd.getMustHaveSkills())).append("\n");
+        if (!jd.getNiceToHaveSkills().isEmpty())
+            sb.append("Preferred: ").append(String.join(", ", jd.getNiceToHaveSkills())).append("\n");
+        if (jd.getYoeRawStatement() != null)
+            sb.append("Experience: ").append(jd.getYoeRawStatement()).append("\n");
+        return sb.toString().trim();
     }
 }

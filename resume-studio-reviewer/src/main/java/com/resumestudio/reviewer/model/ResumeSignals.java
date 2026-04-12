@@ -97,6 +97,12 @@ public class ResumeSignals {
     private String mostRecentCompany;
     private int recentRoleCount;         // number of roles in last 3 years
 
+    // ── JD quality signals ────────────────────────────────────
+    private JdClarity jdClarity = JdClarity.MEDIUM;
+
+    // ── Projects / portfolio signals ──────────────────────────
+    private boolean hasProjectsSection;  // bootcamp/self-taught candidates
+
     // ── Getters & Setters ────────────────────────────────────
 
     public boolean isFilenameProfessional() { return filenameProfessional; }
@@ -286,4 +292,10 @@ public class ResumeSignals {
     public void setMostRecentCompany(String mostRecentCompany) { this.mostRecentCompany = mostRecentCompany; }
     public int getRecentRoleCount() { return recentRoleCount; }
     public void setRecentRoleCount(int recentRoleCount) { this.recentRoleCount = recentRoleCount; }
+
+    public JdClarity getJdClarity() { return jdClarity; }
+    public void setJdClarity(JdClarity jdClarity) { this.jdClarity = jdClarity; }
+
+    public boolean isHasProjectsSection() { return hasProjectsSection; }
+    public void setHasProjectsSection(boolean hasProjectsSection) { this.hasProjectsSection = hasProjectsSection; }
 }

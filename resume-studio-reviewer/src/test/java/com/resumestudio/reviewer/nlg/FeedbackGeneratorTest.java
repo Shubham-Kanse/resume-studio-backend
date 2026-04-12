@@ -29,7 +29,7 @@ class FeedbackGeneratorTest {
         assertNotNull(out);
         assertNotNull(out.signals());
         assertNotNull(out.fixes());
-        assertNotNull(out.summaryParagraph());
+        assertNotNull(out.summaryLine());
     }
 
     // ── Signal list ──────────────────────────────────────────────────────────
@@ -188,7 +188,9 @@ class FeedbackGeneratorTest {
         s.setHasUnexplainedGap(true);
         s.setGapDescriptions(List.of("18-month gap between A and B"));
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
-        assertTrue(out.fixes().stream().anyMatch(f -> f.getExample().contains("Align work, education, and career breaks")));
+        assertTrue(out.fixes().stream().anyMatch(f -> f.getBeforeAfter() != null
+            && f.getBeforeAfter().getBefore() != null
+            && f.getBeforeAfter().getBefore().contains("Align work, education, and career breaks")));
         assertFalse(out.fixes().stream().anyMatch(f -> "Label your career gap".equals(f.getAction())));
     }
 
@@ -198,9 +200,9 @@ class FeedbackGeneratorTest {
     void summaryParagraph_strongFit_mentionsFoundation() {
         ResumeSignals s = strongSignals();
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.STRONG_FIT);
-        assertTrue(out.summaryParagraph().toLowerCase().contains("solid") ||
-                   out.summaryParagraph().toLowerCase().contains("foundation") ||
-                   out.summaryParagraph().toLowerCase().contains("strong"));
+        assertTrue(out.summaryLine().toLowerCase().contains("solid") ||
+                   out.summaryLine().toLowerCase().contains("foundation") ||
+                   out.summaryLine().toLowerCase().contains("strong"));
     }
 
     @Test
@@ -210,14 +212,14 @@ class FeedbackGeneratorTest {
         SkillMatchResult missing = new SkillMatchResult("Java", true);
         s.setMustHaveResults(List.of(missing));
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
-        assertTrue(out.summaryParagraph().contains("Java"));
+        assertTrue(out.summaryLine().contains("Java"));
     }
 
     @Test
     void summaryParagraph_notBlank() {
         ResumeSignals s = strongSignals();
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.POSSIBLE_FIT);
-        assertFalse(out.summaryParagraph().isBlank());
+        assertFalse(out.summaryLine().isBlank());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

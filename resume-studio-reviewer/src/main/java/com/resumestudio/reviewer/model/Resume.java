@@ -42,9 +42,12 @@ public class Resume {
     private int distinctFontSizeCount;
 
     // ── Computed YOE ─────────────────────────────────────────
-    private Double totalYoeYears;         // null if cannot be computed
+    private Double totalYoeYears;
     private boolean yoeExplicitInSummary;
-    private String yoeRawStatement;       // e.g. "5 years of backend experience"
+    private String yoeRawStatement;
+
+    // ── Bullet enrichment ─────────────────────────────────────
+    private List<String> topBullets = new ArrayList<>(); // top 5 scored bullets for AI prompt
 
     // ── Getters & Setters ────────────────────────────────────
 
@@ -128,4 +131,7 @@ public class Resume {
 
     public String getYoeRawStatement() { return yoeRawStatement; }
     public void setYoeRawStatement(String yoeRawStatement) { this.yoeRawStatement = yoeRawStatement; }
+
+    public List<String> getTopBullets() { return topBullets; }
+    public void setTopBullets(List<String> topBullets) { this.topBullets = topBullets; }
 }

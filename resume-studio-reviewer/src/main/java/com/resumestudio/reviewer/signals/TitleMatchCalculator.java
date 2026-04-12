@@ -30,6 +30,11 @@ public class TitleMatchCalculator {
         ROLE_DOMAINS.put("data", Set.of("data", "analytics", "ml", "machine learning", "ai", "scientist", "analyst"));
         ROLE_DOMAINS.put("qa", Set.of("qa", "quality", "testing", "test", "automation", "sdet"));
         ROLE_DOMAINS.put("security", Set.of("security", "devsecops", "appsec", "infosec", "cybersecurity"));
+        // Adjacent role pairs — career transitions that share domain
+        ROLE_DOMAINS.put("data_science_ml", Set.of("data scientist", "ml engineer", "machine learning engineer", "ai engineer", "research engineer"));
+        ROLE_DOMAINS.put("devops_sre", Set.of("devops", "sre", "site reliability", "platform engineer", "infrastructure engineer"));
+        ROLE_DOMAINS.put("qa_sdet", Set.of("qa engineer", "sdet", "test engineer", "quality engineer", "automation engineer"));
+        ROLE_DOMAINS.put("product_management", Set.of("product manager", "product owner", "program manager", "project manager", "technical program manager"));
     }
 
     // Seniority words to strip before domain comparison
@@ -38,15 +43,17 @@ public class TitleMatchCalculator {
         "head of|director|vp|chief|entry[- ]level|intermediate)\\b",
         Pattern.CASE_INSENSITIVE);
 
-    // IC level map for progression calculation
+    // IC level map for progression calculation.
+    // Order matters: higher seniority patterns are checked first so that
+    // "Sr. Associate" resolves to senior (4) rather than associate (2).
     private static final Map<Pattern, Integer> IC_LEVELS = new LinkedHashMap<>();
     static {
-        IC_LEVELS.put(Pattern.compile("\\b(intern|trainee|graduate|junior|jr\\.?)\\b", Pattern.CASE_INSENSITIVE), 1);
-        IC_LEVELS.put(Pattern.compile("\\b(associate|entry[- ]level)\\b", Pattern.CASE_INSENSITIVE), 2);
-        IC_LEVELS.put(Pattern.compile("\\b(mid[- ]level|intermediate)\\b", Pattern.CASE_INSENSITIVE), 3);
+        IC_LEVELS.put(Pattern.compile("\\b(distinguished|fellow|vp|director|chief)\\b", Pattern.CASE_INSENSITIVE), 6);
+        IC_LEVELS.put(Pattern.compile("\\b(head of|staff|principal|lead|architect)\\b", Pattern.CASE_INSENSITIVE), 5);
         IC_LEVELS.put(Pattern.compile("\\b(senior|sr\\.?)\\b", Pattern.CASE_INSENSITIVE), 4);
-        IC_LEVELS.put(Pattern.compile("\\b(staff|principal|lead|architect)\\b", Pattern.CASE_INSENSITIVE), 5);
-        IC_LEVELS.put(Pattern.compile("\\b(distinguished|fellow|head of|vp|director|chief)\\b", Pattern.CASE_INSENSITIVE), 6);
+        IC_LEVELS.put(Pattern.compile("\\b(mid[- ]level|intermediate)\\b", Pattern.CASE_INSENSITIVE), 3);
+        IC_LEVELS.put(Pattern.compile("\\b(associate|entry[- ]level)\\b", Pattern.CASE_INSENSITIVE), 2);
+        IC_LEVELS.put(Pattern.compile("\\b(intern|trainee|graduate|junior|jr\\.?)\\b", Pattern.CASE_INSENSITIVE), 1);
     }
 
     public void compute(String candidateTitle, String jdTitle, List<WorkExperience> experience,

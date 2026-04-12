@@ -1,5 +1,6 @@
 package com.resumestudio.reviewer.model;
 
+import com.resumestudio.reviewer.model.enums.JdClarity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,9 @@ public class JobDescription {
     // parse quality
     private boolean isWellStructured;      // JD has clear must-have / nice-to-have sections
     private double parseConfidence;        // 0.0–1.0
+    private JdClarity jdClarity = JdClarity.MEDIUM;
+    private int jdClarityScore;
+    private String trimmedText;            // stripped JD for AI prompt (~150 tokens)
 
     // ── Getters & Setters ────────────────────────────────────
 
@@ -97,4 +101,13 @@ public class JobDescription {
 
     public double getParseConfidence() { return parseConfidence; }
     public void setParseConfidence(double parseConfidence) { this.parseConfidence = parseConfidence; }
+
+    public JdClarity getJdClarity() { return jdClarity; }
+    public void setJdClarity(JdClarity jdClarity) { this.jdClarity = jdClarity; }
+
+    public int getJdClarityScore() { return jdClarityScore; }
+    public void setJdClarityScore(int jdClarityScore) { this.jdClarityScore = jdClarityScore; }
+
+    public String getTrimmedText() { return trimmedText; }
+    public void setTrimmedText(String trimmedText) { this.trimmedText = trimmedText; }
 }

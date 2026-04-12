@@ -65,6 +65,12 @@ public class JdFetchService {
             .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 404) {
+            throw new IOException("Job posting not found (404) — the job may have been removed or the URL is incorrect");
+        }
+        if (response.statusCode() == 403 || response.statusCode() == 401) {
+            throw new IOException("Access denied (" + response.statusCode() + ") — this page requires login");
+        }
         if (response.statusCode() >= 400) {
             throw new IOException("Jina Reader returned HTTP " + response.statusCode());
         }
@@ -137,6 +143,20 @@ public class JdFetchService {
         String title = matcher.group(1).trim();
         if (title.isBlank() || title.equalsIgnoreCase("Untitled") || title.startsWith("http")) {
             return null;
+        }
+
+        // Jina titles are often "Company - Role - Location" or "Role | Company"
+        // Extract the segment that looks like a job title
+        for (String sep : new String[]{" - ", " | ", " – ", " — "}) {
+            String[] parts = title.split(Pattern.quote(sep));
+            for (String part : parts) {
+                String p = part.trim();
+                String lower = p.toLowerCase();
+                if (lower.matches(".*(engineer|developer|architect|manager|analyst|designer|scientist|devops|sre|lead|specialist|programmer|director|officer).*")
+                    && p.split("\\s+").length <= 8) {
+                    return p;
+                }
+            }
         }
 
         return title;

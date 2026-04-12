@@ -1,127 +1,84 @@
 package com.resumestudio.reviewer.skills;
 
+import ai.djl.Application;
+import ai.djl.inference.Predictor;
+import ai.djl.repository.zoo.Criteria;
+import ai.djl.repository.zoo.ZooModel;
+import ai.djl.training.util.ProgressBar;
+import ai.djl.translate.TranslateException;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * Loads the pre-computed skill embedding index (skill-embeddings-v1.bin).
- *
- * Binary format (little-endian):
- *   Magic:   4 bytes = 0x454D4244 ('DBME' LE)
- *   Version: 1 byte
- *   Dim:     2 bytes = embedding dimension (768)
- *   Count:   4 bytes = number of entries
- *   Entries: { label_len(2) + label(N bytes UTF-8) + embedding(dim × float32 LE) }
- *
- * All embeddings are L2-normalised → cosine similarity = dot product.
+ * MiniLM-L6-v2 sentence embeddings via DJL TextEmbedding.
+ * Downloads model from HuggingFace on first run, cached under ~/.djl.ai/
+ * Falls back to Jaccard token overlap if model unavailable.
  */
 @Component
 public class SkillEmbeddingIndex {
 
     private static final Logger log = LoggerFactory.getLogger(SkillEmbeddingIndex.class);
-    private static final int MAGIC = 0x454D4244;
-    private static final String INDEX_PATH = "taxonomy/skill-embeddings-v1.bin";
 
-    private String[] labels;
-    private float[][] embeddings;
-    private int dim;
-    private Map<String, Integer> labelIndex;
+    private ZooModel<String[], float[][]> model;
+    private Predictor<String[], float[][]> predictor;
     private boolean available = false;
 
     @PostConstruct
     public void load() {
-        try (InputStream is = getClass().getClassLoader().getResourceAsStream(INDEX_PATH)) {
-            if (is == null) {
-                log.warn("SkillEmbeddingIndex: {} not found on classpath", INDEX_PATH);
-                return;
-            }
-            DataInputStream dis = new DataInputStream(new BufferedInputStream(is));
-
-            int magic = readIntLE(dis);
-            if (magic != MAGIC) throw new IOException("Invalid magic: 0x" + Integer.toHexString(magic));
-            dis.readByte(); // version
-            dim = readShortLE(dis);
-            int count = readIntLE(dis);
-            log.info("SkillEmbeddingIndex: loading {} entries × {} dims...", count, dim);
-
-            labels = new String[count];
-            embeddings = new float[count][dim];
-            labelIndex = new HashMap<>(count * 2);
-            byte[] floatBuf = new byte[dim * 4];
-
-            for (int i = 0; i < count; i++) {
-                int labelLen = readShortLE(dis);
-                byte[] labelBytes = dis.readNBytes(labelLen);
-                String label = new String(labelBytes, StandardCharsets.UTF_8);
-                labels[i] = label;
-                labelIndex.put(label.toLowerCase().trim(), i);
-
-                dis.readFully(floatBuf);
-                ByteBuffer bb = ByteBuffer.wrap(floatBuf).order(ByteOrder.LITTLE_ENDIAN);
-                bb.asFloatBuffer().get(embeddings[i]);
-            }
-
+        try {
+            log.info("SkillEmbeddingIndex: loading all-MiniLM-L6-v2...");
+            Criteria<String[], float[][]> criteria = Criteria.builder()
+                .optApplication(Application.NLP.TEXT_EMBEDDING)
+                .setTypes(String[].class, float[][].class)
+                .optModelUrls("djl://ai.djl.huggingface.onnxruntime/sentence-transformers/all-MiniLM-L6-v2")
+                .optProgress(new ProgressBar())
+                .build();
+            model = criteria.loadModel();
+            predictor = model.newPredictor();
             available = true;
-            if (labels.length > 1) {
-                float norm = 0;
-                for (float v : embeddings[1]) norm += v * v;
-                log.info("SkillEmbeddingIndex: loaded {} embeddings (dim={}, sample norm={}, label[1]='{}')",
-                    count, dim, String.format("%.4f", Math.sqrt(norm)), labels[1]);
-            }
+            log.info("SkillEmbeddingIndex: all-MiniLM-L6-v2 ready");
         } catch (Exception e) {
-            log.warn("SkillEmbeddingIndex: failed to load ({})", e.getMessage());
+            log.warn("SkillEmbeddingIndex: MiniLM unavailable ({}), falling back to Jaccard", e.getMessage());
         }
     }
 
-    /** Cosine similarity between two skill labels. Returns -1 if either is not in the index. */
-    public float cosineSimilarity(String labelA, String labelB) {
-        if (!available) return -1f;
-        float[] a = getEmbedding(labelA);
-        float[] b = getEmbedding(labelB);
-        if (a == null || b == null) return -1f;
-        return dot(a, b);
+    public float cosineSimilarity(String a, String b) {
+        if (!available || a == null || b == null) return jaccard(a, b);
+        try {
+            float[][] embeddings = predictor.predict(new String[]{a, b});
+            return dot(normalize(embeddings[0]), normalize(embeddings[1]));
+        } catch (TranslateException e) {
+            log.debug("Embedding failed: {}", e.getMessage());
+            return jaccard(a, b);
+        }
     }
 
-    /** Returns the pre-computed embedding for a label, or null if not found. */
-    public float[] getEmbedding(String label) {
-        if (!available || label == null) return null;
-        Integer idx = labelIndex.get(label.toLowerCase().trim());
-        return idx != null ? embeddings[idx] : null;
-    }
-
-    /** Finds the top-K most similar labels to the query. */
-    public List<Map.Entry<String, Float>> findMostSimilar(String query, int topK) {
-        if (!available) return List.of();
-        float[] qEmb = getEmbedding(query);
-        if (qEmb == null) return List.of();
-
-        float[] scores = new float[labels.length];
-        for (int i = 0; i < labels.length; i++) {
-            scores[i] = dot(qEmb, embeddings[i]);
+    public float[] embed(String text) {
+        if (!available || text == null) return null;
+        try {
+            return predictor.predict(new String[]{text})[0];
+        } catch (TranslateException e) {
+            return null;
         }
-
-        Integer[] indices = new Integer[labels.length];
-        for (int i = 0; i < indices.length; i++) indices[i] = i;
-        Arrays.sort(indices, (a, b) -> Float.compare(scores[b], scores[a]));
-
-        List<Map.Entry<String, Float>> result = new ArrayList<>(topK);
-        for (int i = 0; i < Math.min(topK, indices.length); i++) {
-            int idx = indices[i];
-            result.add(Map.entry(labels[idx], scores[idx]));
-        }
-        return result;
     }
 
     public boolean isAvailable() { return available; }
-    public int getDim() { return dim; }
+
+    private float[] normalize(float[] v) {
+        float norm = 0f;
+        for (float x : v) norm += x * x;
+        norm = (float) Math.sqrt(norm);
+        if (norm == 0f) return v;
+        float[] out = new float[v.length];
+        for (int i = 0; i < v.length; i++) out[i] = v[i] / norm;
+        return out;
+    }
 
     private float dot(float[] a, float[] b) {
         float sum = 0f;
@@ -129,17 +86,16 @@ public class SkillEmbeddingIndex {
         return sum;
     }
 
-    private static int readIntLE(DataInputStream dis) throws IOException {
-        int b0 = dis.readUnsignedByte();
-        int b1 = dis.readUnsignedByte();
-        int b2 = dis.readUnsignedByte();
-        int b3 = dis.readUnsignedByte();
-        return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
+    private float jaccard(String a, String b) {
+        if (a == null || b == null) return 0f;
+        Set<String> sa = tokens(a), sb = tokens(b);
+        if (sa.isEmpty() || sb.isEmpty()) return 0f;
+        long inter = sa.stream().filter(sb::contains).count();
+        return (float) inter / (sa.size() + sb.size() - inter);
     }
 
-    private static int readShortLE(DataInputStream dis) throws IOException {
-        int b0 = dis.readUnsignedByte();
-        int b1 = dis.readUnsignedByte();
-        return b0 | (b1 << 8);
+    private Set<String> tokens(String s) {
+        return new HashSet<>(Arrays.asList(
+            s.toLowerCase().replaceAll("[^a-z0-9]", " ").trim().split("\\s+")));
     }
 }

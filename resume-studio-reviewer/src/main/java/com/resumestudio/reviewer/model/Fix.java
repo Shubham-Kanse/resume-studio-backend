@@ -1,6 +1,8 @@
 package com.resumestudio.reviewer.model;
 
-
+import com.resumestudio.reviewer.model.enums.EffortLevel;
+import com.resumestudio.reviewer.model.enums.FixScope;
+import com.resumestudio.reviewer.model.enums.FixType;
 import com.resumestudio.reviewer.model.enums.ImpactLevel;
 
 /**
@@ -10,23 +12,32 @@ import com.resumestudio.reviewer.model.enums.ImpactLevel;
 public class Fix {
 
     private int rank;
-    private String signalId;         // references Signal.id
-    private String action;           // what to do e.g. "Move Java to your skills section"
-    private String reason;           // why it matters in recruiter terms
-    private String example;          // concrete before/after or template
+    private String signalId;
+    private FixType fixType;
+    private FixScope fixScope;
+    private String action;
+    private String reason;
+    private BeforeAfter beforeAfter;
+    private EffortLevel effort;
     private ImpactLevel impact;
 
-    public Fix() {}
+    public static class BeforeAfter {
+        private String before;
+        private String after;
 
-    public Fix(int rank, String signalId, String action, String reason,
-               String example, ImpactLevel impact) {
-        this.rank = rank;
-        this.signalId = signalId;
-        this.action = action;
-        this.reason = reason;
-        this.example = example;
-        this.impact = impact;
+        public BeforeAfter() {}
+        public BeforeAfter(String before, String after) {
+            this.before = before;
+            this.after = after;
+        }
+
+        public String getBefore() { return before; }
+        public void setBefore(String before) { this.before = before; }
+        public String getAfter() { return after; }
+        public void setAfter(String after) { this.after = after; }
     }
+
+    public Fix() {}
 
     public int getRank() { return rank; }
     public void setRank(int rank) { this.rank = rank; }
@@ -34,14 +45,23 @@ public class Fix {
     public String getSignalId() { return signalId; }
     public void setSignalId(String signalId) { this.signalId = signalId; }
 
+    public FixType getFixType() { return fixType; }
+    public void setFixType(FixType fixType) { this.fixType = fixType; }
+
+    public FixScope getFixScope() { return fixScope; }
+    public void setFixScope(FixScope fixScope) { this.fixScope = fixScope; }
+
     public String getAction() { return action; }
     public void setAction(String action) { this.action = action; }
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
 
-    public String getExample() { return example; }
-    public void setExample(String example) { this.example = example; }
+    public BeforeAfter getBeforeAfter() { return beforeAfter; }
+    public void setBeforeAfter(BeforeAfter beforeAfter) { this.beforeAfter = beforeAfter; }
+
+    public EffortLevel getEffort() { return effort; }
+    public void setEffort(EffortLevel effort) { this.effort = effort; }
 
     public ImpactLevel getImpact() { return impact; }
     public void setImpact(ImpactLevel impact) { this.impact = impact; }

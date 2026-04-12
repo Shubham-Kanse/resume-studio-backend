@@ -86,10 +86,9 @@ public class YoeSignalCalculator {
     // ── YOE calculation ───────────────────────────────────────────────────────
 
     private double calculateTotalYoe(List<WorkExperience> experience) {
-        // Sum non-overlapping date ranges
-        // Sort by start date
+        // Sum non-overlapping date ranges, with part-time counted at 0.5x
         List<WorkExperience> sorted = new ArrayList<>(experience);
-        sorted.removeIf(WorkExperience::isCareerBreak);
+        sorted.removeIf(e -> e.isCareerBreak() || e.isSabbatical() || e.isParentalLeave());
         sorted.sort(Comparator.comparing(
             e -> e.getStartDate() != null ? e.getStartDate() : LocalDate.of(2000, 1, 1)));
 
@@ -102,22 +101,24 @@ public class YoeSignalCalculator {
             LocalDate end = role.isCurrent() ? LocalDate.now() : role.getEndDate();
             if (start == null || end == null) continue;
 
+            double multiplier = role.isPartTime() ? 0.5 : 1.0;
+
             if (rangeStart == null) {
                 rangeStart = start;
                 rangeEnd = end;
+                totalDays += ChronoUnit.DAYS.between(start, end) * multiplier;
             } else if (!start.isAfter(rangeEnd)) {
-                // Overlapping — extend the range
-                if (end.isAfter(rangeEnd)) rangeEnd = end;
+                // Overlapping — extend the range (don't double-count)
+                if (end.isAfter(rangeEnd)) {
+                    totalDays += ChronoUnit.DAYS.between(rangeEnd, end) * multiplier;
+                    rangeEnd = end;
+                }
             } else {
-                // Gap — save previous range, start new
-                totalDays += ChronoUnit.DAYS.between(rangeStart, rangeEnd);
+                // Gap — start new range
                 rangeStart = start;
                 rangeEnd = end;
+                totalDays += ChronoUnit.DAYS.between(start, end) * multiplier;
             }
-        }
-
-        if (rangeStart != null) {
-            totalDays += ChronoUnit.DAYS.between(rangeStart, rangeEnd);
         }
 
         return totalDays / 365.25;
@@ -146,13 +147,17 @@ public class YoeSignalCalculator {
     // ── Fit computation ───────────────────────────────────────────────────────
 
     private YoeFit computeFit(double yoe, Double jdMin, Double jdMax) {
-        if (jdMin == null) return YoeFit.IN_RANGE; // no requirement stated
+        if (jdMin == null && jdMax == null) return YoeFit.IN_RANGE; // no requirement stated
 
-        if (jdMax != null && yoe > jdMax + 4) return YoeFit.OVER_RANGE;
+        // Overqualified: more than 2 years over the max
+        if (jdMax != null && yoe > jdMax + 2) return YoeFit.OVER_RANGE;
 
-        if (yoe >= jdMin) return YoeFit.IN_RANGE;
+        // In range
+        double min = jdMin != null ? jdMin : 0.0;
+        if (yoe >= min) return YoeFit.IN_RANGE;
 
-        double gap = jdMin - yoe;
+        // Under range
+        double gap = min - yoe;
         if (gap <= 1.5) return YoeFit.UNDER_RANGE_MINOR;
         return YoeFit.UNDER_RANGE_SIGNIFICANT;
     }
@@ -305,7 +310,9 @@ public class YoeSignalCalculator {
     private boolean isCoveredByCareerBreak(LocalDate gapStart, LocalDate gapEnd, List<WorkExperience> experience) {
         if (experience == null || experience.isEmpty()) return false;
         for (WorkExperience role : experience) {
-            if (!role.isCareerBreak() || role.getStartDate() == null) continue;
+            // Career breaks, sabbaticals, and parental leave all explain gaps
+            boolean isExplainedBreak = role.isCareerBreak() || role.isSabbatical() || role.isParentalLeave();
+            if (!isExplainedBreak || role.getStartDate() == null) continue;
             LocalDate breakEnd = role.isCurrent() ? LocalDate.now() : role.getEndDate();
             if (breakEnd == null) continue;
             if (!breakEnd.isBefore(gapStart) && !role.getStartDate().isAfter(gapEnd)) return true;

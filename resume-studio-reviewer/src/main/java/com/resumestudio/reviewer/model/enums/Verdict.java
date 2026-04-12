@@ -1,7 +1,5 @@
 package com.resumestudio.reviewer.model.enums;
 
 public enum Verdict {
-    STRONG_FIT,
-    POSSIBLE_FIT,
-    WEAK_FIT
+    STRONG_FIT, POSSIBLE_FIT, WEAK_FIT, NO_FIT
 }

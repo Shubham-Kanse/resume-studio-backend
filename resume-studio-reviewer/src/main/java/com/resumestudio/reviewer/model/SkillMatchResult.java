@@ -1,6 +1,7 @@
 package com.resumestudio.reviewer.model;
 
 
+import com.resumestudio.reviewer.model.enums.AbsenceReason;
 import com.resumestudio.reviewer.model.enums.SkillMatchType;
 import com.resumestudio.reviewer.model.enums.SkillVisibility;
 
@@ -15,8 +16,11 @@ public class SkillMatchResult {
     private SkillMatchType matchType;      // how it was matched
     private SkillVisibility visibility;    // where it was found on resume
     private boolean isMustHave;
-    private boolean isAbbreviationMismatch; // JD: "PostgreSQL", CV: "PG"
-    private Double semanticScore;          // 0.0-1.0 for SEMANTIC matches
+    private boolean isAbbreviationMismatch;
+    private Double semanticScore;
+    private AbsenceReason absenceReason;
+    private float recencyWeight = 1.0f;   // from Skill.recencyWeight
+    private float finalConfidence = 1.0f; // matchConfidence * recencyWeight
 
     public SkillMatchResult() {}
 
@@ -54,4 +58,13 @@ public class SkillMatchResult {
 
     public Double getSemanticScore() { return semanticScore; }
     public void setSemanticScore(Double semanticScore) { this.semanticScore = semanticScore; }
+
+    public AbsenceReason getAbsenceReason() { return absenceReason; }
+    public void setAbsenceReason(AbsenceReason absenceReason) { this.absenceReason = absenceReason; }
+
+    public float getRecencyWeight() { return recencyWeight; }
+    public void setRecencyWeight(float recencyWeight) { this.recencyWeight = recencyWeight; }
+
+    public float getFinalConfidence() { return finalConfidence; }
+    public void setFinalConfidence(float finalConfidence) { this.finalConfidence = finalConfidence; }
 }
