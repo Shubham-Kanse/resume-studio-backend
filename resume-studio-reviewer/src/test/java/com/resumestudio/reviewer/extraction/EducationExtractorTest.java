@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class EducationExtractorTest {
 
@@ -14,7 +15,11 @@ class EducationExtractorTest {
 
     @BeforeEach
     void setUp() {
-        extractor = new EducationExtractor();
+        EducationPrestigeService prestige = mock(EducationPrestigeService.class);
+        when(prestige.institutionTier(anyString())).thenReturn("UNKNOWN");
+        when(prestige.institutionBoost(anyString())).thenReturn(0.5);
+        when(prestige.degreeRelevance(anyString())).thenReturn(0.5);
+        extractor = new EducationExtractor(prestige);
     }
 
     @Test

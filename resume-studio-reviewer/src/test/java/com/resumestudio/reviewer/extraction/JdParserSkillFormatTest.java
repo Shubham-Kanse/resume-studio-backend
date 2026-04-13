@@ -43,7 +43,8 @@ class JdParserSkillFormatTest {
         when(tfidf.computePositionalWeight(anyString(), anyString())).thenReturn(0.5);
         when(pos.isVerb(anyString(), anyString())).thenReturn(false);
 
-        parser = new JdParserService(escoGraph, mind, encoder, tfidf, pos);
+        parser = new JdParserService(escoGraph, mind, encoder, tfidf, pos,
+                mock(JdRolePatternsService.class));
     }
 
     @Test void slashSeparatedSkills_allExtracted() {

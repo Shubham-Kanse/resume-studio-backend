@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Edge cases for company signals — freelance, unknown company, subsidiary names.
@@ -20,7 +21,12 @@ class CompanySignalEdgeCaseTest {
     private CompanySignalCalculator calculator;
 
     @BeforeEach
-    void setUp() { calculator = new CompanySignalCalculator(); }
+    void setUp() {
+        CompanyContextService ctx = mock(CompanyContextService.class);
+        when(ctx.tierLabel(anyString())).thenReturn("UNKNOWN");
+        when(ctx.credibility(anyString())).thenReturn(0.5);
+        calculator = new CompanySignalCalculator(ctx);
+    }
 
     private WorkExperience role(String company, String descriptor) {
         WorkExperience w = new WorkExperience();

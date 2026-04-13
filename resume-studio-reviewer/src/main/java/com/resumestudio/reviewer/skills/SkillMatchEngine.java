@@ -112,28 +112,25 @@ public class SkillMatchEngine {
             }
         }
 
-        // ── Strategy 5: SEMANTIC (embeddings) ─────────────────────────────
-        // Use BGE embeddings for fuzzy semantic matching
-        SemanticSkillMatcher.MatchResult semantic = semanticMatcher.findBestMatch(jdSkill, resumeSkills);
-        if (semantic != null) {
-            log.debug("SEMANTIC match: '{}' → '{}' (score: {:.2f})", jdSkill, semantic.getSkill().getRawName(), semantic.getScore());
-            SkillMatchResult semanticResult = buildResult(result, semantic.getSkill(), SkillMatchType.SEMANTIC, jdCanonical);
-            semanticResult.setSemanticScore((double) semantic.getScore());
-            return semanticResult;
-        }
-
-        // ── Strategy 6: PARENT_FRAMEWORK ──────────────────────────────────
-        // JD asks for "Spring Boot", CV has "Spring" (parent)
-        // Use word boundary to avoid false positives (e.g., "Java" in "JavaScript")
+        // ── Strategy 5: PARENT_FRAMEWORK ──────────────────────────────────
+        // JD asks for "Spring Boot", CV has "Spring" (parent) — higher confidence than semantic
         for (Skill resumeSkill : resumeSkills) {
             String rawName = resumeSkill.getRawName();
             if (rawName == null || rawName.isBlank()) continue;
-            
             String resumeNorm = normalise(rawName);
             if (resumeNorm.length() > 4 && jdNormalised.matches(".*\\b" + java.util.regex.Pattern.quote(resumeNorm) + "\\b.*")) {
                 log.debug("PARENT_FRAMEWORK match: '{}' → '{}'", jdSkill, rawName);
                 return buildResult(result, resumeSkill, SkillMatchType.PARENT_FRAMEWORK, jdCanonical);
             }
+        }
+
+        // ── Strategy 6: SEMANTIC (embeddings) ─────────────────────────────
+        SemanticSkillMatcher.MatchResult semantic = semanticMatcher.findBestMatch(jdSkill, resumeSkills);
+        if (semantic != null) {
+            log.debug("SEMANTIC match: '{}' → '{}' (score: {})", jdSkill, semantic.getSkill().getRawName(), semantic.getScore());
+            SkillMatchResult semanticResult = buildResult(result, semantic.getSkill(), SkillMatchType.SEMANTIC, jdCanonical);
+            semanticResult.setSemanticScore((double) semantic.getScore());
+            return semanticResult;
         }
 
         // ── Strategy 7: ESCO equivalence ──────────────────────────────────

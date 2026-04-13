@@ -19,7 +19,9 @@ class ExperienceExtractorTest {
     void setUp() {
         NlpService nlp = mock(NlpService.class);
         when(nlp.findOrganizations(anyString())).thenReturn(List.of());
-        extractor = new ExperienceExtractor(nlp);
+        DesignationOntologyService ontology = mock(DesignationOntologyService.class);
+        when(ontology.isKnownTitle(anyString())).thenReturn(false);
+        extractor = new ExperienceExtractor(nlp, ontology);
     }
 
     @Test void extract_null_returnsEmpty() {

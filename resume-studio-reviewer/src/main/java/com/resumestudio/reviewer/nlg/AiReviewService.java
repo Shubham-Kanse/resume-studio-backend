@@ -317,22 +317,11 @@ public class AiReviewService {
                 builder.fixes(fixList);
             }
 
-            // signals — deterministic structure from FeedbackGenerator, capped at 6
-            // AI observation/interpretation text merged in where available
+            // signals — deterministic structure from FeedbackGenerator only
+            // AI signal text is intentionally NOT merged — SentenceBank generates
+            // specific, data-grounded observations that the AI consistently degrades
             FeedbackGenerator.FeedbackOutput fb = fallback.generate(signals, classification.verdict());
-            JsonNode signalTexts = root.path("signalTexts");
-            List<Signal> cappedSignals = fb.signals().stream().limit(6).map(s -> {
-                if (!signalTexts.isMissingNode() && s.getId() != null) {
-                    JsonNode st = signalTexts.path(s.getId());
-                    if (!st.isMissingNode()) {
-                        String obs = st.path("observation").asText(null);
-                        String interp = st.path("interpretation").asText(null);
-                        if (obs != null) s.setObservation(obs);
-                        if (interp != null) s.setInterpretation(interp);
-                    }
-                }
-                return s;
-            }).toList();
+            List<Signal> cappedSignals = fb.signals().stream().limit(6).toList();
             builder.signals(cappedSignals);
 
             // Post-AI consistency: tailoringScore must not be 10 for WEAK_FIT/NO_FIT
@@ -392,14 +381,6 @@ public class AiReviewService {
             "firstImpression": "string",
             "trustLevel": "HIGH | MEDIUM | LOW",
             "observation": "string"
-          },
-          "signalTexts": {
-            "title_match": { "observation": "string", "interpretation": "string" },
-            "yoe_fit": { "observation": "string", "interpretation": "string" },
-            "must_haves_visible": { "observation": "string", "interpretation": "string" },
-            "company_context": { "observation": "string", "interpretation": "string" },
-            "summary_quality": { "observation": "string", "interpretation": "string" },
-            "career_trajectory": { "observation": "string", "interpretation": "string" }
           },
           "differentiators": [
             { "observation": "string", "impact": "HIGH | MEDIUM | LOW" }

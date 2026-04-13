@@ -1,5 +1,6 @@
 package com.resumestudio.reviewer.extraction;
 
+import com.resumestudio.reviewer.nlp.TextNormalizer;
 import com.resumestudio.reviewer.model.Resume;
 import com.resumestudio.reviewer.skills.EscoSkillGraph;
 import org.slf4j.Logger;
@@ -21,9 +22,14 @@ public class SummaryExtractor {
     private static final Logger log = LoggerFactory.getLogger(SummaryExtractor.class);
 
     private final EscoSkillGraph escoGraph;
+    private final TextNormalizer textNormalizer;
+    private final ResumeOntologyService resumeOntology;
 
-    public SummaryExtractor(EscoSkillGraph escoGraph) {
+    public SummaryExtractor(EscoSkillGraph escoGraph, TextNormalizer textNormalizer,
+                            ResumeOntologyService resumeOntology) {
         this.escoGraph = escoGraph;
+        this.textNormalizer = textNormalizer;
+        this.resumeOntology = resumeOntology;
     }
 
     // Generic/useless summary phrases
@@ -55,7 +61,11 @@ public class SummaryExtractor {
     public SummaryAnalysis analyse(String summaryText, String jdTitle) {
         SummaryAnalysis analysis = new SummaryAnalysis();
 
-        if (summaryText == null || summaryText.isBlank()) {
+        // Use ontology minWords (15) as the minimum — filters contact lines and fragments
+        int minWords = Math.max(5, resumeOntology.getMinWords("PROFESSIONAL_SUMMARY"));
+        if (summaryText == null || summaryText.isBlank()
+                || summaryText.trim().length() < 30
+                || summaryText.trim().split("\\s+").length < minWords) {
             analysis.setPresent(false);
             return analysis;
         }
@@ -69,15 +79,10 @@ public class SummaryExtractor {
         int skillCount = extractTechnicalSkills(summaryText);
         analysis.setMentionsSkills(skillCount >= 3); // At least 3 technical skills
 
-        // Check if mentions title/role
+        // BoW overlap between summary and JD title — more robust than word-contains
         if (jdTitle != null) {
-            String[] titleWords = jdTitle.toLowerCase().split("\\s+");
-            String summaryLower = summaryText.toLowerCase();
-            int matched = 0;
-            for (String word : titleWords) {
-                if (word.length() > 3 && summaryLower.contains(word)) matched++;
-            }
-            analysis.setMentionsTitle(matched >= Math.max(1, titleWords.length / 2));
+            double overlap = textNormalizer.jaccardSimilarity(summaryText, jdTitle);
+            analysis.setMentionsTitle(overlap >= 0.15); // at least 15% token overlap
         }
 
         // Check for generic phrases

@@ -292,16 +292,20 @@ public class YoeSignalCalculator {
                                           List<com.resumestudio.reviewer.model.Education> education) {
         if (education == null || education.isEmpty()) return false;
         for (var edu : education) {
-            if (edu.getGraduationYear() == null) continue;
-            LocalDate eduEnd = LocalDate.of(edu.getGraduationYear(), 12, 31);
+            LocalDate eduEnd;
+            if (edu.isCurrentlyStudying()) {
+                eduEnd = LocalDate.now();
+            } else if (edu.getGraduationYear() != null) {
+                eduEnd = LocalDate.of(edu.getGraduationYear(), 12, 31);
+            } else {
+                log.debug("isCoveredByEducation: skipping edu with no graduation year: {}", edu.getInstitution());
+                continue;
+            }
             LocalDate eduStart = edu.getStartYear() != null
                 ? LocalDate.of(edu.getStartYear(), 1, 1)
-                : eduEnd.minusYears(4); // assume 4-year degree if no start year
-            
-            // Extend education coverage to 9 months post-graduation for job search
-            LocalDate extendedEduEnd = eduEnd.plusMonths(9);
-            
-            // Gap is covered if education (+ post-grad buffer) overlaps with it
+                : eduEnd.minusYears(4);
+
+            LocalDate extendedEduEnd = edu.isCurrentlyStudying() ? eduEnd : eduEnd.plusMonths(9);
             if (!extendedEduEnd.isBefore(gapStart) && !eduStart.isAfter(gapEnd)) return true;
         }
         return false;

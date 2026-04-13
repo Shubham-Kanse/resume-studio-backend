@@ -40,6 +40,7 @@ public class JdParserService {
     private final SentenceEncoder sentenceEncoder;
     private final TfIdfVectorizer tfidfVectorizer;
     private final PosTagService posTagService;
+    private final JdRolePatternsService rolePatternsService;
     
     private double unstructuredMustHaveRatio = 0.7;
     private int unstructuredSplitMinSkills = 8;
@@ -55,16 +56,18 @@ public class JdParserService {
         }
     );
 
-    public JdParserService(EscoSkillGraph escoGraph, 
+    public JdParserService(EscoSkillGraph escoGraph,
                           MindTechOntology mindTech,
                           SentenceEncoder sentenceEncoder,
                           TfIdfVectorizer tfidfVectorizer,
-                          PosTagService posTagService) {
+                          PosTagService posTagService,
+                          JdRolePatternsService rolePatternsService) {
         this.escoGraph = escoGraph;
         this.mindTech = mindTech;
         this.sentenceEncoder = sentenceEncoder;
         this.tfidfVectorizer = tfidfVectorizer;
         this.posTagService = posTagService;
+        this.rolePatternsService = rolePatternsService;
     }
 
     @Value("${reviewer.jd.unstructured.must-have-ratio:0.7}")
@@ -192,9 +195,45 @@ public class JdParserService {
         );
         jd.setJdClarity(computeJdClarity(rawText, jd));
         jd.setTrimmedText(buildTrimmedText(rawText, jd));
+
+        // Enrich with role pattern data from ontology
+        enrichFromRolePatterns(rawText, jd);
+
         return jd;
     }
-    
+
+    /**
+     * Enriches the parsed JD with data from jd_role_patterns.json:
+     * - Implicit expectations (e.g. "on-call" for SRE even if not written)
+     * - YOE range fallback if not extracted from text
+     * - Red/green flag detection
+     * - JdClarity upgrade if high-clarity indicators found
+     */
+    private void enrichFromRolePatterns(String rawText, JobDescription jd) {
+        // Implicit expectations
+        List<String> expectations = rolePatternsService.implicitExpectations(jd.getRoleTitle());
+        if (!expectations.isEmpty()) jd.setImplicitExpectations(expectations);
+
+        // YOE range fallback — only if parser didn't extract one
+        if (jd.getYoeMin() == null && jd.getYoeMax() == null) {
+            double[] range = rolePatternsService.typicalYoeRange(jd.getRoleTitle());
+            if (range != null) {
+                jd.setYoeMin(range[0]);
+                jd.setYoeMax(range[1]);
+            }
+        }
+
+        // Red/green flags
+        jd.setHasRedFlag(rolePatternsService.hasRedFlag(rawText));
+        jd.setHasGreenFlag(rolePatternsService.hasGreenFlag(rawText));
+
+        // Upgrade JdClarity if high-clarity indicators present
+        if (jd.getJdClarity() == com.resumestudio.reviewer.model.enums.JdClarity.MEDIUM
+                && rolePatternsService.isHighClarity(rawText, jd.getRoleTitle())) {
+            jd.setJdClarity(com.resumestudio.reviewer.model.enums.JdClarity.HIGH);
+        }
+    }
+
     private String computeSha256(String text) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

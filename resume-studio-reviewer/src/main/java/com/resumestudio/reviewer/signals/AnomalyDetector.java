@@ -5,6 +5,7 @@ import com.resumestudio.reviewer.model.Skill;
 import com.resumestudio.reviewer.model.WorkExperience;
 import com.resumestudio.reviewer.nlp.NlpService;
 import com.resumestudio.reviewer.skills.EscoSkillGraph;
+import com.resumestudio.reviewer.skills.SkillRecencyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -18,9 +19,6 @@ import java.util.regex.Pattern;
 public class AnomalyDetector {
 
     private static final Logger log = LoggerFactory.getLogger(AnomalyDetector.class);
-
-    private final EscoSkillGraph escoGraph;
-    private final NlpService nlp;
 
     private static final Pattern SKILL_YOE_CLAIM = Pattern.compile(
         "(\\d+)\\s*\\+?\\s*years?\\s+(?:of\\s+)?([A-Za-z][A-Za-z0-9.+#\\s]{1,30})",
@@ -40,16 +38,22 @@ public class AnomalyDetector {
         "mentored", "spearheaded", "pioneered", "transformed", "built from scratch"
     );
 
-    public AnomalyDetector(EscoSkillGraph escoGraph, NlpService nlp) {
+    private final EscoSkillGraph escoGraph;
+    private final NlpService nlp;
+    private final SkillRecencyService skillRecency;
+
+    public AnomalyDetector(EscoSkillGraph escoGraph, NlpService nlp, SkillRecencyService skillRecency) {
         this.escoGraph = escoGraph;
         this.nlp = nlp;
+        this.skillRecency = skillRecency;
     }
 
     public void detect(List<Skill> skills, List<WorkExperience> experience,
                        String fullText, ResumeSignals signals) {
         detectSkillAgeMismatch(fullText, signals);
         detectTitleInflation(experience, signals);
-        computeBulletQuality(experience, signals);
+        // Note: bullet quality (impactVerbRatio, metricDensity) is computed in
+        // ReviewerPipeline.computeSignals via NlpService over ALL bullets — not duplicated here.
     }
 
     private void detectSkillAgeMismatch(String text, ResumeSignals signals) {
@@ -62,15 +66,14 @@ public class AnomalyDetector {
     }
 
     private void checkMismatch(String skillName, int claimedYears, int currentYear, ResumeSignals signals) {
-        String canonical = escoGraph.resolve(skillName);
-        Integer releaseYear = escoGraph.releaseYearOf(canonical);
-        if (releaseYear == null) return;
-        int maxPossible = currentYear - releaseYear;
-        if (claimedYears > maxPossible + 1) {
+        // Use SkillRecencyService — replaces the broken escoGraph.releaseYearOf() stub
+        if (skillRecency.isYoeClaimSuspicious(skillName, claimedYears)) {
+            Integer born = skillRecency.bornYear(skillName);
+            int maxPossible = born != null ? currentYear - born : claimedYears;
             signals.setHasSkillAgeMismatch(true);
             signals.setSkillAgeMismatchDetail(String.format(
-                "Claims %d years of %s, but %s was released in %d (max possible: %d years).",
-                claimedYears, canonical, canonical, releaseYear, maxPossible));
+                "Claims %d years of %s, but it was released ~%d (max possible: ~%d years).",
+                claimedYears, skillName, born != null ? born : currentYear - maxPossible, maxPossible));
         }
     }
 

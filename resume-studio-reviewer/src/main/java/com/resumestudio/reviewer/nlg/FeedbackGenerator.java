@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Orchestrates all feedback generation.
@@ -25,9 +26,32 @@ public class FeedbackGenerator {
     private static final Logger log = LoggerFactory.getLogger(FeedbackGenerator.class);
 
     private final SentenceBank bank;
+    private final SentenceBankOntologyService ontologyBank;
 
-    public FeedbackGenerator(SentenceBank bank) {
+    public FeedbackGenerator(SentenceBank bank, SentenceBankOntologyService ontologyBank) {
         this.bank = bank;
+        this.ontologyBank = ontologyBank;
+    }
+
+    /**
+     * Get observation from ontology with token interpolation, falling back to SentenceBank.
+     * seed = hash of signalId+tier for determinism.
+     */
+    private String obs(String signalId, String tier, Map<String, String> tokens) {
+        int seed = (signalId + tier).hashCode();
+        String result = ontologyBank.observation(signalId, tier, tokens, seed);
+        return result != null ? result : null; // caller handles null fallback
+    }
+
+    private String interp(String signalId, String tier, Map<String, String> tokens) {
+        int seed = (signalId + tier + "i").hashCode();
+        String result = ontologyBank.interpretation(signalId, tier, tokens, seed);
+        return result != null ? result : null;
+    }
+
+    private String act(String signalId, String tier, Map<String, String> tokens) {
+        int seed = (signalId + tier + "a").hashCode();
+        return ontologyBank.action(signalId, tier, tokens, seed);
     }
 
     public FeedbackOutput generate(ResumeSignals signals, Verdict verdict) {
@@ -43,149 +67,270 @@ public class FeedbackGenerator {
         return new FeedbackOutput(signalList, fixes, summary);
     }
 
-    // ── Signal list (max 6 for UI 2×3 grid) ──────────────────────────────────
+    // ── Signal list — synthesised cross-signal insights ───────────────────────
+    //
+    // A professional reviewer doesn't list signals in isolation.
+    // They synthesise: "Your background is credible but the stack gap is the blocker."
+    // We produce 3-4 insights that combine related signals into a coherent story.
 
     private List<Signal> buildSignals(ResumeSignals signals) {
         List<Signal> list = new ArrayList<>();
 
-        // 1. Title match
-        TitleMatch titleMatch = signals.getTitleMatch();
-        SignalStatus titleStatus;
-        if (titleMatch == null) {
-            titleStatus = SignalStatus.WARN;
-        } else {
-            titleStatus = switch (titleMatch) {
-                case EXACT, ADJACENT -> SignalStatus.PASS;
-                case RELATED -> SignalStatus.WARN;
-                case MISS -> SignalStatus.FAIL;
-                default -> SignalStatus.WARN;
-            };
-        }
-        list.add(signal("title_match", "Title match", titleStatus, SignalFriction.NONE, bank.titleObservation(signals), bank.titleInterpretation(signals), ImpactLevel.HIGH));
+        // ── Insight 1: Candidate fit (title + YOE + company tier) ─────────────
+        list.add(buildFitInsight(signals));
 
-        // 2. YOE fit
-        YoeFit yoeFit = signals.getYoeFit();
-        SignalStatus yoeStatus;
-        if (signals.isChronologyUnreliable()) {
-            yoeStatus = SignalStatus.FAIL;
-        } else if (yoeFit == null) {
-            yoeStatus = SignalStatus.FAIL;
-        } else {
-            yoeStatus = switch (yoeFit) {
-                case IN_RANGE -> SignalStatus.PASS;
-                case UNDER_RANGE_MINOR, OVER_RANGE -> SignalStatus.WARN;
-                case UNDER_RANGE_SIGNIFICANT, CANNOT_DETERMINE -> SignalStatus.FAIL;
-            };
-        }
-        
-        YoeState yoeState = signals.getYoeState();
-        SignalFriction yoeFriction;
-        if (signals.isChronologyUnreliable()) {
-            yoeFriction = SignalFriction.HIGH;
-        } else if (signals.isHasChronologyIssues()) {
-            yoeFriction = SignalFriction.MEDIUM;
-        } else if (yoeState == null) {
-            yoeFriction = SignalFriction.HIGH;
-        } else {
-            yoeFriction = switch (yoeState) {
-                case EXPLICIT -> SignalFriction.NONE;
-                case CALCULABLE -> SignalFriction.LOW;
-                case PARTIAL, INCONSISTENT_FORMAT -> SignalFriction.MEDIUM;
-                default -> SignalFriction.HIGH;
-            };
-        }
-        list.add(signal("yoe_fit", "Years of experience", yoeStatus, yoeFriction, bank.yoeObservation(signals), bank.yoeInterpretation(signals), ImpactLevel.HIGH));
+        // ── Insight 2: Skill coverage (the make-or-break signal) ──────────────
+        list.add(buildSkillInsight(signals));
 
-        // 3. Must-have skills visible
-        SignalStatus skillsStatus;
-        SignalFriction skillsFriction;
-        String skillsObservation;
-        String skillsInterpretation;
-        boolean hasJdSkills = signals.getMustHaveResults() != null && !signals.getMustHaveResults().isEmpty();
-        if (!hasJdSkills) {
-            // No JD skills were parsed — can't do skill matching
-            skillsStatus = SignalStatus.WARN; skillsFriction = SignalFriction.NONE;
-            skillsObservation = "No must-have skills could be extracted from the job description.";
-            skillsInterpretation = "Paste a well-structured JD (with a Requirements section) to get targeted skill gap analysis.";
-        } else if (signals.isHasMissingMustHaves()) {
-            skillsStatus = SignalStatus.FAIL; skillsFriction = SignalFriction.HIGH;
-            long missingCount = signals.getMustHaveResults().stream()
-                .filter(r -> r.getVisibility() == SkillVisibility.MISSING).count();
-            String first = signals.getMustHaveResults().stream()
-                .filter(r -> r.getVisibility() == SkillVisibility.MISSING)
-                .map(SkillMatchResult::getJdSkill).findFirst().orElse("required skill");
-            skillsObservation = missingCount > 1
-                ? first + " and " + (missingCount - 1) + " other must-have skills don't appear anywhere on your resume."
-                : first + " doesn't appear anywhere on your resume.";
-            skillsInterpretation = "Missing must-have skills are typically a decisive rejection signal. A recruiter scanning for these won't find them.";
-        } else if (signals.isHasBuriedMustHaves()) {
-            skillsStatus = SignalStatus.WARN; skillsFriction = SignalFriction.MEDIUM;
-            skillsObservation = bank.skillsFormatObservation(signals);
-            skillsInterpretation = bank.skillsFormatInterpretation(signals);
-        } else {
-            skillsStatus = SignalStatus.PASS; skillsFriction = SignalFriction.NONE;
-            skillsObservation = bank.skillsFormatObservation(signals);
-            skillsInterpretation = bank.skillsFormatInterpretation(signals);
-        }
-        list.add(signal("must_haves_visible", "Must-have skills visible", skillsStatus, skillsFriction, skillsObservation, skillsInterpretation, ImpactLevel.HIGH));
+        // ── Insight 3: Resume presentation (summary + format + visibility) ────
+        list.add(buildPresentationInsight(signals));
 
-        // 4. Company context
-        SignalStatus companyStatus = switch (signals.getCurrentCompanyTier()) {
-            case FAANG, TIER_1 -> SignalStatus.PASS;
-            case SCALE_UP, DESCRIBED -> SignalStatus.PASS;
-            case STARTUP -> SignalStatus.WARN;
-            case UNKNOWN -> SignalStatus.WARN;
-        };
-        list.add(signal("company_context", "Company context", companyStatus, SignalFriction.NONE, bank.companyObservation(signals), bank.companyInterpretation(signals), ImpactLevel.MEDIUM));
-
-        // 5. Summary present and quality
-        SignalStatus summaryStatus;
-        if (!signals.isSummaryPresent()) summaryStatus = SignalStatus.WARN;
-        else if (signals.isSummaryIsGeneric()) summaryStatus = SignalStatus.WARN;
-        else if (signals.isSummaryMentionsYoe() && signals.isSummaryMentionsSkills()) summaryStatus = SignalStatus.PASS;
-        else summaryStatus = SignalStatus.WARN;
-        list.add(signal("summary_quality", "Summary section", summaryStatus, SignalFriction.NONE, bank.summaryObservation(signals), bank.summaryInterpretation(signals), ImpactLevel.MEDIUM));
-
-        // 6. Title progression / format (pick most relevant)
-        if (signals.isHasChronologyIssues()) {
-            SignalStatus chronologyStatus = signals.isChronologyUnreliable() ? SignalStatus.FAIL : SignalStatus.WARN;
-            SignalFriction chronologyFriction = signals.isChronologyUnreliable() ? SignalFriction.HIGH : SignalFriction.MEDIUM;
-            list.add(signal("chronology", "Career chronology", chronologyStatus, chronologyFriction, bank.chronologyObservation(signals), bank.chronologyInterpretation(signals), ImpactLevel.MEDIUM));
-        } else if (signals.isFormatWallOfText() || signals.isFormatHasPhoto() || signals.isFormatTooManyPages()) {
-            SignalStatus formatStatus = SignalStatus.WARN;
-            list.add(signal("format_quality", "Layout & formatting", formatStatus, SignalFriction.MEDIUM, "Formatting issues detected that increase scan friction.", "Layout problems make the document harder to read at speed.", ImpactLevel.MEDIUM));
-        } else {
-            TitleProgression prog = signals.getTitleProgression();
-            SignalStatus progressionStatus;
-            String progObs;
-            String progInterp;
-            switch (prog == null ? TitleProgression.UNKNOWN : prog) {
-                case GROWING -> {
-                    progressionStatus = SignalStatus.PASS;
-                    progObs = "Your career shows an upward title trajectory.";
-                    progInterp = "Title growth is a positive trust signal — it shows a recruiter you've earned more responsibility over time.";
-                }
-                case FLAT -> {
-                    progressionStatus = SignalStatus.WARN;
-                    progObs = "Your title has remained at the same level across roles.";
-                    progInterp = "Flat progression isn't disqualifying, but a recruiter will expect to see growing scope or impact in the bullet points instead.";
-                }
-                case REGRESSION -> {
-                    progressionStatus = SignalStatus.WARN;
-                    progObs = "Your most recent title is lower than a previous one.";
-                    progInterp = "A step down in title raises questions without context. If it was intentional (pivot, move abroad, company stage), address it briefly in your summary.";
-                }
-                default -> {
-                    // UNKNOWN: not enough roles with readable seniority markers
-                    progressionStatus = SignalStatus.WARN;
-                    progObs = "Only one substantive role on record — trajectory can't be established from a single position.";
-                    progInterp = "This isn't a negative signal at your career stage. As you add more roles, showing upward progression will matter increasingly.";
-                }
-            }
-            list.add(signal("title_progression", "Career trajectory", progressionStatus, SignalFriction.NONE, progObs, progInterp, ImpactLevel.LOW));
-        }
+        // ── Insight 4: Trust & chronology (only if there's an issue) ──────────
+        Signal trustInsight = buildTrustInsight(signals);
+        if (trustInsight != null) list.add(trustInsight);
 
         return list;
+    }
+
+    /**
+     * Insight 1 — Candidate fit.
+     * Combines title match + YOE fit + company tier into one verdict.
+     * Only surfaces what's actually interesting — not "title matches" when it obviously does.
+     */
+    private Signal buildFitInsight(ResumeSignals signals) {
+        TitleMatch titleMatch = signals.getTitleMatch() != null ? signals.getTitleMatch() : TitleMatch.MISS;
+        YoeFit yoeFit = signals.getYoeFit() != null ? signals.getYoeFit() : YoeFit.CANNOT_DETERMINE;
+        CompanyTier tier = signals.getCurrentCompanyTier() != null ? signals.getCurrentCompanyTier() : CompanyTier.UNKNOWN;
+
+        boolean titleOk = titleMatch == TitleMatch.EXACT || titleMatch == TitleMatch.ADJACENT;
+        boolean yoeOk = yoeFit == YoeFit.IN_RANGE;
+        boolean tierStrong = tier == CompanyTier.FAANG || tier == CompanyTier.TIER_1;
+        boolean yoeShort = yoeFit == YoeFit.UNDER_RANGE_SIGNIFICANT;
+        boolean titleMiss = titleMatch == TitleMatch.MISS;
+
+        String candidateTitle = signals.getCandidateTitle() != null ? signals.getCandidateTitle() : "your title";
+        String jdTitle = signals.getJdTitle() != null ? signals.getJdTitle() : "this role";
+        String yoeStr = signals.getCalculatedYoe() != null ? String.format("%.1f", signals.getCalculatedYoe()).replaceAll("\\.0$", "") : "unknown";
+        String yoeRange = signals.getJdYoeMin() != null
+            ? signals.getJdYoeMin().intValue() + (signals.getJdYoeMax() != null ? "–" + signals.getJdYoeMax().intValue() : "+")
+            : "required";
+        String company = signals.getCurrentCompanyName() != null ? signals.getCurrentCompanyName() : "your company";
+
+        Map<String, String> tokens = Map.of(
+            "candidate_title", candidateTitle,
+            "jd_title", jdTitle,
+            "calculated_yoe", yoeStr,
+            "jd_yoe_min", signals.getJdYoeMin() != null ? String.valueOf(signals.getJdYoeMin().intValue()) : "",
+            "jd_yoe_max", signals.getJdYoeMax() != null ? String.valueOf(signals.getJdYoeMax().intValue()) : "",
+            "company_name", company
+        );
+
+        SignalStatus status;
+        String titleOntologyTier;
+        String obsOverride = null, interpOverride = null;
+
+        if (titleMiss && yoeShort) {
+            status = SignalStatus.FAIL;
+            titleOntologyTier = "CRITICAL";
+            obsOverride = candidateTitle + " and " + yoeStr + " years of experience both fall short of what " + jdTitle + " expects.";
+            interpOverride = "Two hard filters failing simultaneously makes this a difficult application to advance without significant tailoring.";
+        } else if (titleMiss) {
+            status = SignalStatus.WARN;
+            titleOntologyTier = "POOR";
+        } else if (yoeShort) {
+            status = SignalStatus.WARN;
+            titleOntologyTier = "FAIR";
+            obsOverride = yoeStr + " years of experience against a " + yoeRange + " year requirement.";
+            interpOverride = tierStrong
+                ? "The experience gap is real, but " + company + " pedigree adds credibility that partially compensates."
+                : "This is a meaningful gap. Strong skill coverage and a targeted summary are essential to stay in contention.";
+        } else if (titleOk && yoeOk && tierStrong) {
+            status = SignalStatus.PASS;
+            titleOntologyTier = "EXCELLENT";
+            obsOverride = "Title, experience level, and " + company + " background all align with what this role expects.";
+            interpOverride = "The profile clears the credibility bar. Whether it advances depends entirely on skill coverage.";
+        } else if (titleOk && yoeOk) {
+            status = SignalStatus.PASS;
+            titleOntologyTier = "GOOD";
+        } else {
+            status = SignalStatus.WARN;
+            titleOntologyTier = "FAIR";
+        }
+
+        // Use ontology sentences, fall back to overrides
+        String observation = obsOverride != null ? obsOverride : obs("title_match", titleOntologyTier, tokens);
+        String interpretation = interpOverride != null ? interpOverride : interp("title_match", titleOntologyTier, tokens);
+        if (observation == null) observation = bank.titleObservation(signals);
+        if (interpretation == null) interpretation = bank.titleInterpretation(signals);
+
+        return signal("candidate_fit", "Candidate fit", status, SignalFriction.NONE, observation, interpretation, ImpactLevel.HIGH);
+    }
+
+    /**
+     * Insight 2 — Skill coverage.
+     * The single most important signal. Specific about what's missing and what's buried.
+     */
+    private Signal buildSkillInsight(ResumeSignals signals) {
+        boolean hasJdSkills = signals.getMustHaveResults() != null && !signals.getMustHaveResults().isEmpty();
+
+        if (!hasJdSkills) {
+            return signal("skill_coverage", "Skill coverage", SignalStatus.WARN, SignalFriction.NONE,
+                "No required skills could be extracted from the job description.",
+                "Paste a structured JD with a Requirements section to get targeted skill gap analysis.",
+                ImpactLevel.HIGH);
+        }
+
+        long total = signals.getMustHaveResults().size();
+        long missing = signals.getMustHaveResults().stream()
+            .filter(r -> r.getVisibility() == SkillVisibility.MISSING).count();
+        long buried = signals.getMustHaveResults().stream()
+            .filter(r -> r.getVisibility() == SkillVisibility.BURIED).count();
+        long found = total - missing;
+
+        String firstMissing = signals.getMustHaveResults().stream()
+            .filter(r -> r.getVisibility() == SkillVisibility.MISSING)
+            .map(SkillMatchResult::getJdSkill).findFirst().orElse("a required skill");
+        String firstBuried = signals.getMustHaveResults().stream()
+            .filter(r -> r.getVisibility() == SkillVisibility.BURIED)
+            .map(SkillMatchResult::getJdSkill).findFirst().orElse("a required skill");
+
+        Map<String, String> tokens = Map.of("skill_name", firstMissing);
+
+        if (missing == 0 && buried == 0) {
+            String o = obs("skills_visibility", "EXCELLENT", tokens);
+            String i = interp("skills_visibility", "EXCELLENT", tokens);
+            return signal("skill_coverage", "Skill coverage", SignalStatus.PASS, SignalFriction.NONE,
+                o != null ? o : "All " + total + " required skills are present and visible.",
+                i != null ? i : "A recruiter scanning for the core stack will find everything they need.",
+                ImpactLevel.HIGH);
+        }
+
+        if (missing == 0) {
+            Map<String, String> buriedTokens = Map.of("skill_name", firstBuried);
+            String o = obs("skills_visibility", "FAIR", buriedTokens);
+            String i = interp("skills_visibility", "FAIR", buriedTokens);
+            String obsText = o != null ? o : (buried == 1
+                ? firstBuried + " is only visible in an older role — not in your skills section."
+                : buried + " required skills (including " + firstBuried + ") are buried in older roles.");
+            String interpText = i != null ? i : "You have the skills — the problem is visibility. A recruiter scanning in 10 seconds won't reach old bullet points.";
+            return signal("skill_coverage", "Skill coverage", SignalStatus.WARN, SignalFriction.MEDIUM, obsText, interpText, ImpactLevel.HIGH);
+        }
+
+        SignalStatus status = missing > total / 2 ? SignalStatus.FAIL : SignalStatus.WARN;
+        String ontologyTier = status == SignalStatus.FAIL ? "CRITICAL" : "POOR";
+
+        String o = obs("skills_visibility", ontologyTier, tokens);
+        String i = interp("skills_visibility", ontologyTier, tokens);
+
+        String obsText = o != null ? o : (missing == total
+            ? "None of the " + total + " required skills appear on your resume."
+            : found + " of " + total + " required skills found. " + firstMissing + (missing > 1 ? " and " + (missing - 1) + " others are missing." : " is missing."));
+
+        String interpText = i != null ? i : (missing >= total * 0.7
+            ? "The stack gap is too wide for a recruiter to bridge mentally."
+            : missing >= total * 0.4
+                ? "Significant gaps. A recruiter will note the missing skills and likely move on."
+                : "A few gaps. Addressable with targeted additions to your skills section.");
+
+        return signal("skill_coverage", "Skill coverage", status,
+            status == SignalStatus.FAIL ? SignalFriction.HIGH : SignalFriction.MEDIUM,
+            obsText, interpText, ImpactLevel.HIGH);
+    }
+
+    /**
+     * Insight 3 — Resume presentation.
+     * Combines summary quality + skills format + bullet quality into one verdict.
+     * Only surfaces what's actually wrong — doesn't praise the obvious.
+     */
+    private Signal buildPresentationInsight(ResumeSignals signals) {
+        boolean summaryMissing = !signals.isSummaryPresent();
+        boolean summaryGeneric = signals.isSummaryIsGeneric();
+        boolean summaryWeak = summaryMissing || summaryGeneric
+            || (!signals.isSummaryMentionsSkills() && !signals.isSummaryMentionsYoe());
+        boolean skillsFormatPoor = signals.getSkillsFormat() == SkillsFormat.NO_SECTION
+            || signals.getSkillsFormat() == SkillsFormat.GENERIC_ONLY
+            || signals.getSkillsFormat() == SkillsFormat.PROSE;
+        boolean lowImpactBullets = signals.getImpactVerbRatio() < 0.4;
+        boolean lowMetrics = signals.getMetricDensity() < 0.3;
+
+        int issues = (summaryWeak ? 1 : 0) + (skillsFormatPoor ? 1 : 0) + (lowImpactBullets || lowMetrics ? 1 : 0);
+
+        if (issues == 0) {
+            String o = obs("summary", "EXCELLENT", Map.of());
+            String i = interp("summary", "EXCELLENT", Map.of());
+            return signal("presentation", "Resume presentation", SignalStatus.PASS, SignalFriction.NONE,
+                o != null ? o : "Summary, skills section, and bullet quality are all working.",
+                i != null ? i : "The document is doing its job — no presentation friction to fix.",
+                ImpactLevel.MEDIUM);
+        }
+
+        SignalStatus status = issues >= 2 ? SignalStatus.WARN : SignalStatus.WARN;
+        String obs;
+        String interp;
+
+        if (summaryMissing && skillsFormatPoor) {
+            obs = "No summary and no structured skills section — a recruiter has to hunt for context and stack.";
+            interp = "These two sections are the first things a recruiter reads. Without them, the document forces extra work before any value is delivered.";
+        } else if (summaryMissing) {
+            obs = "No summary. The recruiter goes straight to experience with no framing of who you are or why you fit.";
+            interp = lowImpactBullets
+                ? "Combined with weak bullet language, there's no strong hook anywhere in the top half of the document."
+                : "Your experience bullets are solid, but a 2-line summary would orient the recruiter before they get there.";
+        } else if (summaryGeneric) {
+            obs = "Your summary uses generic language that doesn't signal fit for this specific role.";
+            interp = "A recruiter reading 'passionate team player' learns nothing about your technical profile. The summary slot is wasted.";
+        } else if (!signals.isSummaryMentionsSkills()) {
+            obs = "Your summary doesn't mention the core skills this role requires.";
+            interp = "The summary is your one chance to immediately signal fit. Not mentioning the required stack is a missed opportunity.";
+        } else if (skillsFormatPoor) {
+            obs = bank.skillsFormatObservation(signals);
+            interp = bank.skillsFormatInterpretation(signals);
+        } else if (lowImpactBullets && lowMetrics) {
+            obs = "Most bullets describe responsibilities rather than outcomes. No quantified results visible.";
+            interp = "Recruiters scan for numbers and impact verbs. 'Responsible for X' tells them nothing about what you actually achieved.";
+        } else if (lowMetrics) {
+            obs = "Fewer than 30% of your bullets include quantified results.";
+            interp = "Numbers are the fastest way to signal impact. 'Reduced latency by 40%' is read in 1 second. 'Improved performance' is skipped.";
+        } else {
+            obs = "Bullet language leans on weak verbs — 'assisted', 'supported', 'helped'.";
+            interp = "Weak verbs signal a supporting role, not ownership. Replace with action verbs that show you drove the outcome.";
+        }
+
+        return signal("presentation", "Resume presentation", status, SignalFriction.MEDIUM, obs, interp, ImpactLevel.MEDIUM);
+    }
+
+    /**
+     * Insight 4 — Trust signals.
+     * Only shown when there's an actual issue: chronology problems, anomalies, title inflation.
+     * Returns null if everything is clean — no need to say "no trust issues found".
+     */
+    private Signal buildTrustInsight(ResumeSignals signals) {
+        if (signals.isChronologyUnreliable()) {
+            return signal("trust", "Credibility", SignalStatus.FAIL, SignalFriction.HIGH,
+                bank.chronologyObservation(signals),
+                "An unreliable chronology undermines every other claim on the resume. Recruiters can't verify experience level.",
+                ImpactLevel.HIGH);
+        }
+        if (signals.isHasUnexplainedGap()) {
+            String gapDesc = !signals.getGapDescriptions().isEmpty() ? signals.getGapDescriptions().get(0) : "An unexplained gap";
+            return signal("trust", "Credibility", SignalStatus.WARN, SignalFriction.MEDIUM,
+                gapDesc + " with no label.",
+                "Unlabelled gaps raise questions. A one-word label — 'Career break', 'MSc', 'Freelance' — removes the ambiguity entirely.",
+                ImpactLevel.MEDIUM);
+        }
+        if (signals.isHasSkillAgeMismatch()) {
+            return signal("trust", "Credibility", SignalStatus.WARN, SignalFriction.MEDIUM,
+                signals.getSkillAgeMismatchDetail() != null ? signals.getSkillAgeMismatchDetail() : "A skill YOE claim exceeds the technology's age.",
+                "This type of error is noticed by technical reviewers and damages credibility across the whole document.",
+                ImpactLevel.MEDIUM);
+        }
+        if (signals.isHasTitleInflation()) {
+            return signal("trust", "Credibility", SignalStatus.WARN, SignalFriction.MEDIUM,
+                "Your most recent title suggests senior scope, but the bullet language reads as a supporting role.",
+                "A technical recruiter will notice the mismatch between title and bullet evidence. Rewrite bullets to reflect ownership, not assistance.",
+                ImpactLevel.MEDIUM);
+        }
+        return null; // clean — don't show this signal at all
     }
 
     // ── Fix list ──────────────────────────────────────────────────────────────
@@ -217,9 +362,15 @@ public class FeedbackGenerator {
         }
 
         // Summary missing or weak
-        String summaryAction = bank.summaryAction(signals);
-        if (summaryAction != null) {
-            fixes.add(fix(rank++, "summary_quality", !signals.isSummaryPresent() ? "Add a professional summary at the top of your resume" : "Rewrite your summary with technical specifics", bank.summaryInterpretation(signals), summaryAction, ImpactLevel.HIGH));
+        String summaryTier = !signals.isSummaryPresent() ? "CRITICAL" : signals.isSummaryIsGeneric() ? "POOR" : "FAIR";
+        String summaryActionText = act("summary", summaryTier, Map.of());
+        if (summaryActionText == null) summaryActionText = bank.summaryAction(signals);
+        if (summaryActionText != null) {
+            String summaryInterpText = interp("summary", summaryTier, Map.of());
+            if (summaryInterpText == null) summaryInterpText = bank.summaryInterpretation(signals);
+            fixes.add(fix(rank++, "summary_quality",
+                !signals.isSummaryPresent() ? "Add a professional summary at the top of your resume" : "Rewrite your summary with technical specifics",
+                summaryInterpText, summaryActionText, ImpactLevel.HIGH));
         }
 
         // Skills format
@@ -272,12 +423,24 @@ public class FeedbackGenerator {
 
         // Bullet quality - weak verbs
         if (signals.getImpactVerbRatio() < 0.5) {
-            fixes.add(fix(rank++, "bullet_quality", String.format("Only %.0f%% of your bullets start with impact verbs", signals.getImpactVerbRatio() * 100), "Weak verbs like 'responsible for' or 'worked on' don't convey ownership or results. Recruiters scan for action and impact.", "Rewrite bullets to start with strong verbs: Built, Designed, Led, Reduced, Increased, Automated, Migrated, Scaled.", ImpactLevel.MEDIUM));
+            String bulletTier = signals.getImpactVerbRatio() < 0.2 ? "CRITICAL" : "POOR";
+            String bulletObs = obs("bullet_quality", bulletTier, Map.of("bullet_count", String.valueOf((int)(signals.getImpactVerbRatio() * 100))));
+            String bulletAct = act("bullet_quality", bulletTier, Map.of());
+            fixes.add(fix(rank++, "bullet_quality",
+                bulletObs != null ? bulletObs : String.format("Only %.0f%% of your bullets start with impact verbs", signals.getImpactVerbRatio() * 100),
+                "Weak verbs like 'responsible for' or 'worked on' don't convey ownership or results.",
+                bulletAct != null ? bulletAct : "Rewrite bullets to start with strong verbs: Built, Designed, Led, Reduced, Increased, Automated.",
+                ImpactLevel.MEDIUM));
         }
 
         // Bullet quality - no metrics
         if (signals.getMetricDensity() < 0.3) {
-            fixes.add(fix(rank++, "bullet_quality", String.format("Only %.0f%% of your bullets include quantified results", signals.getMetricDensity() * 100), "Unquantified claims are vague. Numbers make impact concrete and memorable.", "Add metrics: '...reduced latency by 75%', '...serving 5M daily transactions', '...adopted by 40% more clients'.", ImpactLevel.MEDIUM));
+            String metricAct = act("bullet_quality", "POOR", Map.of());
+            fixes.add(fix(rank++, "bullet_quality",
+                String.format("Only %.0f%% of your bullets include quantified results", signals.getMetricDensity() * 100),
+                "Unquantified claims are vague. Numbers make impact concrete and memorable.",
+                metricAct != null ? metricAct : "Add metrics: '...reduced latency by 75%', '...serving 5M daily transactions'.",
+                ImpactLevel.MEDIUM));
         }
 
         // Sort by impact

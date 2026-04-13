@@ -45,6 +45,9 @@ public class JobDescription {
     private JdClarity jdClarity = JdClarity.MEDIUM;
     private int jdClarityScore;
     private String trimmedText;            // stripped JD for AI prompt (~150 tokens)
+    private List<String> implicitExpectations = new ArrayList<>(); // from role patterns ontology
+    private boolean hasRedFlag;            // JD contains red flag phrases
+    private boolean hasGreenFlag;          // JD contains green flag phrases
 
     // ── Getters & Setters ────────────────────────────────────
 
@@ -110,4 +113,13 @@ public class JobDescription {
 
     public String getTrimmedText() { return trimmedText; }
     public void setTrimmedText(String trimmedText) { this.trimmedText = trimmedText; }
+
+    public List<String> getImplicitExpectations() { return implicitExpectations; }
+    public void setImplicitExpectations(List<String> implicitExpectations) { this.implicitExpectations = implicitExpectations; }
+
+    public boolean isHasRedFlag() { return hasRedFlag; }
+    public void setHasRedFlag(boolean hasRedFlag) { this.hasRedFlag = hasRedFlag; }
+
+    public boolean isHasGreenFlag() { return hasGreenFlag; }
+    public void setHasGreenFlag(boolean hasGreenFlag) { this.hasGreenFlag = hasGreenFlag; }
 }

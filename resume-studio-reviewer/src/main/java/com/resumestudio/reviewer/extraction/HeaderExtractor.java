@@ -26,10 +26,16 @@ public class HeaderExtractor {
 
     private final SemanticExtractor semanticExtractor;
     private final NlpService nlp;
+    private final DesignationOntologyService designationOntology;
+    private final ResumeOntologyService resumeOntology;
 
-    public HeaderExtractor(SemanticExtractor semanticExtractor, NlpService nlp) {
+    public HeaderExtractor(SemanticExtractor semanticExtractor, NlpService nlp,
+                           DesignationOntologyService designationOntology,
+                           ResumeOntologyService resumeOntology) {
         this.semanticExtractor = semanticExtractor;
         this.nlp = nlp;
+        this.designationOntology = designationOntology;
+        this.resumeOntology = resumeOntology;
     }
 
     // ── Contact patterns ──────────────────────────────────────────────────────
@@ -125,7 +131,10 @@ public class HeaderExtractor {
             if (PHONE.matcher(trimmed).find()) continue;
             if (LINKEDIN.matcher(trimmed).find()) continue;
             if (GITHUB.matcher(trimmed).find()) continue;
+            if (trimmed.toLowerCase().contains("linkedin") || trimmed.toLowerCase().contains("github")) continue;
             if (trimmed.length() > 60) continue;
+            // Reject lines matching ontology negative patterns for FULL_NAME
+            if (resumeOntology.matchesNegativePattern("FULL_NAME", trimmed)) continue;
 
             String[] words = trimmed.split("\\s+");
             if (words.length >= 2 && words.length <= 5) {
@@ -143,7 +152,7 @@ public class HeaderExtractor {
             }
         }
 
-        // NER fallback — use OpenNLP person finder on the header text
+        // NER fallback
         if (resume.getCandidateName() == null) {
             List<String> persons = nlp.findPersons(headerText.substring(0, Math.min(300, headerText.length())));
             if (!persons.isEmpty()) {
@@ -169,10 +178,9 @@ public class HeaderExtractor {
             if (trimmed.equals(resume.getCandidateName())) { nameFound = true; continue; }
             if (!nameFound) continue;
 
-            // Stop if we hit a section header (but only after we've found title AND company, or exhausted attempts)
+            // Stop at section headers always — the title is in the header zone, not in sections
             if (semanticExtractor.classifyHeader(trimmed) != com.resumestudio.reviewer.extraction.SemanticExtractor.SectionType.UNKNOWN) {
-                // Only stop if we've already extracted both title and company
-                if (titleFound && resume.getCurrentCompany() != null) break;
+                break;
             }
 
             // Skip contact lines
@@ -180,37 +188,33 @@ public class HeaderExtractor {
             if (PHONE.matcher(trimmed).find()) continue;
             if (LINKEDIN.matcher(trimmed).find()) continue;
             if (GITHUB.matcher(trimmed).find()) continue;
+            // Skip lines that mention LinkedIn/GitHub as text (e.g. "| LinkedIn | GitHub")
+            if (trimmed.toLowerCase().contains("linkedin") || trimmed.toLowerCase().contains("github")) continue;
 
             // First non-contact line after name = likely title
             if (!titleFound && looksLikeTitle(trimmed)) {
                 resume.setCurrentTitle(trimmed);
                 titleFound = true;
-                continue;
-            }
-
-            // Next non-contact line after title = company (only if it looks like one)
-            if (titleFound && resume.getCurrentCompany() == null && looksLikeCompany(trimmed)) {
-                Matcher descriptorMatcher = COMPANY_DESCRIPTOR.matcher(trimmed);
-                if (descriptorMatcher.find()) {
-                    resume.setCompanyDescriptor(descriptorMatcher.group(1));
-                    resume.setCurrentCompany(trimmed.substring(0, descriptorMatcher.start()).trim());
-                } else {
-                    resume.setCurrentCompany(trimmed);
-                }
+                // Don't try to extract company from header — it comes from experience section
+                break;
             }
         }
     }
 
     private boolean looksLikeTitle(String line) {
-        if (line.length() > 80) return false;
+        if (line == null || line.isBlank()) return false;
+        // Must be at least 2 words — single words like "Engineering" are not titles
+        String[] words = line.trim().split("\\s+");
+        if (words.length < 2 || line.length() > 80) return false;
+        // Ontology-first: check against known designation synonyms
+        if (designationOntology.isKnownTitle(line)) return true;
+        // Keyword fallback
         String lower = line.toLowerCase();
-        // Contains engineering/tech role words
         return lower.contains("engineer") || lower.contains("developer") || lower.contains("architect")
             || lower.contains("designer") || lower.contains("analyst") || lower.contains("manager")
             || lower.contains("lead") || lower.contains("director") || lower.contains("scientist")
             || lower.contains("consultant") || lower.contains("specialist") || lower.contains("devops")
             || lower.contains("qa") || lower.contains("sre") || lower.contains("product")
-            // OR contains a seniority prefix
             || SENIORITY_PREFIXES.stream().anyMatch(p -> lower.startsWith(p + " "));
     }
 

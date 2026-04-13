@@ -44,6 +44,14 @@ public class NlpService {
     private NameFinderME orgFinder;
     private boolean available = false;
 
+    private final TextNormalizer textNormalizer;
+    private final VerbQualityService verbQuality;
+
+    public NlpService(TextNormalizer textNormalizer, VerbQualityService verbQuality) {
+        this.textNormalizer = textNormalizer;
+        this.verbQuality = verbQuality;
+    }
+
     @PostConstruct
     public void init() {
         try {
@@ -96,7 +104,11 @@ public class NlpService {
         for (String bullet : bullets) {
             String first = firstVerb(bullet);
             if (first == null) continue;
-            if (IMPACT_VERBS.contains(first)) impact++;
+            // Ontology-first
+            if (verbQuality.isImpactVerb(first)) impact++;
+            else if (verbQuality.isWeakVerb(first)) weak++;
+            // Fallback to hardcoded sets
+            else if (IMPACT_VERBS.contains(first)) impact++;
             else if (WEAK_VERBS.contains(first)) weak++;
         }
         int total = impact + weak;
@@ -118,12 +130,18 @@ public class NlpService {
         String[] words = bullet.trim().split("\\s+");
         if (words.length == 0) return null;
         String first = words[0].toLowerCase().replaceAll("[^a-z]", "");
-        if (IMPACT_VERBS.contains(first) || WEAK_VERBS.contains(first)) return first;
+        String lemma = textNormalizer.lemmatize(first);
+        // Ontology-first: check VerbQualityService
+        if (verbQuality.lookup(lemma) != null) return lemma;
+        if (verbQuality.lookup(first) != null) return first;
+        // Fallback to hardcoded sets
+        if (IMPACT_VERBS.contains(lemma) || IMPACT_VERBS.contains(first)) return lemma;
+        if (WEAK_VERBS.contains(lemma) || WEAK_VERBS.contains(first)) return lemma;
         if (available) {
             String[] tokens = tokenize(bullet);
             String[] tags = posTag(tokens);
             for (int i = 0; i < Math.min(3, tags.length); i++) {
-                if (tags[i].startsWith("VB")) return tokens[i].toLowerCase();
+                if (tags[i].startsWith("VB")) return textNormalizer.lemmatize(tokens[i].toLowerCase());
             }
         }
         return null;

@@ -1,5 +1,6 @@
 package com.resumestudio.reviewer.signals;
 
+import com.resumestudio.reviewer.extraction.DesignationOntologyService;
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.WorkExperience;
 import com.resumestudio.reviewer.model.enums.TitleMatch;
@@ -18,6 +19,12 @@ import java.util.regex.Pattern;
 public class TitleMatchCalculator {
 
     private static final Logger log = LoggerFactory.getLogger(TitleMatchCalculator.class);
+
+    private final DesignationOntologyService ontology;
+
+    public TitleMatchCalculator(DesignationOntologyService ontology) {
+        this.ontology = ontology;
+    }
 
     // Role domain groupings for adjacency detection
     private static final Map<String, Set<String>> ROLE_DOMAINS = new HashMap<>();
@@ -73,19 +80,37 @@ public class TitleMatchCalculator {
         // EXACT: normalised strings match
         if (cNorm.equals(jNorm)) return TitleMatch.EXACT;
 
-        // EXACT: strip seniority and compare core role
+        // EXACT: both resolve to the same canonical designation
+        String cCanon = ontology.canonicalise(candidateTitle);
+        String jCanon = ontology.canonicalise(jdTitle);
+        if (cCanon != null && cCanon.equalsIgnoreCase(jCanon)) return TitleMatch.EXACT;
+
+        // EXACT: strip seniority and compare core role (legacy fallback)
         String cCore = stripSeniority(cNorm);
         String jCore = stripSeniority(jNorm);
         if (!cCore.isBlank() && cCore.equals(jCore)) return TitleMatch.EXACT;
 
-        // ADJACENT: same seniority band, same domain
-        if (sameDomain(cNorm, jNorm)) {
-            int cIc = extractIcLevel(candidateTitle);
-            int jIc = extractIcLevel(jdTitle);
-            if (Math.abs(cIc - jIc) <= 1) return TitleMatch.ADJACENT;
+        // ADJACENT: same seniority band (±1), overlapping domains from ontology
+        List<String> cDomains = ontology.domains(candidateTitle);
+        List<String> jDomains = ontology.domains(jdTitle);
+        boolean domainsOverlap = !cDomains.isEmpty() && !jDomains.isEmpty()
+            && !Collections.disjoint(cDomains, jDomains);
+
+        if (domainsOverlap) {
+            int cLevel = ontology.seniorityLevel(candidateTitle);
+            int jLevel = ontology.seniorityLevel(jdTitle);
+            if (Math.abs(cLevel - jLevel) <= 1) return TitleMatch.ADJACENT;
         }
 
-        // RELATED: overlapping domain keywords but different specialty
+        // ADJACENT: candidate is in jd title's relatedDesignations
+        List<String> related = ontology.relatedDesignations(jdTitle);
+        if (cCanon != null && related.stream().anyMatch(r -> r.equalsIgnoreCase(cCanon)))
+            return TitleMatch.ADJACENT;
+
+        // RELATED: overlapping domains but seniority gap > 1
+        if (domainsOverlap) return TitleMatch.RELATED;
+
+        // RELATED: legacy keyword domain overlap
         if (hasOverlappingDomain(cNorm, jNorm)) return TitleMatch.RELATED;
 
         return TitleMatch.MISS;
@@ -94,19 +119,23 @@ public class TitleMatchCalculator {
     private TitleProgression computeProgression(List<WorkExperience> experience) {
         if (experience == null || experience.size() < 2) return TitleProgression.UNKNOWN;
 
-        // experience is sorted most-recent-first; reverse to get chronological order
         List<WorkExperience> chronological = new ArrayList<>(experience);
-        Collections.reverse(chronological);
+        Collections.reverse(chronological); // most-recent-first → chronological
 
-        List<Integer> icLevels = chronological.stream()
-            .map(e -> e.getIcLevel() > 0 ? e.getIcLevel() : extractIcLevel(e.getTitle()))
+        List<Integer> levels = chronological.stream()
+            .filter(e -> e.getTitle() != null)
+            .map(e -> {
+                int ontologyLevel = ontology.seniorityLevel(e.getTitle());
+                // If ontology returned default (3), try IC_LEVELS regex as fallback
+                return ontologyLevel != 3 ? ontologyLevel : extractIcLevel(e.getTitle());
+            })
             .filter(l -> l > 0)
             .toList();
 
-        if (icLevels.size() < 2) return TitleProgression.UNKNOWN;
+        if (levels.size() < 2) return TitleProgression.UNKNOWN;
 
-        int first = icLevels.get(0);
-        int last = icLevels.get(icLevels.size() - 1);
+        int first = levels.get(0);
+        int last = levels.get(levels.size() - 1);
 
         if (last > first) return TitleProgression.GROWING;
         if (last < first) return TitleProgression.REGRESSION;

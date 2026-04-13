@@ -2,6 +2,7 @@ package com.resumestudio.reviewer.extraction;
 
 import com.resumestudio.reviewer.model.Skill;
 import com.resumestudio.reviewer.model.enums.SkillsFormat;
+import com.resumestudio.reviewer.nlp.SoftSkillsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,12 @@ import java.util.regex.Pattern;
 public class SkillsSectionExtractor {
 
     private static final Logger log = LoggerFactory.getLogger(SkillsSectionExtractor.class);
+
+    private final SoftSkillsService softSkillsService;
+
+    public SkillsSectionExtractor(SoftSkillsService softSkillsService) {
+        this.softSkillsService = softSkillsService;
+    }
 
     // Known soft skills to detect MIXED_SOFT_HARD or GENERIC_ONLY
     private static final Set<String> SOFT_SKILLS = Set.of(
@@ -100,8 +107,8 @@ public class SkillsSectionExtractor {
                 skill.setStrippedName(skill.getRawName().substring(0, versionMatcher.start()).trim());
             }
 
-            // Soft skill check
-            if (SOFT_SKILLS.contains(lower)) hasSoft = true;
+            // Soft skill check — uses ontology instead of hardcoded set
+            if (softSkillsService.isSoftSkill(lower)) hasSoft = true;
             else hasTech = true;
 
             // Self-rated check

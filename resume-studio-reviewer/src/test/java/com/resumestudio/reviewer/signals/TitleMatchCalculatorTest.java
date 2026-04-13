@@ -1,5 +1,6 @@
 package com.resumestudio.reviewer.signals;
 
+import com.resumestudio.reviewer.extraction.DesignationOntologyService;
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.WorkExperience;
 import com.resumestudio.reviewer.model.enums.TitleMatch;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class TitleMatchCalculatorTest {
 
@@ -17,7 +19,17 @@ class TitleMatchCalculatorTest {
 
     @BeforeEach
     void setUp() {
-        calculator = new TitleMatchCalculator();
+        DesignationOntologyService ontology = mock(DesignationOntologyService.class);
+        when(ontology.canonicalise(anyString())).thenReturn(null);
+        when(ontology.domains(anyString())).thenReturn(List.of());
+        when(ontology.seniorityLevel(anyString())).thenReturn(3);
+        when(ontology.relatedDesignations(anyString())).thenReturn(List.of());
+        // For adjacent test: "Senior API Developer" and "Staff Platform Engineer" share "Backend" domain
+        when(ontology.domains("Senior API Developer")).thenReturn(List.of("Backend"));
+        when(ontology.domains("Staff Platform Engineer")).thenReturn(List.of("Backend", "DevOps"));
+        when(ontology.seniorityLevel("Senior API Developer")).thenReturn(4);
+        when(ontology.seniorityLevel("Staff Platform Engineer")).thenReturn(5);
+        calculator = new TitleMatchCalculator(ontology);
     }
 
     // ── TitleMatch ─────────────────────────────────────────────────────────────

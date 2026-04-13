@@ -41,6 +41,9 @@ class JdParserServiceTest {
     @Mock
     private PosTagService posTagService;
 
+    @Mock
+    private JdRolePatternsService rolePatternsService;
+
     private JdParserService parser;
 
     @BeforeEach
@@ -117,7 +120,8 @@ class JdParserServiceTest {
         registerSkill("OpenTelemetry");
         registerSkill("Go", "golang");
 
-        parser = new JdParserService(escoGraph, mindTech, sentenceEncoder, tfidfVectorizer, posTagService);
+        parser = new JdParserService(escoGraph, mindTech, sentenceEncoder, tfidfVectorizer, posTagService,
+                rolePatternsService);
     }
 
     /**

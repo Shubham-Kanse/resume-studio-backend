@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class CompanySignalCalculatorTest {
 
@@ -16,8 +17,10 @@ class CompanySignalCalculatorTest {
 
     @BeforeEach
     void setUp() {
-        calculator = new CompanySignalCalculator();
-        // loadTiers() is normally called by @PostConstruct; invoke directly in tests
+        CompanyContextService ctx = mock(CompanyContextService.class);
+        when(ctx.tierLabel(anyString())).thenReturn("UNKNOWN");
+        when(ctx.credibility(anyString())).thenReturn(0.5);
+        calculator = new CompanySignalCalculator(ctx);
         calculator.loadTiers();
     }
 

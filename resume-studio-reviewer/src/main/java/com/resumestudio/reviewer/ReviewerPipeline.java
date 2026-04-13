@@ -56,6 +56,7 @@ public class ReviewerPipeline {
     private final OutcomeTracker outcomeTracker;
     private final com.resumestudio.reviewer.nlp.NlpService nlpService;
     private final com.resumestudio.reviewer.nlp.BulletEnricher bulletEnricher;
+    private final DesignationOntologyService designationOntology;
 
     public ReviewerPipeline(ResumeIngestService ingestService,
                             JdParserService jdParser,
@@ -81,7 +82,8 @@ public class ReviewerPipeline {
                             AiReviewService aiReviewService,
                             OutcomeTracker outcomeTracker,
                             com.resumestudio.reviewer.nlp.NlpService nlpService,
-                            com.resumestudio.reviewer.nlp.BulletEnricher bulletEnricher) {
+                            com.resumestudio.reviewer.nlp.BulletEnricher bulletEnricher,
+                            DesignationOntologyService designationOntology) {
         this.ingestService = ingestService;
         this.jdParser = jdParser;
         this.jdFetchService = jdFetchService;
@@ -107,6 +109,7 @@ public class ReviewerPipeline {
         this.outcomeTracker = outcomeTracker;
         this.nlpService = nlpService;
         this.bulletEnricher = bulletEnricher;
+        this.designationOntology = designationOntology;
     }
 
     public FeedbackReport review(MultipartFile file, String jdText) {
@@ -423,18 +426,6 @@ public class ReviewerPipeline {
     }
 
     private String inferDomain(String roleTitle) {
-        if (roleTitle == null) return null;
-        String lower = roleTitle.toLowerCase();
-        if (lower.contains("backend") || lower.contains("java") || lower.contains("python") || lower.contains("api")) return "Backend Engineering";
-        if (lower.contains("frontend") || lower.contains("react") || lower.contains("ui")) return "Frontend Engineering";
-        if (lower.contains("full stack") || lower.contains("fullstack")) return "Full Stack Engineering";
-        if (lower.contains("devops") || lower.contains("sre") || lower.contains("platform") || lower.contains("infrastructure")) return "DevOps / Platform";
-        if (lower.contains("data") || lower.contains("ml") || lower.contains("machine learning") || lower.contains("ai")) return "Data / ML";
-        if (lower.contains("mobile") || lower.contains("ios") || lower.contains("android")) return "Mobile Engineering";
-        if (lower.contains("security") || lower.contains("infosec")) return "Security";
-        if (lower.contains("qa") || lower.contains("test") || lower.contains("sdet")) return "Quality Engineering";
-        if (lower.contains("product")) return "Product Management";
-        if (lower.contains("manager") || lower.contains("director")) return "Engineering Management";
-        return "Software Engineering";
+        return designationOntology.inferDomain(roleTitle);
     }
 }

@@ -1,5 +1,6 @@
 package com.resumestudio.reviewer.extraction;
 
+import com.resumestudio.reviewer.extraction.ResumeOntologyService;
 import com.resumestudio.reviewer.model.Resume;
 import com.resumestudio.reviewer.skills.EscoSkillGraph;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +26,8 @@ class SummaryExtractorTest {
         when(escoGraph.isKnownSkill("node")).thenReturn(true);
         when(escoGraph.isKnownSkill("node.js")).thenReturn(true);
         when(escoGraph.isKnownSkill("postgresql")).thenReturn(true);
-        extractor = new SummaryExtractor(escoGraph);
+        extractor = new SummaryExtractor(escoGraph, new com.resumestudio.reviewer.nlp.TextNormalizer(),
+                mock(ResumeOntologyService.class));
     }
 
     // ── extract() ────────────────────────────────────────────────────────────

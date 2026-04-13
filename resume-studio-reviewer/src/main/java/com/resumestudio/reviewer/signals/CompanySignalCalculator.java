@@ -29,10 +29,16 @@ public class CompanySignalCalculator {
 
     private static final Logger log = LoggerFactory.getLogger(CompanySignalCalculator.class);
 
+    private final CompanyContextService companyContext;
+
     private Map<CompanyTier, Set<String>> tierMap = new HashMap<>();
 
     // Descriptor pattern: "(Series B fintech, 200 engineers)"
     private static final Pattern DESCRIPTOR_PATTERN = Pattern.compile("\\(([^)]{5,80})\\)");
+
+    public CompanySignalCalculator(CompanyContextService companyContext) {
+        this.companyContext = companyContext;
+    }
 
     @PostConstruct
     public void loadTiers() {
@@ -108,8 +114,18 @@ public class CompanySignalCalculator {
 
     public CompanyTier lookupTier(String companyName) {
         if (companyName == null) return CompanyTier.UNKNOWN;
+        // CompanyContextService first — richer ontology
+        String tier = companyContext.tierLabel(companyName);
+        if (!"UNKNOWN".equals(tier)) {
+            return switch (tier) {
+                case "TIER_0", "TIER_1" -> CompanyTier.TIER_1;
+                case "TIER_2" -> CompanyTier.SCALE_UP;
+                case "TIER_3", "TIER_4" -> CompanyTier.STARTUP;
+                default -> CompanyTier.UNKNOWN;
+            };
+        }
+        // Fallback to legacy company-tiers.json
         String lower = companyName.toLowerCase().trim();
-
         for (Map.Entry<CompanyTier, Set<String>> entry : tierMap.entrySet()) {
             for (String known : entry.getValue()) {
                 if (lower.equals(known) || lower.contains(known) || known.contains(lower)) {

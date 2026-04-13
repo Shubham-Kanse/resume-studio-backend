@@ -19,6 +19,12 @@ import java.util.regex.Pattern;
 @Component
 public class EducationExtractor {
 
+    private final EducationPrestigeService prestigeService;
+
+    public EducationExtractor(EducationPrestigeService prestigeService) {
+        this.prestigeService = prestigeService;
+    }
+
     private static final Pattern YEAR_PATTERN = Pattern.compile("\\b(19\\d{2}|20\\d{2})\\b");
     private static final Pattern INSTITUTION_HINT = Pattern.compile(
         "\\b(university|college|institute|school|academy|polytechnic)\\b",
@@ -118,11 +124,17 @@ public class EducationExtractor {
                 education.setGraduationYear(sortedYears.get(sortedYears.size() - 1));
             } else {
                 int year = sortedYears.get(0);
-                if (EXPECTED_HINT.matcher(block).find()) {
-                    education.setGraduationYear(year);
-                } else {
-                    education.setGraduationYear(year);
-                }
+                education.setGraduationYear(year);
+            }
+        }
+
+        // Detect ongoing education — "present", "current", "ongoing", "pursuing"
+        if (EXPECTED_HINT.matcher(block).find()) {
+            education.setCurrentlyStudying(true);
+            // If only one year found, it's the start year not graduation
+            if (sortedYears.size() == 1) {
+                education.setStartYear(sortedYears.get(0));
+                education.setGraduationYear(null);
             }
         }
 
@@ -131,6 +143,15 @@ public class EducationExtractor {
             Integer tmp = education.getStartYear();
             education.setStartYear(education.getGraduationYear());
             education.setGraduationYear(tmp);
+        }
+
+        // Enrich with prestige data
+        if (institution != null) {
+            education.setInstitutionTier(prestigeService.institutionTier(institution));
+            education.setInstitutionBoost(prestigeService.institutionBoost(institution));
+        }
+        if (degree != null) {
+            education.setDegreeRelevance(prestigeService.degreeRelevance(degree));
         }
 
         return education;

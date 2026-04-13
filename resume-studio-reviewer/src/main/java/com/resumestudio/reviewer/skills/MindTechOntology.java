@@ -178,8 +178,8 @@ public class MindTechOntology {
                 .stream()
                 .filter(s -> {
                     MindTechSkill skill = skillIndex.get(s.toLowerCase());
-                    return skill.supportedProgrammingLanguages.stream()
-                        .anyMatch(lang -> lang.matches("Java|Python|Golang|Ruby|PHP|C#|Rust"));
+                    return skill != null && skill.supportedProgrammingLanguages.stream()
+                        .anyMatch(lang -> lang.matches("Java|Python|Golang|Ruby|PHP|C#|Rust|Go|Scala|Kotlin"));
                 })
                 .collect(Collectors.toList());
         }
@@ -190,8 +190,8 @@ public class MindTechOntology {
                 .stream()
                 .filter(s -> {
                     MindTechSkill skill = skillIndex.get(s.toLowerCase());
-                    return skill.supportedProgrammingLanguages.stream()
-                        .anyMatch(lang -> lang.matches("JavaScript|TypeScript"));
+                    return skill != null && skill.supportedProgrammingLanguages.stream()
+                        .anyMatch(lang -> lang.equals("JavaScript") || lang.equals("TypeScript"));
                 })
                 .collect(Collectors.toList());
         }

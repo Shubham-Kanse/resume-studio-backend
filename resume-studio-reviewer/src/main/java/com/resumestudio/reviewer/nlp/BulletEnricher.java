@@ -1,6 +1,7 @@
 package com.resumestudio.reviewer.nlp;
 
 import com.resumestudio.reviewer.model.WorkExperience;
+import com.resumestudio.reviewer.nlp.TextNormalizer;
 import com.resumestudio.reviewer.skills.SkillEmbeddingIndex;
 import org.springframework.stereotype.Component;
 
@@ -56,9 +57,13 @@ public class BulletEnricher {
         Pattern.CASE_INSENSITIVE);
 
     private final SkillEmbeddingIndex embeddings;
+    private final TextNormalizer textNormalizer;
+    private final VerbQualityService verbQuality;
 
-    public BulletEnricher(SkillEmbeddingIndex embeddings) {
+    public BulletEnricher(SkillEmbeddingIndex embeddings, TextNormalizer textNormalizer, VerbQualityService verbQuality) {
         this.embeddings = embeddings;
+        this.textNormalizer = textNormalizer;
+        this.verbQuality = verbQuality;
     }
 
     public EnrichmentResult enrich(List<WorkExperience> experience, List<String> jdMustHaves) {
@@ -115,7 +120,11 @@ public class BulletEnricher {
     }
 
     private String verbQuality(String bullet) {
-        String first = firstWord(bullet);
+        String first = textNormalizer.lemmatize(firstWord(bullet));
+        // Ontology-first
+        String q = verbQuality.quality(first);
+        if (q != null) return q;
+        // Fallback to hardcoded sets
         if (STRONG_VERBS.contains(first)) return "STRONG";
         if (MEDIUM_VERBS.contains(first)) return "MEDIUM";
         if (WEAK_VERBS.contains(first)) return "WEAK";

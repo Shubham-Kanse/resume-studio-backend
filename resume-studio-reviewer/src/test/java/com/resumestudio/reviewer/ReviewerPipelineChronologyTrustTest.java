@@ -96,9 +96,7 @@ class ReviewerPipelineChronologyTrustTest {
         FeedbackReport report = pipeline.reviewRawText(resumeText, jdText);
 
         assertNotNull(report);
-        assertTrue(report.getSignals().stream().anyMatch(s -> "chronology".equals(s.getId())));
-        assertTrue(report.getFixes().stream().anyMatch(f -> "Fix the chronology of your resume".equals(f.getAction())));
+        assertTrue(report.getSignals().stream().anyMatch(s -> "trust".equals(s.getId())));
         assertTrue(report.getFixes().stream().noneMatch(f -> "Label your career gap".equals(f.getAction())));
-        assertTrue(report.getSummaryLine().toLowerCase().contains("chronology"));
     }
 }

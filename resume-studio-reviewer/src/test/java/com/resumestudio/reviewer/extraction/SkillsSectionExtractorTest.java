@@ -1,12 +1,15 @@
 package com.resumestudio.reviewer.extraction;
 
 import com.resumestudio.reviewer.model.enums.SkillsFormat;
+import com.resumestudio.reviewer.nlp.SoftSkillsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class SkillsSectionExtractorTest {
 
@@ -14,7 +17,14 @@ class SkillsSectionExtractorTest {
 
     @BeforeEach
     void setUp() {
-        extractor = new SkillsSectionExtractor();
+        SoftSkillsService softSkills = mock(SoftSkillsService.class);
+        // Return true for known soft skill words used in tests
+        Set<String> knownSoftSkills = Set.of("communication", "teamwork", "leadership",
+            "problem solving", "problem-solving", "time management", "adaptability",
+            "collaboration", "creativity", "attention to detail");
+        when(softSkills.isSoftSkill(anyString())).thenAnswer(inv ->
+            knownSoftSkills.contains(((String) inv.getArgument(0)).toLowerCase()));
+        extractor = new SkillsSectionExtractor(softSkills);
     }
 
     // ── null / blank ──────────────────────────────────────────────────────────

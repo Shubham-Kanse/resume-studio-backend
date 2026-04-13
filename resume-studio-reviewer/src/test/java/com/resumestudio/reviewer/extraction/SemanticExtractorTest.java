@@ -1,16 +1,24 @@
 package com.resumestudio.reviewer.extraction;
 
+import com.resumestudio.reviewer.nlp.TextNormalizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class SemanticExtractorTest {
 
     private SemanticExtractor extractor;
 
     @BeforeEach
-    void setUp() { extractor = new SemanticExtractor(); }
+    void setUp() {
+        ResumeOntologyService ontology = mock(ResumeOntologyService.class);
+        when(ontology.getSectionSynonyms(anyString())).thenReturn(Set.of());
+        extractor = new SemanticExtractor(new TextNormalizer(), ontology);
+    }
 
     // ── classifyHeader ────────────────────────────────────────────────────────
 
@@ -84,7 +92,7 @@ class SemanticExtractorTest {
     @Test void extractSections_parsesAllSections() {
         String text = """
             Summary
-            Experienced engineer.
+            Experienced backend engineer with 5 years building distributed systems.
             
             Experience
             Software Engineer at Acme, 2020-2023
@@ -103,7 +111,7 @@ class SemanticExtractorTest {
     }
 
     @Test void extractSections_noHeaders_fallsBackToFullText() {
-        String text = "Software Engineer at Acme 2020-2023. Built microservices.";
+        String text = "Software Engineer at Acme 2020-2023. Built microservices using Java and Spring Boot.";
         SemanticExtractor.SectionMap map = extractor.extractSections(text);
         assertNotNull(map.experience);
     }

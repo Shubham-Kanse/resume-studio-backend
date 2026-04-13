@@ -28,9 +28,11 @@ public class ExperienceExtractor {
     private static final Logger log = LoggerFactory.getLogger(ExperienceExtractor.class);
 
     private final NlpService nlp;
+    private final DesignationOntologyService designationOntology;
 
-    public ExperienceExtractor(NlpService nlp) {
+    public ExperienceExtractor(NlpService nlp, DesignationOntologyService designationOntology) {
         this.nlp = nlp;
+        this.designationOntology = designationOntology;
     }
 
     // ── Date patterns — ordered from most to least specific ──────────────────
@@ -184,14 +186,12 @@ public class ExperienceExtractor {
                 continue;
             }
 
-            // Remaining lines = bullets (include short lines without markers, but not if they look like titles)
+            // Remaining lines = bullets
             if (BULLET_START.matcher(trimmed).find()) {
                 String cleanBullet = BULLET_START.matcher(trimmed).replaceFirst("").trim();
-                if (!cleanBullet.isBlank()) {
-                    bullets.add(cleanBullet);
-                }
-            } else if (trimmed.length() > 10 && !trimmed.matches(".*\\d{4}.*") && !looksLikeTitle(trimmed)) {
-                // Include non-date, non-title lines > 10 chars (catches short bullets like "Led team of 5")
+                if (!cleanBullet.isBlank()) bullets.add(cleanBullet);
+            } else if (trimmed.length() > 10 && !trimmed.matches(".*\\d{4}.*")
+                    && !looksLikeTitle(trimmed) && !looksLikeSubSectionHeader(trimmed)) {
                 bullets.add(trimmed);
             }
         }
@@ -310,13 +310,57 @@ public class ExperienceExtractor {
     }
 
     private boolean looksLikeTitle(String text) {
+        if (text == null || text.isBlank() || text.length() > 120) return false;
+        // Ontology-first: check against all known designation synonyms
+        if (designationOntology.isKnownTitle(text)) return true;
+        // Fallback: keyword heuristics for titles not in ontology
         String lower = text.toLowerCase();
-        return lower.contains("engineer") || lower.contains("developer") || lower.contains("architect")
-            || lower.contains("manager") || lower.contains("lead") || lower.contains("analyst")
-            || lower.contains("designer") || lower.contains("scientist") || lower.contains("consultant")
-            || lower.contains("devops") || lower.contains("qa") || lower.contains("sre")
-            || CAREER_BREAK.matcher(text).find()
-            || TITLE_IC_LEVELS.keySet().stream().anyMatch(p -> p.matcher(text).find());
+        if (lower.contains("engineer") || lower.contains("developer") || lower.contains("architect")
+            || lower.contains("programmer") || lower.contains("coder")) return true;
+        if (lower.contains("manager") || lower.contains("director") || lower.contains("lead")
+            || lower.contains("head of") || lower.contains("vp ") || lower.contains("vice president")
+            || lower.contains("cto") || lower.contains("ceo") || lower.contains("coo")
+            || lower.contains("chief")) return true;
+        if (lower.contains("scientist") || lower.contains("analyst") || lower.contains("researcher")
+            || lower.contains("data ") || lower.contains("machine learning") || lower.contains(" ml ")
+            || lower.contains("ai ") || lower.contains("nlp")) return true;
+        if (lower.contains("designer") || lower.contains("product") || lower.contains("ux")
+            || lower.contains("ui ")) return true;
+        if (lower.contains("devops") || lower.contains("qa") || lower.contains("sre")
+            || lower.contains("security") || lower.contains("infosec") || lower.contains("devsecops")
+            || lower.contains("platform") || lower.contains("reliability") || lower.contains("tester")) return true;
+        if (lower.contains("ios") || lower.contains("android") || lower.contains("mobile")) return true;
+        if (lower.contains("consultant") || lower.contains("specialist") || lower.contains("advisor")
+            || lower.contains("associate") || lower.contains("intern") || lower.contains("trainee")
+            || lower.contains("graduate")) return true;
+        if (CAREER_BREAK.matcher(text).find()) return true;
+        return TITLE_IC_LEVELS.keySet().stream().anyMatch(p -> p.matcher(text).find());
+    }
+
+    /**
+     * Sub-section headers inside experience blocks (e.g. "Cloud-Native Microservices & Platform Engineering")
+     * are Title Case or ALL CAPS noun phrases with no action verb at the start.
+     * They should not be treated as bullets.
+     */
+    private boolean looksLikeSubSectionHeader(String text) {
+        if (text == null || text.length() > 100) return false;
+        // All caps phrase (e.g. "API ENGINEERING")
+        if (text.equals(text.toUpperCase()) && text.matches("[A-Z0-9&/\\s\\-]+")) return true;
+        // Title Case with no leading action verb and ends without punctuation
+        String[] words = text.split("\\s+");
+        if (words.length >= 2 && words.length <= 8) {
+            boolean allTitleCase = true;
+            for (String w : words) {
+                if (w.length() > 1 && !w.isEmpty() && Character.isLowerCase(w.charAt(0))
+                        && !w.equals("&") && !w.equals("and") && !w.equals("or")) {
+                    allTitleCase = false;
+                    break;
+                }
+            }
+            // Title case phrase that doesn't end with period/comma = sub-heading
+            if (allTitleCase && !text.endsWith(".") && !text.endsWith(",")) return true;
+        }
+        return false;
     }
 
     private boolean looksLikeCompany(String text) {

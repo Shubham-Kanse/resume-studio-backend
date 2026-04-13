@@ -5,6 +5,7 @@ import com.resumestudio.reviewer.model.Skill;
 import com.resumestudio.reviewer.model.WorkExperience;
 import com.resumestudio.reviewer.nlp.NlpService;
 import com.resumestudio.reviewer.skills.EscoSkillGraph;
+import com.resumestudio.reviewer.skills.SkillRecencyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +18,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,10 +39,16 @@ class AnomalyDetectorTest {
     @BeforeEach
     void setUp() {
         when(escoGraph.resolve(anyString())).thenAnswer(inv -> inv.getArgument(0));
-        when(escoGraph.releaseYearOf(anyString())).thenReturn(null); // no mismatch by default
         when(nlpService.impactVerbRatio(any())).thenReturn(0.5);
         when(nlpService.metricDensity(any())).thenReturn(0.3);
-        detector = new AnomalyDetector(escoGraph, nlpService);
+        SkillRecencyService recency = mock(SkillRecencyService.class);
+        // Default: no suspicious claims
+        when(recency.isYoeClaimSuspicious(anyString(), anyInt())).thenReturn(false);
+        // Kubernetes released 2014 — 20 years is suspicious
+        when(recency.isYoeClaimSuspicious(eq("Kubernetes experience"), anyInt())).thenReturn(true);
+        when(recency.isYoeClaimSuspicious(eq("Kubernetes"), anyInt())).thenReturn(true);
+        when(recency.bornYear(anyString())).thenReturn(2014);
+        detector = new AnomalyDetector(escoGraph, nlpService, recency);
     }
 
     // ── No crash cases ────────────────────────────────────────────────────────
@@ -168,21 +178,21 @@ class AnomalyDetectorTest {
     }
 
     // ── Bullet quality ────────────────────────────────────────────────────────
+    // Note: impactVerbRatio and metricDensity are set by ReviewerPipeline via NlpService,
+    // not by AnomalyDetector. AnomalyDetector only sets titleInflation and skillAgeMismatch.
 
     @Test
-    void detect_bulletQuality_setsImpactAndMetricFromNlp() {
-        when(nlpService.impactVerbRatio(any())).thenReturn(0.75);
-        when(nlpService.metricDensity(any())).thenReturn(0.4);
-
+    void detect_bulletQuality_doesNotOverwriteSignals() {
+        // AnomalyDetector should NOT touch impactVerbRatio/metricDensity
         WorkExperience recent = new WorkExperience();
         recent.setTitle("Engineer");
         recent.setIcLevel(3);
         recent.setBullets(List.of("Increased throughput by 40%", "Reduced latency from 200ms to 50ms"));
 
         ResumeSignals s = new ResumeSignals();
+        s.setImpactVerbRatio(0.75); // pre-set by pipeline
         detector.detect(List.of(), List.of(recent), "text", s);
-        assertEquals(0.75, s.getImpactVerbRatio());
-        assertEquals(0.4, s.getMetricDensity());
+        assertEquals(0.75, s.getImpactVerbRatio()); // unchanged
     }
 
     @Test

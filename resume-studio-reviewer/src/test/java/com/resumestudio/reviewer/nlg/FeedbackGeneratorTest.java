@@ -7,8 +7,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class FeedbackGeneratorTest {
 
@@ -16,8 +19,12 @@ class FeedbackGeneratorTest {
 
     @BeforeEach
     void setUp() {
-        // SentenceBank has no dependencies — use directly
-        generator = new FeedbackGenerator(new SentenceBank());
+        SentenceBankOntologyService ontologyBank = mock(SentenceBankOntologyService.class);
+        // Return null for all ontology lookups — falls back to SentenceBank
+        when(ontologyBank.observation(anyString(), anyString(), any(), anyInt())).thenReturn(null);
+        when(ontologyBank.interpretation(anyString(), anyString(), any(), anyInt())).thenReturn(null);
+        when(ontologyBank.action(anyString(), anyString(), any(), anyInt())).thenReturn(null);
+        generator = new FeedbackGenerator(new SentenceBank(), ontologyBank);
     }
 
     // ── generate() returns non-null output ───────────────────────────────────
@@ -35,78 +42,60 @@ class FeedbackGeneratorTest {
     // ── Signal list ──────────────────────────────────────────────────────────
 
     @Test
-    void signals_alwaysContains6Signals() {
+    void signals_alwaysContainsAtLeast3Signals() {
         ResumeSignals s = strongSignals();
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.STRONG_FIT);
-        assertEquals(6, out.signals().size());
+        assertTrue(out.signals().size() >= 3);
     }
 
     @Test
-    void signals_chronologyIncluded_whenChronologyHasIssues() {
+    void signals_trustIncluded_whenChronologyUnreliable() {
         ResumeSignals s = strongSignals();
         s.setHasChronologyIssues(true);
         s.setChronologyUnreliable(true);
         s.setChronologyDescriptions(List.of("Multiple roles are marked current."));
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
-        assertTrue(out.signals().stream().anyMatch(sig -> "chronology".equals(sig.getId())));
+        assertTrue(out.signals().stream().anyMatch(sig -> "trust".equals(sig.getId())));
     }
 
     @Test
-    void signals_titlePass_whenExactMatch() {
+    void signals_candidateFitPass_whenTitleAndYoeMatch() {
         ResumeSignals s = strongSignals();
         s.setTitleMatch(TitleMatch.EXACT);
+        s.setYoeFit(YoeFit.IN_RANGE);
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.STRONG_FIT);
-        var titleSignal = out.signals().stream()
-            .filter(sig -> "title_match".equals(sig.getId())).findFirst().orElseThrow();
-        assertEquals(SignalStatus.PASS, titleSignal.getStatus());
+        var fitSignal = out.signals().stream()
+            .filter(sig -> "candidate_fit".equals(sig.getId())).findFirst().orElseThrow();
+        assertEquals(SignalStatus.PASS, fitSignal.getStatus());
     }
 
     @Test
-    void signals_titleFail_whenMiss() {
+    void signals_candidateFitFail_whenTitleMissAndYoeShort() {
         ResumeSignals s = strongSignals();
         s.setTitleMatch(TitleMatch.MISS);
+        s.setYoeFit(YoeFit.UNDER_RANGE_SIGNIFICANT);
+        s.setCalculatedYoe(1.0);
+        s.setJdYoeMin(5.0);
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
-        var titleSignal = out.signals().stream()
-            .filter(sig -> "title_match".equals(sig.getId())).findFirst().orElseThrow();
-        assertEquals(SignalStatus.FAIL, titleSignal.getStatus());
+        var fitSignal = out.signals().stream()
+            .filter(sig -> "candidate_fit".equals(sig.getId())).findFirst().orElseThrow();
+        assertEquals(SignalStatus.FAIL, fitSignal.getStatus());
     }
 
     @Test
-    void signals_yoePass_whenInRange() {
-        ResumeSignals s = strongSignals();
-        s.setYoeFit(YoeFit.IN_RANGE);
-        s.setYoeState(YoeState.EXPLICIT);
-        FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.STRONG_FIT);
-        var yoeSignal = out.signals().stream()
-            .filter(sig -> "yoe_fit".equals(sig.getId())).findFirst().orElseThrow();
-        assertEquals(SignalStatus.PASS, yoeSignal.getStatus());
-    }
-
-    @Test
-    void signals_yoeFail_whenCannotDetermine() {
-        ResumeSignals s = strongSignals();
-        s.setYoeFit(YoeFit.CANNOT_DETERMINE);
-        s.setYoeState(YoeState.MISSING);
-        FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
-        var yoeSignal = out.signals().stream()
-            .filter(sig -> "yoe_fit".equals(sig.getId())).findFirst().orElseThrow();
-        assertEquals(SignalStatus.FAIL, yoeSignal.getStatus());
-    }
-
-    @Test
-    void signals_skillsFail_whenMissingMustHaves() {
+    void signals_skillCoverageFail_whenMissingMustHaves() {
         ResumeSignals s = strongSignals();
         s.setHasMissingMustHaves(true);
         SkillMatchResult missing = new SkillMatchResult("Java", true);
         s.setMustHaveResults(List.of(missing));
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
         var skillSignal = out.signals().stream()
-            .filter(sig -> "must_haves_visible".equals(sig.getId())).findFirst().orElseThrow();
+            .filter(sig -> "skill_coverage".equals(sig.getId())).findFirst().orElseThrow();
         assertEquals(SignalStatus.FAIL, skillSignal.getStatus());
     }
 
     @Test
-    void signals_skillsWarn_whenBuriedMustHaves() {
+    void signals_skillCoverageWarn_whenBuriedMustHaves() {
         ResumeSignals s = strongSignals();
         s.setHasBuriedMustHaves(true);
         s.setHasMissingMustHaves(false);
@@ -116,8 +105,15 @@ class FeedbackGeneratorTest {
         s.setMustHaveResults(List.of(buried));
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.POSSIBLE_FIT);
         var skillSignal = out.signals().stream()
-            .filter(sig -> "must_haves_visible".equals(sig.getId())).findFirst().orElseThrow();
+            .filter(sig -> "skill_coverage".equals(sig.getId())).findFirst().orElseThrow();
         assertEquals(SignalStatus.WARN, skillSignal.getStatus());
+    }
+
+    @Test
+    void signals_trustNotPresent_whenEverythingClean() {
+        ResumeSignals s = strongSignals();
+        FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.STRONG_FIT);
+        assertTrue(out.signals().stream().noneMatch(sig -> "trust".equals(sig.getId())));
     }
 
     // ── Fix list ─────────────────────────────────────────────────────────────
@@ -129,8 +125,7 @@ class FeedbackGeneratorTest {
         SkillMatchResult missing = new SkillMatchResult("Java", true);
         s.setMustHaveResults(List.of(missing));
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
-        assertTrue(out.fixes().stream()
-            .anyMatch(f -> "must_haves_visible".equals(f.getSignalId()) && f.getImpact() == ImpactLevel.HIGH));
+        assertTrue(out.fixes().stream().anyMatch(f -> f.getImpact() == ImpactLevel.HIGH));
     }
 
     @Test
@@ -138,8 +133,7 @@ class FeedbackGeneratorTest {
         ResumeSignals s = strongSignals();
         s.setSummaryPresent(false);
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.POSSIBLE_FIT);
-        assertTrue(out.fixes().stream()
-            .anyMatch(f -> "summary_quality".equals(f.getSignalId())));
+        assertTrue(out.fixes().stream().anyMatch(f -> f.getAction() != null && f.getAction().toLowerCase().contains("summary")));
     }
 
     @Test

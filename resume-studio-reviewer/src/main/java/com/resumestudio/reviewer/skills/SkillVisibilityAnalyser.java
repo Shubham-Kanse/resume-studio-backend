@@ -112,7 +112,25 @@ public class SkillVisibilityAnalyser {
 
     private boolean containsSkill(String text, String skillLower, String canonical) {
         String textLower = text.toLowerCase();
-        return textLower.contains(skillLower) || textLower.contains(canonical);
+        return matchesWithBoundary(textLower, skillLower)
+            || (!canonical.equals(skillLower) && matchesWithBoundary(textLower, canonical));
+    }
+
+    /**
+     * Word-boundary-aware skill matching.
+     * Prevents "Java" matching inside "JavaScript", "C" inside "C#", "Go" inside "Google".
+     */
+    private boolean matchesWithBoundary(String text, String skill) {
+        if (skill == null || skill.isBlank()) return false;
+        int idx = text.indexOf(skill);
+        while (idx >= 0) {
+            boolean startOk = idx == 0 || !Character.isLetterOrDigit(text.charAt(idx - 1));
+            boolean endOk = idx + skill.length() >= text.length()
+                || !Character.isLetterOrDigit(text.charAt(idx + skill.length()));
+            if (startOk && endOk) return true;
+            idx = text.indexOf(skill, idx + 1);
+        }
+        return false;
     }
 
     /**
@@ -136,8 +154,8 @@ public class SkillVisibilityAnalyser {
         }
 
         // Not in skills section — check bullets directly
-        if (summaryText != null && (summaryText.toLowerCase().contains(jdLower)
-            || summaryText.toLowerCase().contains(jdCanonical))) {
+        if (summaryText != null && (matchesWithBoundary(summaryText.toLowerCase(), jdLower)
+            || matchesWithBoundary(summaryText.toLowerCase(), jdCanonical))) {
             return SkillVisibility.SURFACE;
         }
 
@@ -147,7 +165,8 @@ public class SkillVisibilityAnalyser {
                 if (role.getBullets() == null) continue;
                 for (String bullet : role.getBullets()) {
                     String bulletLower = bullet.toLowerCase();
-                    if (bulletLower.contains(jdLower) || bulletLower.contains(jdCanonical)) {
+                    if (matchesWithBoundary(bulletLower, jdLower)
+                            || matchesWithBoundary(bulletLower, jdCanonical)) {
                         return i <= 1 ? SkillVisibility.MID : SkillVisibility.BURIED;
                     }
                 }
