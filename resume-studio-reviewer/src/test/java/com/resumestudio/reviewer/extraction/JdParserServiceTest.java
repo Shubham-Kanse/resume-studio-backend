@@ -3,7 +3,7 @@ package com.resumestudio.reviewer.extraction;
 import com.resumestudio.reviewer.model.JobDescription;
 import com.resumestudio.reviewer.skills.EscoSkillGraph;
 import com.resumestudio.reviewer.skills.MindTechOntology;
-import com.resumestudio.reviewer.nlp.SentenceEncoder;
+import com.resumestudio.reviewer.skills.SkillEmbeddingIndex;
 import com.resumestudio.reviewer.nlp.TfIdfVectorizer;
 import com.resumestudio.reviewer.nlp.PosTagService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +33,7 @@ class JdParserServiceTest {
     private MindTechOntology mindTech;
     
     @Mock
-    private SentenceEncoder sentenceEncoder;
+    private SkillEmbeddingIndex embeddingIndex;
     
     @Mock
     private TfIdfVectorizer tfidfVectorizer;
@@ -69,11 +69,8 @@ class JdParserServiceTest {
         when(mindTech.getImpliedSkills("Terraform")).thenReturn(List.of("Cloud infrastructure"));
         when(mindTech.getImpliedSkills("Next.js")).thenReturn(List.of("React", "JavaScript"));
         
-        // Sentence encoder defaults
-        when(sentenceEncoder.similarity(anyString(), anyString())).thenReturn(0.3);
-        when(sentenceEncoder.mustHaveSimilarity(anyString())).thenReturn(0.3);
-        when(sentenceEncoder.niceToHaveSimilarity(anyString())).thenReturn(0.3);
-        when(sentenceEncoder.encode(anyString())).thenReturn(new float[384]);
+        // Embedding index defaults
+        when(embeddingIndex.cosineSimilarity(anyString(), anyString())).thenReturn(0.3f);
         
         // TF-IDF defaults
         when(tfidfVectorizer.computeTfIdf(anyString(), any())).thenAnswer(inv -> {
@@ -120,7 +117,7 @@ class JdParserServiceTest {
         registerSkill("OpenTelemetry");
         registerSkill("Go", "golang");
 
-        parser = new JdParserService(escoGraph, mindTech, sentenceEncoder, tfidfVectorizer, posTagService,
+        parser = new JdParserService(escoGraph, mindTech, embeddingIndex, tfidfVectorizer, posTagService,
                 rolePatternsService);
     }
 

@@ -7,6 +7,7 @@ import ai.djl.repository.zoo.ZooModel;
 import ai.djl.training.util.ProgressBar;
 import ai.djl.translate.TranslateException;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,8 @@ public class SkillEmbeddingIndex {
     private static final Logger log = LoggerFactory.getLogger(SkillEmbeddingIndex.class);
 
     private ZooModel<String[], float[][]> model;
-    private Predictor<String[], float[][]> predictor;
+    // ThreadLocal predictor — Predictor is not thread-safe, each thread gets its own instance
+    private final ThreadLocal<Predictor<String[], float[][]>> predictorLocal = new ThreadLocal<>();
     private boolean available = false;
 
     @PostConstruct
@@ -36,11 +38,12 @@ public class SkillEmbeddingIndex {
             Criteria<String[], float[][]> criteria = Criteria.builder()
                 .optApplication(Application.NLP.TEXT_EMBEDDING)
                 .setTypes(String[].class, float[][].class)
-                .optModelUrls("djl://ai.djl.huggingface.onnxruntime/sentence-transformers/all-MiniLM-L6-v2")
+                .optGroupId("ai.djl.huggingface.pytorch")
+                .optArtifactId("sentence-transformers/all-MiniLM-L6-v2")
+                .optEngine("PyTorch")
                 .optProgress(new ProgressBar())
                 .build();
             model = criteria.loadModel();
-            predictor = model.newPredictor();
             available = true;
             log.info("SkillEmbeddingIndex: all-MiniLM-L6-v2 ready");
         } catch (Exception e) {
@@ -51,7 +54,7 @@ public class SkillEmbeddingIndex {
     public float cosineSimilarity(String a, String b) {
         if (!available || a == null || b == null) return jaccard(a, b);
         try {
-            float[][] embeddings = predictor.predict(new String[]{a, b});
+            float[][] embeddings = predictor().predict(new String[]{a, b});
             return dot(normalize(embeddings[0]), normalize(embeddings[1]));
         } catch (TranslateException e) {
             log.debug("Embedding failed: {}", e.getMessage());
@@ -62,10 +65,24 @@ public class SkillEmbeddingIndex {
     public float[] embed(String text) {
         if (!available || text == null) return null;
         try {
-            return predictor.predict(new String[]{text})[0];
+            return predictor().predict(new String[]{text})[0];
         } catch (TranslateException e) {
             return null;
         }
+    }
+
+    private Predictor<String[], float[][]> predictor() {
+        Predictor<String[], float[][]> p = predictorLocal.get();
+        if (p == null) {
+            p = model.newPredictor();
+            predictorLocal.set(p);
+        }
+        return p;
+    }
+
+    @PreDestroy
+    public void close() {
+        if (model != null) model.close();
     }
 
     public boolean isAvailable() { return available; }

@@ -19,6 +19,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -71,25 +72,109 @@ public class AiReviewService {
             CoherenceEngine.CoherenceResult coherence) {
 
         String prompt = buildPrompt(signals, classification, jd, resume, coherence);
+        prompt = smartTruncate(prompt, 4000);
 
-        // Truncate prompt if too long (~4000 chars ≈ ~1000 tokens, safe for Groq)
-        if (prompt.length() > 4000) {
-            prompt = prompt.substring(0, 4000) + "\n[prompt truncated]";
-        }
+        // Build ground-truth before-text map from actual resume data
+        // so AI-generated "before" is overridden with real resume text
+        Map<String, String> signalToRealText = buildSignalTextMap(signals, resume);
 
         try {
             String raw = callGroq(prompt);
-            return mergeAiOutput(builder, raw, signals, classification);
+            FeedbackReport.Builder result = mergeAiOutput(builder, raw, signals, classification);
+            injectRealBeforeText(result, signalToRealText);
+            return result;
         } catch (Exception first) {
             log.warn("AI call failed ({}), retrying once", first.getMessage());
             try {
                 String retryPrompt = prompt + "\n\nPrevious attempt failed: " + first.getMessage()
                     + "\nEnsure output is valid JSON matching the schema exactly.";
                 String raw = callGroq(retryPrompt);
-                return mergeAiOutput(builder, raw, signals, classification);
+                FeedbackReport.Builder result = mergeAiOutput(builder, raw, signals, classification);
+                injectRealBeforeText(result, signalToRealText);
+                return result;
             } catch (Exception second) {
                 log.warn("AI retry failed ({}), using fallback", second.getMessage());
                 return applyFallback(builder, signals, classification);
+            }
+        }
+    }
+
+    // ── Real before-text injection ────────────────────────────────────────────
+
+    /**
+     * Builds a map of signalId → actual resume text for use as ground-truth "before" in fixes.
+     * Keyed by the signal IDs the AI uses in its fix output.
+     */
+    private Map<String, String> buildSignalTextMap(ResumeSignals signals, Resume resume) {
+        Map<String, String> map = new java.util.HashMap<>();
+
+        List<com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet> enriched =
+            resume.getEnrichedBullets();
+
+        if (enriched != null && !enriched.isEmpty()) {
+            // Weakest bullet → used for impact_evidence / bullets fixes
+            enriched.stream()
+                .filter(b -> !b.duplicateFlag())
+                .min(java.util.Comparator.comparingDouble(b -> {
+                    double v = b.metricDetected() ? 1.0 : 0.0;
+                    double verb = switch (b.actionVerbQuality()) {
+                        case "STRONG" -> 1.0; case "MEDIUM" -> 0.6; default -> 0.1;
+                    };
+                    return v * 0.3 + verb * 0.2 + b.specificityScore() / 10.0 * 0.5;
+                }))
+                .ifPresent(b -> {
+                    map.put("bullets", b.text());
+                    map.put("impact_evidence", b.text());
+                });
+
+            // Duplicate bullet → used for duplicate fixes
+            enriched.stream()
+                .filter(com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet::duplicateFlag)
+                .findFirst()
+                .ifPresent(b -> map.put("duplicate_bullets", b.text()));
+        }
+
+        // Summary text → used for summary fixes
+        if (resume.getSummaryText() != null && !resume.getSummaryText().isBlank()) {
+            map.put("summary", resume.getSummaryText());
+        }
+
+        // Missing must-have skill → used for skill_match fixes
+        if (signals.getMustHaveResults() != null) {
+            signals.getMustHaveResults().stream()
+                .filter(r -> r.getVisibility() == com.resumestudio.reviewer.model.enums.SkillVisibility.MISSING)
+                .findFirst()
+                .ifPresent(r -> map.put("skill_match", "\"" + r.getJdSkill() + "\" not found on resume"));
+        }
+
+        return map;
+    }
+
+    /**
+     * Overrides AI-fabricated "before" text with actual resume text.
+     * The AI's "after" rewrite is kept — only "before" is replaced.
+     */
+    // Signal IDs that have extractable resume text — all others get beforeAfter suppressed
+    private static final java.util.Set<String> TEXT_INJECTABLE_SIGNALS = java.util.Set.of(
+        "bullets", "impact_evidence", "summary", "skill_match", "duplicate_bullets"
+    );
+
+    private void injectRealBeforeText(FeedbackReport.Builder builder, Map<String, String> signalTextMap) {
+        FeedbackReport report = builder.build();
+        if (report.getFixes() == null) return;
+        for (Fix fix : report.getFixes()) {
+            String signalId = fix.getSignalId();
+            if (signalId == null) continue;
+            if (TEXT_INJECTABLE_SIGNALS.contains(signalId)) {
+                // Replace AI-fabricated before with real resume text
+                String realText = signalTextMap.get(signalId);
+                if (realText != null) {
+                    if (fix.getBeforeAfter() == null) fix.setBeforeAfter(new Fix.BeforeAfter(realText, null));
+                    else fix.getBeforeAfter().setBefore(realText);
+                }
+            } else {
+                // Non-text signal (title_match, yoe_fit, format, etc.) — suppress beforeAfter entirely
+                fix.setBeforeAfter(null);
             }
         }
     }
@@ -196,6 +281,37 @@ public class AiReviewService {
     }
 
     // ── Groq HTTP call ────────────────────────────────────────────────────────
+
+    /**
+     * Truncates prompt to maxChars by dropping low-priority sections first,
+     * then truncating at the last sentence boundary.
+     *
+     * Drop order (least → most important):
+     *   1. Top bullets section
+     *   2. Coherence flags section
+     *   3. JD trimmed text → replaced with role+skills summary
+     * If still over limit, truncate at last '.' before the limit.
+     */
+    private String smartTruncate(String prompt, int maxChars) {
+        if (prompt.length() <= maxChars) return prompt;
+
+        // Drop top bullets section
+        String trimmed = prompt.replaceAll("(?s)Top bullets:.*?(?=\\n===|\\Z)", "");
+        if (trimmed.length() <= maxChars) return trimmed;
+
+        // Drop coherence flags section
+        trimmed = trimmed.replaceAll("(?s)=== Coherence flags ===.*?(?=\\n===|\\Z)", "");
+        if (trimmed.length() <= maxChars) return trimmed;
+
+        // Drop JD trimmed text block (keep only role title + required skills line)
+        trimmed = trimmed.replaceAll("(?s)(=== JD ===\n).*?(?=\n=== Candidate)", "$1[JD text omitted — see skill matching section]\n");
+        if (trimmed.length() <= maxChars) return trimmed;
+
+        // Last resort: truncate at last sentence boundary before limit
+        String cut = trimmed.substring(0, maxChars);
+        int lastDot = cut.lastIndexOf('.');
+        return lastDot > maxChars / 2 ? cut.substring(0, lastDot + 1) : cut;
+    }
 
     private String callGroq(String prompt) throws Exception {
         String body = mapper.writeValueAsString(new GroqRequest(ai.getModel(), prompt));
@@ -424,5 +540,106 @@ public class AiReviewService {
     private static void appendSignal(StringBuilder sb, String id, Object value, String detail) {
         sb.append(id).append(": ").append(value != null ? value : "UNKNOWN")
           .append(" (").append(detail).append(")\n");
+    }
+
+    /**
+     * One AI call to enrich the top FAIL/WARN deep dive items with specific, contextual actions.
+     *
+     * Strategy: collect up to 8 FAIL/WARN items across all sections, send their quoted text
+     * and current generic action to the AI, get back specific rewrites.
+     * All structural data (verdict, score, section) stays deterministic — AI only improves `action`.
+     */
+    public void enrichDeepDive(com.resumestudio.reviewer.model.DeepDiveReport report,
+                                com.resumestudio.reviewer.model.JobDescription jd) {
+        // Collect top items needing AI enrichment (FAIL first, then WARN, max 8)
+        List<com.resumestudio.reviewer.model.DeepDiveReport.ReviewItem> targets = new java.util.ArrayList<>();
+        for (com.resumestudio.reviewer.model.DeepDiveReport.Section section : report.getSections()) {
+            for (com.resumestudio.reviewer.model.DeepDiveReport.ReviewItem item : section.getItems()) {
+                if (("FAIL".equals(item.getVerdict()) || "WARN".equals(item.getVerdict()))
+                        && item.getQuote() != null && !item.getQuote().isBlank()
+                        && item.getAction() != null) {
+                    targets.add(item);
+                }
+            }
+        }
+        // Sort: FAIL first, then by score ascending (worst first)
+        targets.sort(java.util.Comparator
+            .comparing((com.resumestudio.reviewer.model.DeepDiveReport.ReviewItem i) -> "FAIL".equals(i.getVerdict()) ? 0 : 1)
+            .thenComparingInt(com.resumestudio.reviewer.model.DeepDiveReport.ReviewItem::getScore));
+        if (targets.size() > 8) targets = targets.subList(0, 8);
+        if (targets.isEmpty()) return;
+
+        String prompt = buildDeepDivePrompt(targets, jd);
+        try {
+            String raw = callGroq(prompt);
+            mergeDeepDiveOutput(raw, targets);
+        } catch (Exception first) {
+            log.warn("Deep dive AI enrichment failed ({}), retrying", first.getMessage());
+            try {
+                String raw = callGroq(prompt);
+                mergeDeepDiveOutput(raw, targets);
+            } catch (Exception second) {
+                log.warn("Deep dive AI enrichment retry failed — keeping rule-based actions");
+            }
+        }
+    }
+
+    private String buildDeepDivePrompt(
+            List<com.resumestudio.reviewer.model.DeepDiveReport.ReviewItem> items,
+            com.resumestudio.reviewer.model.JobDescription jd) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("You are a professional resume reviewer. For each item, write a specific, contextual 'action' ");
+        sb.append("that references the exact quoted text and tells the candidate precisely what to write or change. ");
+        sb.append("Be concrete — include example rewrites where possible. Max 2 sentences. ");
+        sb.append("Do NOT give generic advice. Do NOT repeat the observation. Reference the quote directly.\n\n");
+        sb.append("Role: ").append(jd.getRoleTitle() != null ? jd.getRoleTitle() : "Software Engineer").append("\n");
+        if (!jd.getMustHaveSkills().isEmpty()) {
+            sb.append("Required skills: ").append(String.join(", ", jd.getMustHaveSkills().stream().limit(8).toList())).append("\n");
+        }
+        sb.append("\nOutput ONLY valid JSON:\n");
+        sb.append("{ \"items\": [ { \"index\": 0, \"action\": \"string\" }, ... ] }\n\n");
+        sb.append("Items:\n");
+        for (int i = 0; i < items.size(); i++) {
+            var item = items.get(i);
+            sb.append(i).append(". [").append(item.getType()).append("] verdict=").append(item.getVerdict())
+              .append(" score=").append(item.getScore())
+              .append("\n   quote: \"").append(item.getQuote().replace("\"", "'")).append("\"")
+              .append("\n   observation: ").append(item.getObservation()).append("\n");
+        }
+        return sb.toString();
+    }
+
+    private void mergeDeepDiveOutput(String json,
+            List<com.resumestudio.reviewer.model.DeepDiveReport.ReviewItem> targets) {
+        try {
+            JsonNode root = mapper.readTree(json);
+            for (JsonNode node : root.path("items")) {
+                int idx = node.path("index").asInt(-1);
+                String aiAction = node.path("action").asText(null);
+                if (idx < 0 || idx >= targets.size() || aiAction == null || aiAction.isBlank()) continue;
+
+                String ruleAction = targets.get(idx).getAction();
+
+                // Only use AI action if it is:
+                // 1. Longer than the rule-based action (more specific)
+                // 2. References the actual quote text (contextual, not generic)
+                // 3. Not just a rephrasing of the rule action (different enough)
+                boolean aiIsLonger = aiAction.length() > (ruleAction != null ? ruleAction.length() : 0);
+                String quote = targets.get(idx).getQuote();
+                boolean aiReferencesQuote = quote != null && !quote.isBlank()
+                    && aiAction.toLowerCase().contains(quote.substring(0, Math.min(10, quote.length())).toLowerCase().replaceAll("[^a-z0-9 ]", "").trim());
+                boolean aiIsDifferent = ruleAction == null
+                    || !aiAction.substring(0, Math.min(30, aiAction.length()))
+                        .equalsIgnoreCase(ruleAction.substring(0, Math.min(30, ruleAction.length())));
+
+                // Use AI if it's longer AND (references the quote OR is clearly different from rule)
+                if (aiIsLonger && (aiReferencesQuote || aiIsDifferent)) {
+                    targets.get(idx).setAction(aiAction);
+                }
+                // Otherwise keep the rule-based action — it's more reliable for structured items
+            }
+        } catch (Exception e) {
+            log.debug("Failed to merge deep dive AI output: {}", e.getMessage());
+        }
     }
 }

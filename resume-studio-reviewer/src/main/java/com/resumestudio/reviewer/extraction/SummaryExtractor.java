@@ -50,7 +50,10 @@ public class SummaryExtractor {
             return;
         }
 
-        String cleaned = summaryText.trim();
+        String cleaned = summaryText.trim()
+            .replaceAll("([^\\n])\\n(?!\\n)", "$1 ")
+            .replaceAll("\\n{2,}", "\n\n")
+            .trim();
         resume.setSummaryText(cleaned);
     }
 

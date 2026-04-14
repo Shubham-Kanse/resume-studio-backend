@@ -1,9 +1,11 @@
 package com.resumestudio.reviewer.extraction;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.resumestudio.reviewer.model.JobDescription;
 import com.resumestudio.reviewer.skills.EscoSkillGraph;
 import com.resumestudio.reviewer.skills.MindTechOntology;
-import com.resumestudio.reviewer.nlp.SentenceEncoder;
+import com.resumestudio.reviewer.skills.SkillEmbeddingIndex;
 import com.resumestudio.reviewer.nlp.TfIdfVectorizer;
 import com.resumestudio.reviewer.nlp.PosTagService;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -37,7 +40,7 @@ public class JdParserService {
 
     private final EscoSkillGraph escoGraph;
     private final MindTechOntology mindTech;
-    private final SentenceEncoder sentenceEncoder;
+    private final SkillEmbeddingIndex embeddingIndex;
     private final TfIdfVectorizer tfidfVectorizer;
     private final PosTagService posTagService;
     private final JdRolePatternsService rolePatternsService;
@@ -46,25 +49,20 @@ public class JdParserService {
     private int unstructuredSplitMinSkills = 8;
     
     // Cache for parsed JDs (SHA-256 hash -> JobDescription)
-    // Thread-safe with synchronized access
-    private final Map<String, JobDescription> jdCache = Collections.synchronizedMap(
-        new LinkedHashMap<>(100, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<String, JobDescription> eldest) {
-                return size() > 100;
-            }
-        }
-    );
+    private final Cache<String, JobDescription> jdCache = Caffeine.newBuilder()
+        .maximumSize(100)
+        .expireAfterWrite(1, TimeUnit.HOURS)
+        .build();
 
     public JdParserService(EscoSkillGraph escoGraph,
                           MindTechOntology mindTech,
-                          SentenceEncoder sentenceEncoder,
+                          SkillEmbeddingIndex embeddingIndex,
                           TfIdfVectorizer tfidfVectorizer,
                           PosTagService posTagService,
                           JdRolePatternsService rolePatternsService) {
         this.escoGraph = escoGraph;
         this.mindTech = mindTech;
-        this.sentenceEncoder = sentenceEncoder;
+        this.embeddingIndex = embeddingIndex;
         this.tfidfVectorizer = tfidfVectorizer;
         this.posTagService = posTagService;
         this.rolePatternsService = rolePatternsService;
@@ -156,10 +154,10 @@ public class JdParserService {
             jd.setParseConfidence(0.0);
             return jd;
         }
-        
+
         // Check cache
         String hash = computeSha256(rawText);
-        JobDescription cached = jdCache.get(hash);
+        JobDescription cached = jdCache.getIfPresent(hash);
         if (cached != null) {
             log.debug("JD cache hit: {}", hash.substring(0, 8));
             return cached;
@@ -312,7 +310,7 @@ public class JdParserService {
             if (line.isBlank() || line.length() > 100) continue;
             if (!isPlausibleTitleCandidate(line)) continue;
             
-            double sim = sentenceEncoder.similarity(line, titleQuery);
+            double sim = embeddingIndex.cosineSimilarity(line, titleQuery);
             if (sim > maxSim && sim > 0.6) {
                 maxSim = sim;
                 bestMatch = line;
@@ -632,8 +630,8 @@ public class JdParserService {
             line.matches("^\\d+\\.\\s+[A-Z].+")) {
             
             // Use semantic similarity
-            double mustHaveSim = sentenceEncoder.mustHaveSimilarity(line);
-            double niceToHaveSim = sentenceEncoder.niceToHaveSimilarity(line);
+            double mustHaveSim = embeddingIndex.cosineSimilarity(line, "required qualifications essential skills must have mandatory");
+            double niceToHaveSim = embeddingIndex.cosineSimilarity(line, "preferred qualifications nice to have bonus optional");
             
             if (mustHaveSim > 0.7 && mustHaveSim > niceToHaveSim) {
                 return SectionContext.MUST_HAVE;

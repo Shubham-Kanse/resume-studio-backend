@@ -38,6 +38,7 @@ public class FeedbackReport {
     private List<RedFlag> redFlags;
     private RecruiterGutFeel recruiterGutFeel;
     private List<Fix> fixes;
+    private ResumeScore score;
 
     // -------------------------------------------------------------------------
     // Nested types
@@ -146,6 +147,7 @@ public class FeedbackReport {
         public Builder redFlags(List<RedFlag> rf) { r.redFlags = rf; return this; }
         public Builder recruiterGutFeel(RecruiterGutFeel gf) { r.recruiterGutFeel = gf; return this; }
         public Builder fixes(List<Fix> f) { r.fixes = f; return this; }
+        public Builder score(ResumeScore s) { r.score = s; return this; }
 
         public FeedbackReport build() { return r; }
     }
@@ -173,4 +175,5 @@ public class FeedbackReport {
     public List<RedFlag> getRedFlags() { return redFlags; }
     public RecruiterGutFeel getRecruiterGutFeel() { return recruiterGutFeel; }
     public List<Fix> getFixes() { return fixes; }
+    public ResumeScore getScore() { return score; }
 }

@@ -192,7 +192,11 @@ public class ExperienceExtractor {
                 if (!cleanBullet.isBlank()) bullets.add(cleanBullet);
             } else if (trimmed.length() > 10 && !trimmed.matches(".*\\d{4}.*")
                     && !looksLikeTitle(trimmed) && !looksLikeSubSectionHeader(trimmed)) {
-                bullets.add(trimmed);
+                if (!bullets.isEmpty() && isContinuationLine(bullets.get(bullets.size() - 1), trimmed)) {
+                    bullets.set(bullets.size() - 1, bullets.get(bullets.size() - 1) + " " + trimmed);
+                } else {
+                    bullets.add(trimmed);
+                }
             }
         }
 
@@ -436,5 +440,56 @@ public class ExperienceExtractor {
             if (entry.getKey().matcher(title).find()) return entry.getValue();
         }
         return 3; // default to mid-level if not detectable
+    }
+
+    // Strong action verbs that reliably start a new bullet (not a continuation)
+    private static final Pattern STRONG_VERB_START = Pattern.compile(
+        "^(Developed|Built|Led|Designed|Implemented|Engineered|Architected|Deployed|Delivered|" +
+        "Reduced|Increased|Improved|Optimized|Optimised|Automated|Migrated|Refactored|Integrated|" +
+        "Launched|Scaled|Secured|Established|Drove|Accelerated|Streamlined|Eliminated|Introduced|" +
+        "Shipped|Mentored|Managed|Resolved|Created|Owned|Facilitated|Executed|Produced|Enabled|" +
+        "Collaborated|Contributed|Spearheaded|Championed|Coordinated|Oversaw|Directed|Supervised)\\b",
+        Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Determines whether {@code currentLine} is a PDF line-wrap continuation of {@code prevBullet}.
+     *
+     * A line IS a continuation when:
+     *   1. The previous bullet is syntactically incomplete — doesn't end with a sentence-terminal
+     *      character (. ! ? ) ] " %) AND
+     *   2. The current line doesn't start a new independent sentence — no strong action verb,
+     *      not a proper-noun-led independent clause.
+     *
+     * A line is NOT a continuation (starts a new bullet) when:
+     *   - Previous bullet ends with . ! ? ) ] " %
+     *   - Current line starts with a strong action verb (new achievement)
+     *   - Current line is long enough to be a standalone bullet (>60 chars) AND starts with capital
+     */
+    private boolean isContinuationLine(String prevBullet, String currentLine) {
+        // Previous bullet ends with a sentence-terminal → current line is a new bullet
+        if (prevBullet.matches(".*[.!?\\)\\]\"'%]\\s*$")) {
+            // Exception: if current line is very short and starts lowercase it's still a continuation
+            // e.g. prev ends with ")" but current is "and reduced latency by 20%."
+            if (currentLine.length() < 40 && Character.isLowerCase(currentLine.charAt(0))) {
+                return true;
+            }
+            return false;
+        }
+
+        // Previous bullet is incomplete — check if current line starts a new independent bullet
+        // Strong action verb at start = new bullet
+        if (STRONG_VERB_START.matcher(currentLine).find()) {
+            return false;
+        }
+
+        // Long line starting with capital = likely a new standalone bullet
+        if (currentLine.length() > 60 && Character.isUpperCase(currentLine.charAt(0))
+                && !currentLine.startsWith("and ") && !currentLine.startsWith("or ")
+                && !currentLine.startsWith("while ") && !currentLine.startsWith("with ")) {
+            return false;
+        }
+
+        // Everything else: treat as continuation of the incomplete previous bullet
+        return true;
     }
 }

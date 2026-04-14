@@ -4,6 +4,8 @@ import com.resumestudio.reviewer.ReviewerPipeline;
 import com.resumestudio.reviewer.ReviewCache;
 import com.resumestudio.reviewer.ingest.ResumeIngestService.UnsupportedFileTypeException;
 import com.resumestudio.reviewer.model.FeedbackReport;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -12,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
@@ -22,11 +24,20 @@ public class ResumeReviewerController {
     private static final Logger log = LoggerFactory.getLogger(ResumeReviewerController.class);
     private static final int MAX_REQUESTS_PER_MINUTE = 10;
 
-    // Simple in-memory rate limiter: IP → (windowStart, count)
-    private final ConcurrentHashMap<String, long[]> rateLimiter = new ConcurrentHashMap<>();
+    // Rate limiter: IP → request count, auto-expires after 1 minute
+    private final Cache<String, AtomicInteger> rateLimiter = Caffeine.newBuilder()
+        .expireAfterWrite(1, TimeUnit.MINUTES)
+        .maximumSize(100_000)
+        .build();
 
     private final ReviewerPipeline pipeline;
     private final ReviewCache reviewCache;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private redis.clients.jedis.JedisPool jedisPool;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private javax.sql.DataSource dataSource;
 
     public ResumeReviewerController(ReviewerPipeline pipeline, ReviewCache reviewCache) {
         this.pipeline = pipeline;
@@ -34,8 +45,34 @@ public class ResumeReviewerController {
     }
 
     @GetMapping("/health")
-    public ResponseEntity<Map<String, String>> health() {
-        return ResponseEntity.ok(Map.of("status", "UP"));
+    public ResponseEntity<Map<String, Object>> health() {
+        Map<String, Object> status = new java.util.LinkedHashMap<>();
+        boolean healthy = true;
+
+        // Redis
+        if (jedisPool != null) {
+            try (redis.clients.jedis.Jedis jedis = jedisPool.getResource()) {
+                jedis.ping();
+                status.put("redis", "UP");
+            } catch (Exception e) {
+                status.put("redis", "DOWN");
+                healthy = false;
+            }
+        } else {
+            status.put("redis", "DISABLED");
+        }
+
+        // DB
+        try (java.sql.Connection conn = dataSource.getConnection()) {
+            conn.isValid(1);
+            status.put("db", "UP");
+        } catch (Exception e) {
+            status.put("db", "DOWN");
+            healthy = false;
+        }
+
+        status.put("status", healthy ? "UP" : "DEGRADED");
+        return ResponseEntity.status(healthy ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).body(status);
     }
 
     @PostMapping("/review")
@@ -132,15 +169,7 @@ public class ResumeReviewerController {
     }
 
     private boolean isRateLimited(String ip) {
-        long now = System.currentTimeMillis();
-        long[] window = rateLimiter.computeIfAbsent(ip, k -> new long[]{now, 0});
-        synchronized (window) {
-            if (now - window[0] > 60_000) { // reset window every minute
-                window[0] = now;
-                window[1] = 0;
-            }
-            window[1]++;
-            return window[1] > MAX_REQUESTS_PER_MINUTE;
-        }
+        AtomicInteger count = rateLimiter.get(ip, k -> new AtomicInteger(0));
+        return count.incrementAndGet() > MAX_REQUESTS_PER_MINUTE;
     }
 }

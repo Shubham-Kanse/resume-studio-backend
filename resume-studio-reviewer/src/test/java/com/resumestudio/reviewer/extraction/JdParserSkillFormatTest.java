@@ -3,7 +3,7 @@ package com.resumestudio.reviewer.extraction;
 import com.resumestudio.reviewer.model.JobDescription;
 import com.resumestudio.reviewer.skills.EscoSkillGraph;
 import com.resumestudio.reviewer.skills.MindTechOntology;
-import com.resumestudio.reviewer.nlp.SentenceEncoder;
+import com.resumestudio.reviewer.skills.SkillEmbeddingIndex;
 import com.resumestudio.reviewer.nlp.TfIdfVectorizer;
 import com.resumestudio.reviewer.nlp.PosTagService;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,7 @@ class JdParserSkillFormatTest {
     void setUp() {
         EscoSkillGraph escoGraph = mock(EscoSkillGraph.class);
         MindTechOntology mind = mock(MindTechOntology.class);
-        SentenceEncoder encoder = mock(SentenceEncoder.class);
+        SkillEmbeddingIndex embeddingIndex = mock(SkillEmbeddingIndex.class);
         TfIdfVectorizer tfidf = mock(TfIdfVectorizer.class);
         PosTagService pos = mock(PosTagService.class);
 
@@ -36,14 +36,12 @@ class JdParserSkillFormatTest {
         when(mind.resolve(anyString())).thenReturn(null);
         when(mind.getImpliedSkills(anyString())).thenReturn(List.of());
         when(mind.getRoleSkillRelevance(anyString(), anyString())).thenReturn(0.5);
-        when(encoder.similarity(anyString(), anyString())).thenReturn(0.5);
-        when(encoder.mustHaveSimilarity(anyString())).thenReturn(0.5);
-        when(encoder.niceToHaveSimilarity(anyString())).thenReturn(0.3);
+        when(embeddingIndex.cosineSimilarity(anyString(), anyString())).thenReturn(0.5f);
         when(tfidf.computeTfIdf(anyString(), anyList())).thenReturn(new java.util.HashMap<>());
         when(tfidf.computePositionalWeight(anyString(), anyString())).thenReturn(0.5);
         when(pos.isVerb(anyString(), anyString())).thenReturn(false);
 
-        parser = new JdParserService(escoGraph, mind, encoder, tfidf, pos,
+        parser = new JdParserService(escoGraph, mind, embeddingIndex, tfidf, pos,
                 mock(JdRolePatternsService.class));
     }
 

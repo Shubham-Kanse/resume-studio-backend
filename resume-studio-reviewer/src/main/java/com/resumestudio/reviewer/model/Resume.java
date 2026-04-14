@@ -48,6 +48,7 @@ public class Resume {
 
     // ── Bullet enrichment ─────────────────────────────────────
     private List<String> topBullets = new ArrayList<>(); // top 5 scored bullets for AI prompt
+    private List<com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet> enrichedBullets = new ArrayList<>();
 
     // ── Getters & Setters ────────────────────────────────────
 
@@ -134,4 +135,7 @@ public class Resume {
 
     public List<String> getTopBullets() { return topBullets; }
     public void setTopBullets(List<String> topBullets) { this.topBullets = topBullets; }
+
+    public List<com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet> getEnrichedBullets() { return enrichedBullets; }
+    public void setEnrichedBullets(List<com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet> enrichedBullets) { this.enrichedBullets = enrichedBullets; }
 }

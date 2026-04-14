@@ -3,6 +3,7 @@ package com.resumestudio.reviewer;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import jakarta.annotation.PostConstruct;
 
 @Configuration
 @EnableConfigurationProperties
@@ -21,4 +22,15 @@ public class AiProperties {
 
     public String getModel() { return model; }
     public void setModel(String model) { this.model = model; }
+
+    @PostConstruct
+    public void validate() {
+        if (key == null || key.isBlank()) {
+            throw new IllegalStateException(
+                "AI_API_KEY is not configured. Set the 'ai.api.key' property or AI_API_KEY environment variable.");
+        }
+        if (url == null || url.isBlank()) {
+            throw new IllegalStateException("ai.api.url is not configured.");
+        }
+    }
 }

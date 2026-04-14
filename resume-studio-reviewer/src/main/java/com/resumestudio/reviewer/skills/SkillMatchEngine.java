@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Matches a JD required skill against all skills found on the resume.
@@ -40,14 +41,30 @@ public class SkillMatchEngine {
 
     public List<SkillMatchResult> matchAll(List<String> jdSkills, List<Skill> resumeSkills, boolean isMustHave) {
         if (jdSkills == null || jdSkills.isEmpty()) return List.of();
+        // Build normalised index once — O(m) — so each JD skill lookup is O(1) for strategies 1-4
+        Map<String, Skill> normIndex = new java.util.HashMap<>();
+        Map<String, Skill> canonicalIndex = new java.util.HashMap<>();
+        if (resumeSkills != null) {
+            for (Skill s : resumeSkills) {
+                if (s.getRawName() == null) continue;
+                normIndex.put(normalise(s.getRawName()), s);
+                String resolved = escoGraph.resolve(s.getRawName());
+                if (resolved != null) canonicalIndex.put(resolved.toLowerCase(), s);
+            }
+        }
         List<SkillMatchResult> results = new ArrayList<>();
         for (String jdSkill : jdSkills) {
-            results.add(match(jdSkill, resumeSkills, isMustHave));
+            results.add(match(jdSkill, resumeSkills, isMustHave, normIndex, canonicalIndex));
         }
         return results;
     }
 
     public SkillMatchResult match(String jdSkill, List<Skill> resumeSkills, boolean isMustHave) {
+        return match(jdSkill, resumeSkills, isMustHave, null, null);
+    }
+
+    private SkillMatchResult match(String jdSkill, List<Skill> resumeSkills, boolean isMustHave,
+                                   Map<String, Skill> normIndex, Map<String, Skill> canonicalIndex) {
         if (jdSkill == null || jdSkill.isBlank()) {
             SkillMatchResult result = new SkillMatchResult(jdSkill, isMustHave);
             result.setMatchType(SkillMatchType.MISSING);
@@ -69,26 +86,37 @@ public class SkillMatchEngine {
             return result;
         }
 
+        // ── Strategy 1: EXACT (O(1) with index) ───────────────────────────
+        if (normIndex != null) {
+            Skill exact = normIndex.get(jdNormalised);
+            if (exact != null) {
+                log.debug("EXACT match: '{}' → '{}'", jdSkill, exact.getRawName());
+                return buildResult(result, exact, SkillMatchType.EXACT, jdCanonical);
+            }
+            // ── Strategy 2: SYNONYM (O(1) with index) ─────────────────────
+            Skill synonym = canonicalIndex != null ? canonicalIndex.get(jdCanonical) : null;
+            if (synonym != null && !jdNormalised.equals(normalise(synonym.getRawName()))) {
+                log.debug("SYNONYM match: '{}' → '{}' (canonical: '{}')", jdSkill, synonym.getRawName(), jdCanonical);
+                return buildResult(result, synonym, SkillMatchType.SYNONYM, jdCanonical);
+            }
+        }
+
         for (Skill resumeSkill : resumeSkills) {
             String rawName = resumeSkill.getRawName();
             if (rawName == null || rawName.isBlank()) continue;
-            
+
             String resumeNorm = normalise(rawName);
             String resolvedResume = escoGraph.resolve(rawName);
             String resumeCanonical = resolvedResume != null ? resolvedResume.toLowerCase() : resumeNorm;
 
-            // ── Strategy 1: EXACT ──────────────────────────────────────────
-            if (jdNormalised.equals(resumeNorm)) {
-                log.debug("EXACT match: '{}' → '{}'", jdSkill, resumeSkill.getRawName());
-                return buildResult(result, resumeSkill, SkillMatchType.EXACT, jdCanonical);
-            }
-
-            // ── Strategy 2: SYNONYM (via ESCO) ────────────────────────────
-            // Both skills resolve to the same canonical name but their raw forms differ
-            // (e.g. "PostgreSQL" → "postgresql" and "Postgres" → "postgresql").
-            if (jdCanonical.equals(resumeCanonical) && !jdNormalised.equals(resumeNorm)) {
-                log.debug("SYNONYM match: '{}' → '{}' (canonical: '{}')", jdSkill, resumeSkill.getRawName(), jdCanonical);
-                return buildResult(result, resumeSkill, SkillMatchType.SYNONYM, jdCanonical);
+            // Fallback strategies 1 & 2 when no index provided
+            if (normIndex == null) {
+                if (jdNormalised.equals(resumeNorm)) {
+                    return buildResult(result, resumeSkill, SkillMatchType.EXACT, jdCanonical);
+                }
+                if (jdCanonical.equals(resumeCanonical) && !jdNormalised.equals(resumeNorm)) {
+                    return buildResult(result, resumeSkill, SkillMatchType.SYNONYM, jdCanonical);
+                }
             }
 
             // ── Strategy 3: ABBREVIATION ──────────────────────────────────
