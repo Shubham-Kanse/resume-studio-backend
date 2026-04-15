@@ -1,0 +1,16 @@
+# Ignore Maven build artifacts
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Ignore IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
