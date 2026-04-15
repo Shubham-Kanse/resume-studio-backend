@@ -1,0 +1,2164 @@
+{
+  "_meta": {
+    "version": "2.0.0",
+    "lastUpdated": "2026-04",
+    "description": "Comprehensive JD role pattern definitions for resume feedback — SOTA production config",
+    "schema": "https://resumefeedback.dev/schemas/jd_role_patterns/v2",
+    "totalRoles": 32,
+    "categories": [
+      "Engineering",
+      "Data & ML",
+      "Product & Design",
+      "Leadership & Management",
+      "DevOps & Infrastructure",
+      "Security",
+      "Mobile",
+      "QA & Testing",
+      "Business & Analytics"
+    ]
+  },
+
+  "globalConfig": {
+    "scoringWeights": {
+      "mustHaveGroups": 0.60,
+      "niceToHave": 0.20,
+      "yoeMatch": 0.15,
+      "redFlagPenalty": -0.10
+    },
+    "thresholds": {
+      "strongMatch": 0.80,
+      "goodMatch": 0.65,
+      "partialMatch": 0.45,
+      "noMatch": 0.0
+    },
+    "globalRedFlags": [
+      "rockstar", "ninja", "10x", "hustle", "grind", "guru",
+      "wizard", "hacker", "passionate about", "unlimited PTO",
+      "like a family", "fast-paced startup", "wear many hats",
+      "self-starter", "entrepreneurial mindset"
+    ],
+    "globalGreenFlags": [
+      "work-life balance", "psychological safety", "async-first",
+      "transparent compensation", "learning budget", "sabbatical",
+      "on-call rotation", "blameless postmortems", "ERGs",
+      "parental leave", "inclusive hiring", "structured onboarding"
+    ]
+  },
+
+  "roles": [
+
+    {
+      "key": "Junior Backend Engineer",
+      "category": "Engineering",
+      "match": [
+        "junior backend", "entry level backend", "associate backend",
+        "junior software engineer", "entry level engineer", "graduate engineer",
+        "software engineer i", "engineer i backend"
+      ],
+      "parentRole": null,
+      "childRole": "Mid Backend Engineer",
+      "score": {
+        "yoeRange": { "min": 0, "max": 2 },
+        "mustHaveGroups": [
+          {
+            "id": "lang-basics",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Java", "Python", "JavaScript", "TypeScript", "C#", "Ruby", "Go"]
+          },
+          {
+            "id": "db-basics",
+            "logic": "OR",
+            "weight": 0.7,
+            "skills": ["SQL", "PostgreSQL", "MySQL", "SQLite"]
+          },
+          {
+            "id": "version-control",
+            "logic": "OR",
+            "weight": 0.8,
+            "skills": ["Git", "GitHub", "GitLab", "Bitbucket"]
+          }
+        ],
+        "niceToHave": [
+          "REST APIs", "Docker", "Linux", "Unit Testing",
+          "Agile", "JIRA", "CI/CD basics"
+        ],
+        "dealbreakers": ["5+ years required", "lead experience required"]
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Ability to learn quickly from senior engineers",
+          "Basic understanding of software development lifecycle",
+          "Comfortable asking for help and clarifying requirements",
+          "Writes clean, readable, and testable code",
+          "Familiar with debugging tools"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "immediate productivity"],
+        "redFlagMessage": "JD expects too much for a junior role — may have unrealistic expectations",
+        "resumeTips": [
+          "Highlight academic projects, internships, or personal projects",
+          "Show Git commit history or open-source contributions",
+          "Include specific technologies used in coursework or side projects",
+          "Quantify project impact even at small scale"
+        ]
+      }
+    },
+
+    {
+      "key": "Mid Backend Engineer",
+      "category": "Engineering",
+      "match": [
+        "backend engineer", "software engineer", "mid backend",
+        "backend developer", "server-side engineer", "api engineer",
+        "software engineer ii", "engineer ii backend"
+      ],
+      "parentRole": "Junior Backend Engineer",
+      "childRole": "Senior Backend Engineer",
+      "score": {
+        "yoeRange": { "min": 2, "max": 5 },
+        "mustHaveGroups": [
+          {
+            "id": "primary-lang",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Java", "Python", "Go", "Kotlin", "C#", "Node.js", "Ruby", "Scala"]
+          },
+          {
+            "id": "api-design",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": ["REST APIs", "gRPC", "GraphQL", "OpenAPI", "Swagger"]
+          },
+          {
+            "id": "databases",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["PostgreSQL", "MySQL", "MongoDB", "Redis", "DynamoDB"]
+          },
+          {
+            "id": "testing",
+            "logic": "OR",
+            "weight": 0.65,
+            "skills": ["Unit Testing", "Integration Testing", "TDD", "JUnit", "pytest", "Jest"]
+          }
+        ],
+        "niceToHave": [
+          "Docker", "Kubernetes", "Kafka", "AWS", "GCP", "Azure",
+          "CI/CD", "GitHub Actions", "Terraform", "Microservices"
+        ],
+        "dealbreakers": ["10+ years required", "architect experience required"]
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Independently delivers features end-to-end",
+          "Participates meaningfully in code reviews",
+          "Estimates tasks with reasonable accuracy",
+          "Understands database indexing and query optimization basics",
+          "Can debug production issues independently"
+        ],
+        "redFlagPhrases": ["rockstar", "ninja", "10x", "hustle"],
+        "redFlagMessage": "JD uses culture red flags — approach with caution",
+        "resumeTips": [
+          "Quantify impact: throughput, latency improvements, cost savings",
+          "Highlight ownership of specific services or modules",
+          "Show breadth across the stack if relevant",
+          "Include specific tech stack versions and tools"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Backend Engineer",
+      "category": "Engineering",
+      "match": [
+        "senior backend", "senior api", "senior java", "senior python",
+        "senior software engineer", "senior engineer backend",
+        "senior go engineer", "senior node engineer", "staff engineer backend"
+      ],
+      "parentRole": "Mid Backend Engineer",
+      "childRole": "Staff Backend Engineer",
+      "score": {
+        "yoeRange": { "min": 5, "max": 10 },
+        "mustHaveGroups": [
+          {
+            "id": "primary-lang",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Java", "Python", "Go", "Kotlin", "Scala", "C++", "Rust"]
+          },
+          {
+            "id": "api-design",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": ["REST APIs", "gRPC", "GraphQL", "Event-Driven Architecture"]
+          },
+          {
+            "id": "databases",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["PostgreSQL", "MySQL", "Cassandra", "DynamoDB", "MongoDB", "Redis"]
+          },
+          {
+            "id": "distributed-systems",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["Microservices", "Kafka", "RabbitMQ", "Distributed Tracing", "Service Mesh"]
+          },
+          {
+            "id": "cloud",
+            "logic": "OR",
+            "weight": 0.70,
+            "skills": ["AWS", "GCP", "Azure", "Kubernetes", "Docker"]
+          }
+        ],
+        "niceToHave": [
+          "Terraform", "Istio", "Prometheus", "Grafana",
+          "OpenTelemetry", "eBPF", "Rust", "System Design interviews",
+          "Technical Writing", "RFC authoring"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "System design ownership and architectural decisions",
+          "Code review leadership with actionable feedback",
+          "Mentoring junior and mid-level engineers",
+          "Drives technical roadmap for a service or domain",
+          "Proactively identifies and reduces technical debt",
+          "Participates in on-call and incident response"
+        ],
+        "redFlagPhrases": ["rockstar", "ninja", "10x", "hustle", "guru"],
+        "redFlagMessage": "JD uses culture red flags — approach with caution",
+        "resumeTips": [
+          "Demonstrate leadership: decisions made, systems designed",
+          "Show scale: RPS, data volume, team size impacted",
+          "Highlight cross-team collaboration and influence",
+          "Include post-mortems or reliability improvements"
+        ]
+      }
+    },
+
+    {
+      "key": "Staff Backend Engineer",
+      "category": "Engineering",
+      "match": [
+        "staff engineer", "staff backend", "staff software engineer",
+        "principal backend", "principal engineer", "distinguished engineer"
+      ],
+      "parentRole": "Senior Backend Engineer",
+      "childRole": "Engineering Manager",
+      "score": {
+        "yoeRange": { "min": 8, "max": 15 },
+        "mustHaveGroups": [
+          {
+            "id": "primary-lang",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Java", "Python", "Go", "Rust", "C++", "Scala"]
+          },
+          {
+            "id": "system-design",
+            "logic": "AND",
+            "weight": 0.95,
+            "skills": ["Distributed Systems", "System Design", "High Availability"]
+          },
+          {
+            "id": "org-impact",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "Technical Strategy", "RFC Authoring", "Cross-team Collaboration",
+              "Engineering Roadmap", "Platform Architecture"
+            ]
+          },
+          {
+            "id": "cloud-native",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["Kubernetes", "AWS", "GCP", "Azure", "Terraform", "Service Mesh"]
+          }
+        ],
+        "niceToHave": [
+          "Open Source Contributions", "Conference Speaking", "Technical Blog",
+          "Patent Authorship", "PhD or Research Background", "eBPF", "WASM"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Defines technical direction across multiple teams or entire engineering org",
+          "Resolves ambiguous, high-stakes architectural challenges",
+          "Partners with Product, Data, and Leadership stakeholders",
+          "Drives adoption of platform capabilities org-wide",
+          "Represents engineering perspective in strategic planning",
+          "Mentors senior engineers toward staff-level thinking"
+        ],
+        "redFlagPhrases": ["rockstar", "ninja", "manage up", "hands-on only"],
+        "redFlagMessage": "Staff roles requiring purely hands-on execution without org-level scope are mislabeled",
+        "resumeTips": [
+          "Articulate org-level impact, not just team-level",
+          "Include examples of technical vision and persuasion",
+          "Show cross-functional influence and stakeholder alignment",
+          "Demonstrate navigating ambiguity and competing priorities"
+        ]
+      }
+    },
+
+    {
+      "key": "Frontend Engineer",
+      "category": "Engineering",
+      "match": [
+        "frontend engineer", "front-end engineer", "frontend developer",
+        "ui engineer", "react engineer", "vue engineer", "angular engineer",
+        "web developer", "client-side engineer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior Frontend Engineer",
+      "score": {
+        "yoeRange": { "min": 1, "max": 5 },
+        "mustHaveGroups": [
+          {
+            "id": "core-web",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": ["HTML", "CSS", "JavaScript"]
+          },
+          {
+            "id": "framework",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["React", "Vue", "Angular", "Svelte", "Next.js", "Nuxt"]
+          },
+          {
+            "id": "tooling",
+            "logic": "OR",
+            "weight": 0.70,
+            "skills": ["Webpack", "Vite", "Babel", "ESLint", "Prettier", "TypeScript"]
+          },
+          {
+            "id": "state-management",
+            "logic": "OR",
+            "weight": 0.65,
+            "skills": ["Redux", "Zustand", "MobX", "Pinia", "Recoil", "Context API"]
+          }
+        ],
+        "niceToHave": [
+          "Jest", "Cypress", "Playwright", "Storybook", "Figma",
+          "Accessibility (WCAG)", "Performance Optimization", "SSR", "PWA",
+          "GraphQL", "REST APIs", "WebSockets"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Implements pixel-perfect UI from design specs",
+          "Collaborates closely with designers and product managers",
+          "Understands browser rendering and performance implications",
+          "Writes accessible, semantic HTML",
+          "Cross-browser compatibility awareness"
+        ],
+        "redFlagPhrases": ["rockstar", "full-stack preferred", "ninja"],
+        "redFlagMessage": "JD may conflate frontend with full-stack — clarify scope before applying",
+        "resumeTips": [
+          "Link to portfolio, deployed apps, or GitHub projects",
+          "Highlight Core Web Vitals or Lighthouse scores improved",
+          "Show design collaboration and Figma handoff experience",
+          "Include accessibility or internationalization work"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Frontend Engineer",
+      "category": "Engineering",
+      "match": [
+        "senior frontend", "senior front-end", "senior ui engineer",
+        "senior react engineer", "lead frontend", "principal frontend"
+      ],
+      "parentRole": "Frontend Engineer",
+      "childRole": "Engineering Manager",
+      "score": {
+        "yoeRange": { "min": 5, "max": 10 },
+        "mustHaveGroups": [
+          {
+            "id": "core-web",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": ["HTML", "CSS", "JavaScript", "TypeScript"]
+          },
+          {
+            "id": "framework",
+            "logic": "OR",
+            "weight": 0.95,
+            "skills": ["React", "Vue", "Angular", "Next.js", "Remix"]
+          },
+          {
+            "id": "performance",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Performance Optimization", "Lazy Loading", "Code Splitting",
+              "Core Web Vitals", "Rendering Optimization"
+            ]
+          },
+          {
+            "id": "architecture",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": [
+              "Micro-frontends", "Design Systems", "Component Libraries",
+              "Monorepo", "Module Federation"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "WebAssembly", "Web Workers", "Service Workers", "PWA",
+          "GraphQL", "Storybook", "Testing Library", "Playwright", "Cypress",
+          "Figma", "Design Tokens", "WCAG 2.1 AA"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Architects frontend systems and design systems",
+          "Sets frontend best practices and code quality standards",
+          "Mentors junior and mid frontend engineers",
+          "Deep understanding of browser internals and rendering pipeline",
+          "Drives performance culture across the frontend team"
+        ],
+        "redFlagPhrases": ["rockstar", "ninja", "10x"],
+        "redFlagMessage": "JD uses culture red flags — approach with caution",
+        "resumeTips": [
+          "Quantify Core Web Vitals improvements (LCP, CLS, FID)",
+          "Highlight design system ownership and adoption",
+          "Show cross-browser and cross-device expertise",
+          "Include documentation and RFC authoring"
+        ]
+      }
+    },
+
+    {
+      "key": "Full Stack Engineer",
+      "category": "Engineering",
+      "match": [
+        "full stack", "full-stack", "fullstack engineer",
+        "full stack developer", "full stack software engineer",
+        "generalist engineer", "product engineer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior Full Stack Engineer",
+      "score": {
+        "yoeRange": { "min": 2, "max": 7 },
+        "mustHaveGroups": [
+          {
+            "id": "frontend",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["React", "Vue", "Angular", "Next.js", "HTML", "CSS", "JavaScript", "TypeScript"]
+          },
+          {
+            "id": "backend",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["Node.js", "Python", "Java", "Go", "Ruby", "PHP", "C#"]
+          },
+          {
+            "id": "databases",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["PostgreSQL", "MySQL", "MongoDB", "SQLite", "Redis"]
+          },
+          {
+            "id": "deployment",
+            "logic": "OR",
+            "weight": 0.65,
+            "skills": ["Docker", "AWS", "GCP", "Heroku", "Vercel", "Netlify", "CI/CD"]
+          }
+        ],
+        "niceToHave": [
+          "GraphQL", "REST APIs", "Microservices", "Kubernetes",
+          "Terraform", "Testing", "Agile", "TypeScript"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Comfortable switching between frontend and backend tasks",
+          "Can own a feature from database schema to UI implementation",
+          "Understands trade-offs between different layers of the stack",
+          "Flexible and adaptable to shifting priorities"
+        ],
+        "redFlagPhrases": ["wear many hats", "10x", "rockstar", "unicorn"],
+        "redFlagMessage": "Full-stack roles can be a red flag for underfunded teams — assess team size and specialization carefully",
+        "resumeTips": [
+          "Show examples of features you owned end-to-end",
+          "Clarify depth vs breadth of each skill",
+          "Include tech stack clearly in each work experience",
+          "Highlight shipped products, not just tasks completed"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Full Stack Engineer",
+      "category": "Engineering",
+      "match": [
+        "senior full stack", "senior fullstack", "senior product engineer",
+        "senior full-stack developer", "lead full stack"
+      ],
+      "parentRole": "Full Stack Engineer",
+      "childRole": "Engineering Manager",
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "frontend",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["React", "Vue", "Next.js", "TypeScript"]
+          },
+          {
+            "id": "backend",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["Node.js", "Python", "Go", "Java", "Ruby"]
+          },
+          {
+            "id": "databases",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["PostgreSQL", "MongoDB", "Redis", "Elasticsearch"]
+          },
+          {
+            "id": "cloud",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["AWS", "GCP", "Azure", "Docker", "Kubernetes"]
+          },
+          {
+            "id": "architecture",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["System Design", "API Design", "Microservices", "Monorepo"]
+          }
+        ],
+        "niceToHave": [
+          "GraphQL", "Kafka", "Terraform", "Testing Strategy",
+          "CI/CD pipelines", "Performance Optimization", "Security practices"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Owns technical direction for product features across the full stack",
+          "Collaborates deeply with product and design",
+          "Sets coding standards and runs code reviews",
+          "Identifies architectural bottlenecks proactively"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "ninja", "wear many hats"],
+        "redFlagMessage": "JD may expect staff-level impact without appropriate compensation — negotiate carefully",
+        "resumeTips": [
+          "Highlight products shipped with measurable user or business impact",
+          "Show ownership of system architecture decisions",
+          "Demonstrate depth in at least one layer of the stack",
+          "Include mentorship and team collaboration examples"
+        ]
+      }
+    },
+
+    {
+      "key": "Machine Learning Engineer",
+      "category": "Data & ML",
+      "match": [
+        "machine learning engineer", "ml engineer", "applied ml",
+        "applied scientist", "research engineer", "ml platform engineer",
+        "mlops engineer", "ai engineer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior Machine Learning Engineer",
+      "score": {
+        "yoeRange": { "min": 2, "max": 6 },
+        "mustHaveGroups": [
+          {
+            "id": "ml-frameworks",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["PyTorch", "TensorFlow", "JAX", "scikit-learn", "Keras"]
+          },
+          {
+            "id": "ml-core",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "Supervised Learning", "Unsupervised Learning", "Deep Learning",
+              "Feature Engineering", "Model Evaluation"
+            ]
+          },
+          {
+            "id": "programming",
+            "logic": "OR",
+            "weight": 0.95,
+            "skills": ["Python", "R", "Scala", "Julia"]
+          },
+          {
+            "id": "data",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["Pandas", "NumPy", "Spark", "SQL", "Databricks"]
+          }
+        ],
+        "niceToHave": [
+          "MLflow", "Kubeflow", "Airflow", "Docker", "Kubernetes",
+          "Feature Stores", "A/B Testing", "Experiment Tracking",
+          "ONNX", "TensorRT", "Model Quantization", "LLMs"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Can take ML models from notebook to production",
+          "Understands trade-offs between model accuracy and latency",
+          "Writes production-quality Python for model serving",
+          "Collaborates with data engineers and backend engineers",
+          "Familiar with model monitoring and drift detection"
+        ],
+        "redFlagPhrases": ["PhD required", "publish or perish", "academic"],
+        "redFlagMessage": "ML role may be overly academic — assess whether engineering or research is the primary expectation",
+        "resumeTips": [
+          "Show models deployed to production with measurable impact",
+          "Include dataset sizes, model metrics (precision, recall, AUC)",
+          "Highlight latency and throughput optimizations",
+          "Show collaboration with product teams on ML features"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Machine Learning Engineer",
+      "category": "Data & ML",
+      "match": [
+        "senior ml engineer", "senior machine learning", "senior ai engineer",
+        "senior applied scientist", "lead ml engineer", "staff ml engineer"
+      ],
+      "parentRole": "Machine Learning Engineer",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "ml-frameworks",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["PyTorch", "TensorFlow", "JAX"]
+          },
+          {
+            "id": "advanced-ml",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "Transformers", "LLMs", "Reinforcement Learning",
+              "Computer Vision", "NLP", "Generative Models"
+            ]
+          },
+          {
+            "id": "mlops",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "MLflow", "Kubeflow", "Ray", "Seldon", "BentoML",
+              "Feature Store", "Model Registry", "Experiment Tracking"
+            ]
+          },
+          {
+            "id": "infrastructure",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["Kubernetes", "Docker", "AWS SageMaker", "GCP Vertex AI", "Azure ML"]
+          }
+        ],
+        "niceToHave": [
+          "CUDA", "TensorRT", "ONNX", "Triton Inference Server",
+          "Distributed Training", "RLHF", "LoRA", "Research Publications"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Designs and owns end-to-end ML systems",
+          "Sets ML platform standards and best practices",
+          "Mentors ML engineers and data scientists",
+          "Drives ML roadmap and prioritization",
+          "Deep understanding of model serving and inference optimization"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "ninja", "PhD only"],
+        "redFlagMessage": "JD uses culture red flags or gatekeeping credentials — approach with caution",
+        "resumeTips": [
+          "Quantify model improvements (accuracy gains, latency reduction)",
+          "Show ML system design at scale (billions of predictions, etc.)",
+          "Include any publications, patents, or open-source contributions",
+          "Demonstrate cross-functional ML impact (product, revenue, safety)"
+        ]
+      }
+    },
+
+    {
+      "key": "Data Scientist",
+      "category": "Data & ML",
+      "match": [
+        "data scientist", "quantitative analyst", "research scientist data",
+        "analytics scientist", "decision scientist", "data science analyst"
+      ],
+      "parentRole": null,
+      "childRole": "Senior Data Scientist",
+      "score": {
+        "yoeRange": { "min": 1, "max": 5 },
+        "mustHaveGroups": [
+          {
+            "id": "statistics",
+            "logic": "OR",
+            "weight": 0.95,
+            "skills": [
+              "Statistics", "Probability", "Hypothesis Testing",
+              "Regression", "Bayesian Methods", "A/B Testing"
+            ]
+          },
+          {
+            "id": "programming",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Python", "R", "SQL"]
+          },
+          {
+            "id": "ml-libraries",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["scikit-learn", "statsmodels", "pandas", "NumPy", "SciPy"]
+          },
+          {
+            "id": "data-tools",
+            "logic": "OR",
+            "weight": 0.70,
+            "skills": ["Jupyter", "Tableau", "Power BI", "Looker", "dbt", "Spark"]
+          }
+        ],
+        "niceToHave": [
+          "PyTorch", "TensorFlow", "NLP", "Time Series Analysis",
+          "Causal Inference", "Experimentation Platforms", "Git", "Airflow"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Translates business problems into analytical questions",
+          "Communicates findings clearly to non-technical stakeholders",
+          "Designs rigorous experiments and interprets results",
+          "Collaborates with engineers on data pipeline requirements",
+          "Documents analyses and maintains reproducibility"
+        ],
+        "redFlagPhrases": ["PhD required", "rockstar", "unicorn data scientist"],
+        "redFlagMessage": "Data science roles expecting production ML without engineering support may be overly broad",
+        "resumeTips": [
+          "Show business impact of analyses (revenue, retention, cost)",
+          "Highlight statistical rigor and experimental design",
+          "Include stakeholder communication and presentation examples",
+          "Show data storytelling with visualizations"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Data Scientist",
+      "category": "Data & ML",
+      "match": [
+        "senior data scientist", "lead data scientist", "principal data scientist",
+        "staff data scientist", "senior research scientist"
+      ],
+      "parentRole": "Data Scientist",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "advanced-stats",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": ["Statistical Modeling", "Causal Inference", "Experimentation"]
+          },
+          {
+            "id": "programming",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Python", "R", "SQL"]
+          },
+          {
+            "id": "ml-depth",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Machine Learning", "Deep Learning", "NLP", "Computer Vision",
+              "Time Series Forecasting", "Recommendation Systems"
+            ]
+          },
+          {
+            "id": "data-platform",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["Spark", "Databricks", "Airflow", "dbt", "BigQuery", "Snowflake"]
+          }
+        ],
+        "niceToHave": [
+          "PyTorch", "TensorFlow", "MLflow", "Feature Engineering",
+          "Research Publications", "Conference Presentations", "Mentoring"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Drives data science strategy for a product area",
+          "Mentors junior data scientists",
+          "Partners with engineering on scalable ML deployments",
+          "Influences product strategy with data insights",
+          "Independently scopes and executes complex analytical projects"
+        ],
+        "redFlagPhrases": ["PhD only", "rockstar", "ninja", "10x analyst"],
+        "redFlagMessage": "JD uses red flags or credential gatekeeping — assess team structure carefully",
+        "resumeTips": [
+          "Quantify analytical impact on key product metrics",
+          "Show complex experiment design and causal inference",
+          "Demonstrate leadership in defining metrics and KPIs",
+          "Include cross-functional influence and stakeholder management"
+        ]
+      }
+    },
+
+    {
+      "key": "Data Engineer",
+      "category": "Data & ML",
+      "match": [
+        "data engineer", "etl engineer", "data pipeline engineer",
+        "analytics engineer", "platform data engineer", "big data engineer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior Data Engineer",
+      "score": {
+        "yoeRange": { "min": 2, "max": 6 },
+        "mustHaveGroups": [
+          {
+            "id": "data-processing",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Apache Spark", "Apache Flink", "Kafka", "Airflow", "dbt", "Beam"]
+          },
+          {
+            "id": "sql-warehousing",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["SQL", "BigQuery", "Snowflake", "Redshift", "Databricks", "Hive"]
+          },
+          {
+            "id": "programming",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": ["Python", "Scala", "Java", "SQL"]
+          },
+          {
+            "id": "cloud",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["AWS", "GCP", "Azure", "S3", "GCS"]
+          }
+        ],
+        "niceToHave": [
+          "Terraform", "dbt", "Great Expectations", "Data Contracts",
+          "Iceberg", "Delta Lake", "Data Mesh", "CDC", "Debezium"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Builds and maintains robust data pipelines",
+          "Ensures data quality and observability",
+          "Collaborates with data scientists and analysts on requirements",
+          "Understands data modeling and schema design",
+          "Manages data infrastructure and cost optimization"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "ninja"],
+        "redFlagMessage": "JD uses culture red flags — approach with caution",
+        "resumeTips": [
+          "Quantify data volumes processed (TBs, PBs, records/day)",
+          "Highlight data quality improvements and SLA achievements",
+          "Show infrastructure cost optimizations",
+          "Include data modeling and warehousing design decisions"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Data Engineer",
+      "category": "Data & ML",
+      "match": [
+        "senior data engineer", "lead data engineer", "principal data engineer",
+        "staff data engineer", "senior analytics engineer"
+      ],
+      "parentRole": "Data Engineer",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "data-processing",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Apache Spark", "Apache Flink", "Kafka", "Airflow"]
+          },
+          {
+            "id": "data-platform",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "Data Lakehouse", "Delta Lake", "Apache Iceberg",
+              "Data Mesh", "Data Contracts", "Data Catalog"
+            ]
+          },
+          {
+            "id": "warehousing",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": ["BigQuery", "Snowflake", "Redshift", "Databricks"]
+          },
+          {
+            "id": "cloud",
+            "logic": "AND",
+            "weight": 0.80,
+            "skills": ["AWS", "GCP", "Azure"]
+          }
+        ],
+        "niceToHave": [
+          "Terraform", "Kubernetes", "dbt advanced", "Great Expectations",
+          "Data Governance", "FinOps", "OpenLineage", "DataHub"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Architects the data platform and data infrastructure strategy",
+          "Establishes data engineering best practices and standards",
+          "Mentors junior and mid data engineers",
+          "Drives data quality and observability culture",
+          "Partners with leadership on data strategy"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "ninja"],
+        "redFlagMessage": "JD uses culture red flags — approach with caution",
+        "resumeTips": [
+          "Show data platform architecture decisions and their impact",
+          "Quantify reliability improvements (SLA, data freshness)",
+          "Highlight cross-team data enablement work",
+          "Include cost optimization and scalability achievements"
+        ]
+      }
+    },
+
+    {
+      "key": "DevOps Engineer",
+      "category": "DevOps & Infrastructure",
+      "match": [
+        "devops engineer", "site reliability engineer", "sre",
+        "platform engineer", "infrastructure engineer", "cloud engineer",
+        "release engineer", "build engineer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior DevOps Engineer",
+      "score": {
+        "yoeRange": { "min": 2, "max": 6 },
+        "mustHaveGroups": [
+          {
+            "id": "cloud",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["AWS", "GCP", "Azure"]
+          },
+          {
+            "id": "containers",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["Docker", "Kubernetes", "Helm", "Docker Compose", "Podman"]
+          },
+          {
+            "id": "iac",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": ["Terraform", "Pulumi", "Ansible", "CloudFormation", "CDK"]
+          },
+          {
+            "id": "cicd",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": [
+              "GitHub Actions", "GitLab CI", "Jenkins", "CircleCI",
+              "ArgoCD", "Spinnaker", "Tekton"
+            ]
+          },
+          {
+            "id": "monitoring",
+            "logic": "OR",
+            "weight": 0.70,
+            "skills": ["Prometheus", "Grafana", "Datadog", "PagerDuty", "ELK Stack"]
+          }
+        ],
+        "niceToHave": [
+          "Istio", "Envoy", "Vault", "Consul", "Chaos Engineering",
+          "SLOs", "Error Budgets", "FinOps", "Security Scanning",
+          "OpenTelemetry", "eBPF"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Maintains and improves CI/CD pipelines",
+          "Manages cloud infrastructure as code",
+          "On-call rotation for infrastructure incidents",
+          "Collaborates with engineering teams on deployment practices",
+          "Drives infrastructure cost awareness and optimization"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "ninja", "always on-call"],
+        "redFlagMessage": "Excessive on-call expectations without rotation or compensation should be scrutinized",
+        "resumeTips": [
+          "Quantify uptime and SLA achievements",
+          "Show infrastructure cost savings percentages",
+          "Highlight deployment frequency and change failure rate improvements",
+          "Include incident response and postmortem experience"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior DevOps / SRE",
+      "category": "DevOps & Infrastructure",
+      "match": [
+        "senior devops", "senior sre", "senior platform engineer",
+        "senior infrastructure engineer", "lead sre", "principal sre",
+        "staff devops", "lead platform engineer"
+      ],
+      "parentRole": "DevOps Engineer",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "cloud",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["AWS", "GCP", "Azure"]
+          },
+          {
+            "id": "kubernetes-advanced",
+            "logic": "OR",
+            "weight": 0.95,
+            "skills": [
+              "Kubernetes", "Istio", "Helm", "Kustomize",
+              "Cluster Autoscaling", "Kubernetes Operators"
+            ]
+          },
+          {
+            "id": "sre-practices",
+            "logic": "AND",
+            "weight": 0.90,
+            "skills": ["SLOs", "Error Budgets", "Incident Management", "Chaos Engineering"]
+          },
+          {
+            "id": "iac-advanced",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": ["Terraform", "Pulumi", "CDK", "Crossplane"]
+          },
+          {
+            "id": "observability",
+            "logic": "AND",
+            "weight": 0.85,
+            "skills": ["OpenTelemetry", "Distributed Tracing", "Prometheus", "Grafana"]
+          }
+        ],
+        "niceToHave": [
+          "eBPF", "Cilium", "WASM", "FinOps Certification",
+          "Vault", "Zero Trust Architecture", "Platform Engineering"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Defines SLO framework and reliability culture",
+          "Architects platform engineering capabilities",
+          "Mentors junior SREs and DevOps engineers",
+          "Drives incident response process improvements",
+          "Partners with engineering leadership on platform strategy"
+        ],
+        "redFlagPhrases": ["rockstar", "always-on", "ninja"],
+        "redFlagMessage": "JD uses culture red flags — assess on-call expectations carefully",
+        "resumeTips": [
+          "Quantify reliability improvements (MTTR, availability %)",
+          "Show platform adoption and developer experience improvements",
+          "Include SLO design and error budget management",
+          "Highlight cost optimization and FinOps work"
+        ]
+      }
+    },
+
+    {
+      "key": "Security Engineer",
+      "category": "Security",
+      "match": [
+        "security engineer", "application security engineer", "appsec",
+        "cybersecurity engineer", "information security engineer",
+        "cloud security engineer", "devsecops engineer", "security software engineer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior Security Engineer",
+      "score": {
+        "yoeRange": { "min": 2, "max": 6 },
+        "mustHaveGroups": [
+          {
+            "id": "security-domains",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": [
+              "Application Security", "Cloud Security", "Network Security",
+              "Penetration Testing", "Vulnerability Management", "Identity & Access Management"
+            ]
+          },
+          {
+            "id": "security-tools",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "SAST", "DAST", "SIEM", "WAF", "IDS/IPS",
+              "Burp Suite", "Nessus", "Snyk", "Checkmarx"
+            ]
+          },
+          {
+            "id": "programming",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["Python", "Go", "Bash", "Ruby", "Java"]
+          },
+          {
+            "id": "cloud-security",
+            "logic": "OR",
+            "weight": 0.70,
+            "skills": ["AWS Security", "GCP Security", "Azure Security", "IAM", "Secrets Management"]
+          }
+        ],
+        "niceToHave": [
+          "CISSP", "CEH", "OSCP", "SOC 2", "ISO 27001",
+          "Threat Modeling", "Bug Bounty", "Security Champions Program",
+          "Zero Trust", "SBOM", "Supply Chain Security"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Reviews code and architecture for security vulnerabilities",
+          "Collaborates with engineering teams on secure development practices",
+          "Manages vulnerability disclosure and remediation",
+          "Conducts security assessments and threat modeling",
+          "Maintains security tooling and automation"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "ninja", "lone wolf security"],
+        "redFlagMessage": "Security roles with no peer review culture can be a red flag — assess team structure",
+        "resumeTips": [
+          "Highlight specific vulnerabilities found and remediated",
+          "Show security program improvements (coverage, MTTR)",
+          "Include compliance and audit experience",
+          "Demonstrate cross-team security enablement work"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Security Engineer",
+      "category": "Security",
+      "match": [
+        "senior security engineer", "senior appsec", "senior cybersecurity engineer",
+        "lead security engineer", "principal security engineer",
+        "staff security engineer", "security architect"
+      ],
+      "parentRole": "Security Engineer",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "security-domains",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": [
+              "Application Security", "Cloud Security", "Zero Trust Architecture",
+              "Identity & Access Management", "Security Architecture"
+            ]
+          },
+          {
+            "id": "advanced-security",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "Threat Modeling", "Red Team", "Purple Team",
+              "Supply Chain Security", "SBOM", "Secure SDLC"
+            ]
+          },
+          {
+            "id": "compliance",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["SOC 2", "ISO 27001", "GDPR", "PCI DSS", "HIPAA", "FedRAMP"]
+          },
+          {
+            "id": "security-engineering",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Security Automation", "Security Tooling", "SIEM Engineering",
+              "Detection Engineering", "Incident Response"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "CISSP", "OSCP", "CISM", "Security Champions Program",
+          "Bug Bounty Program Management", "Research Publications",
+          "Conference Speaking (DEF CON, Black Hat)"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Defines security architecture and standards for the organization",
+          "Leads security reviews for major platform changes",
+          "Builds and maintains security champions program",
+          "Partners with compliance and legal on regulatory requirements",
+          "Mentors security engineers and enables engineering teams"
+        ],
+        "redFlagPhrases": ["rockstar", "ninja", "10x", "full autonomy no oversight"],
+        "redFlagMessage": "JD uses culture red flags — assess team structure and organizational security maturity",
+        "resumeTips": [
+          "Quantify security posture improvements (vulnerabilities reduced, coverage)",
+          "Show cross-organizational security program leadership",
+          "Include compliance certification achievements",
+          "Demonstrate security culture change management"
+        ]
+      }
+    },
+
+    {
+      "key": "iOS Engineer",
+      "category": "Mobile",
+      "match": [
+        "ios engineer", "ios developer", "swift engineer",
+        "apple developer", "objective-c developer", "mobile ios engineer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior iOS Engineer",
+      "score": {
+        "yoeRange": { "min": 1, "max": 5 },
+        "mustHaveGroups": [
+          {
+            "id": "ios-core",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Swift", "Objective-C"]
+          },
+          {
+            "id": "apple-frameworks",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["UIKit", "SwiftUI", "Combine", "CoreData", "Foundation"]
+          },
+          {
+            "id": "tools",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["Xcode", "Instruments", "TestFlight", "App Store Connect"]
+          },
+          {
+            "id": "architecture",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["MVC", "MVVM", "VIPER", "Clean Architecture", "Coordinator Pattern"]
+          }
+        ],
+        "niceToHave": [
+          "RxSwift", "Alamofire", "CoreBluetooth", "ARKit", "Core ML",
+          "WidgetKit", "Push Notifications", "In-App Purchases",
+          "CI/CD for iOS", "Fastlane"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Delivers features following Apple HIG guidelines",
+          "Manages App Store submission and review process",
+          "Handles crashes and performance profiling with Instruments",
+          "Collaborates with backend engineers on API contracts",
+          "Maintains backward compatibility with supported iOS versions"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "ninja", "android too preferred"],
+        "redFlagMessage": "iOS-plus-Android role may indicate underfunded mobile team — verify scope",
+        "resumeTips": [
+          "Link to published App Store applications",
+          "Highlight download counts, ratings, or active users",
+          "Show performance optimizations (startup time, memory)",
+          "Include App Store review navigation experience"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior iOS Engineer",
+      "category": "Mobile",
+      "match": [
+        "senior ios engineer", "senior ios developer", "senior swift engineer",
+        "lead ios engineer", "principal ios engineer", "staff ios engineer"
+      ],
+      "parentRole": "iOS Engineer",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "ios-core",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": ["Swift", "UIKit", "SwiftUI"]
+          },
+          {
+            "id": "architecture",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "MVVM", "VIPER", "TCA (The Composable Architecture)",
+              "Modular Architecture", "Clean Architecture"
+            ]
+          },
+          {
+            "id": "performance",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Instruments Profiling", "Memory Optimization",
+              "App Launch Optimization", "Battery Optimization"
+            ]
+          },
+          {
+            "id": "advanced",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": [
+              "Swift Concurrency", "Combine", "CoreData",
+              "WidgetKit", "App Extensions", "Core ML"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "Fastlane", "Tuist", "Swift Package Manager",
+          "ARKit", "Metal", "Vision Framework", "App Clips"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Architects iOS app modules and shared frameworks",
+          "Sets coding standards and leads iOS code reviews",
+          "Mentors junior iOS developers",
+          "Drives performance and reliability culture for mobile",
+          "Manages complex App Store submission processes"
+        ],
+        "redFlagPhrases": ["rockstar", "ninja", "10x"],
+        "redFlagMessage": "JD uses culture red flags — approach with caution",
+        "resumeTips": [
+          "Show app architecture decisions and their impact",
+          "Quantify performance improvements and crash rate reductions",
+          "Highlight modularization and maintainability work",
+          "Include App Store Connect metrics where possible"
+        ]
+      }
+    },
+
+    {
+      "key": "Android Engineer",
+      "category": "Mobile",
+      "match": [
+        "android engineer", "android developer", "kotlin android",
+        "mobile android engineer", "java android developer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior Android Engineer",
+      "score": {
+        "yoeRange": { "min": 1, "max": 5 },
+        "mustHaveGroups": [
+          {
+            "id": "android-core",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Kotlin", "Java Android"]
+          },
+          {
+            "id": "android-frameworks",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["Jetpack Compose", "Android SDK", "Jetpack", "Room", "ViewModel"]
+          },
+          {
+            "id": "tools",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["Android Studio", "Gradle", "ADB", "Google Play Console"]
+          },
+          {
+            "id": "architecture",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["MVVM", "MVP", "MVI", "Clean Architecture"]
+          }
+        ],
+        "niceToHave": [
+          "Hilt", "Dagger", "Retrofit", "Coroutines", "Flow",
+          "WorkManager", "Notifications", "Firebase", "CI/CD for Android",
+          "Fastlane", "Material Design"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Delivers Android features following Material Design guidelines",
+          "Manages Google Play Store submission process",
+          "Handles device fragmentation and backward compatibility",
+          "Profiles and optimizes app performance with Android Profiler",
+          "Collaborates with backend on API design"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "ninja", "ios too preferred"],
+        "redFlagMessage": "Android-plus-iOS role may indicate underfunded mobile team — verify scope",
+        "resumeTips": [
+          "Link to published Play Store applications",
+          "Highlight install counts, ratings, or active users",
+          "Show ANR and crash rate improvements",
+          "Include Jetpack Compose migration experience if applicable"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Android Engineer",
+      "category": "Mobile",
+      "match": [
+        "senior android engineer", "senior android developer", "senior kotlin android",
+        "lead android engineer", "principal android engineer", "staff android engineer"
+      ],
+      "parentRole": "Android Engineer",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "android-core",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": ["Kotlin", "Jetpack Compose", "Coroutines"]
+          },
+          {
+            "id": "architecture",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": ["Clean Architecture", "MVVM", "MVI", "Modular Architecture"]
+          },
+          {
+            "id": "performance",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Android Profiler", "Memory Optimization",
+              "App Startup Optimization", "Battery Optimization"
+            ]
+          },
+          {
+            "id": "advanced",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": [
+              "Hilt", "Dagger", "WorkManager", "Dynamic Feature Modules",
+              "Play Feature Delivery", "App Bundles"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "Kotlin Multiplatform", "NDK", "ML Kit", "ARCore",
+          "Android Auto", "Wear OS", "Large Screen Adaptations"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Architects Android app modules and shared libraries",
+          "Sets coding standards and leads Android code reviews",
+          "Mentors junior Android developers",
+          "Drives performance and reliability culture for Android",
+          "Manages complex Play Store deployment pipelines"
+        ],
+        "redFlagPhrases": ["rockstar", "ninja", "10x"],
+        "redFlagMessage": "JD uses culture red flags — approach with caution",
+        "resumeTips": [
+          "Show app architecture decisions and measurable impact",
+          "Quantify crash rate and ANR rate improvements",
+          "Highlight modularization and maintainability contributions",
+          "Include Play Store metrics where possible"
+        ]
+      }
+    },
+
+    {
+      "key": "Product Manager",
+      "category": "Product & Design",
+      "match": [
+        "product manager", "pm", "product owner", "associate pm",
+        "technical product manager", "platform pm", "growth pm"
+      ],
+      "parentRole": null,
+      "childRole": "Senior Product Manager",
+      "score": {
+        "yoeRange": { "min": 2, "max": 6 },
+        "mustHaveGroups": [
+          {
+            "id": "pm-core",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": ["Product Strategy", "Roadmap Planning", "User Stories", "Prioritization"]
+          },
+          {
+            "id": "analytics",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": ["SQL", "Mixpanel", "Amplitude", "Google Analytics", "Looker", "Tableau"]
+          },
+          {
+            "id": "agile",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["Agile", "Scrum", "Kanban", "JIRA", "Linear", "Notion"]
+          },
+          {
+            "id": "design-collaboration",
+            "logic": "OR",
+            "weight": 0.70,
+            "skills": ["Figma", "User Research", "Wireframing", "Prototyping"]
+          }
+        ],
+        "niceToHave": [
+          "A/B Testing", "Experimentation Platforms", "Technical Background",
+          "API understanding", "Data Science collaboration", "OKRs", "PRFAQs"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Owns the product backlog and sprint planning",
+          "Balances user needs with business objectives",
+          "Communicates product vision to engineering and design teams",
+          "Defines and tracks product KPIs",
+          "Manages stakeholder expectations across functions"
+        ],
+        "redFlagPhrases": ["rockstar pm", "owns everything", "do it all", "visionary"],
+        "redFlagMessage": "PM role with undefined scope or unrealistic ownership may indicate organizational dysfunction",
+        "resumeTips": [
+          "Quantify product impact: MAU growth, revenue, retention",
+          "Show discovery-to-delivery process ownership",
+          "Include cross-functional collaboration examples",
+          "Highlight data-driven decision making"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Product Manager",
+      "category": "Product & Design",
+      "match": [
+        "senior product manager", "senior pm", "group pm",
+        "director of product management", "head of product", "lead pm"
+      ],
+      "parentRole": "Product Manager",
+      "childRole": "Director of Product",
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "strategy",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": [
+              "Product Strategy", "Market Analysis", "Go-to-Market Strategy",
+              "Business Case Development"
+            ]
+          },
+          {
+            "id": "analytics",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "Advanced Analytics", "SQL", "Experimentation", "Causal Analysis",
+              "Cohort Analysis"
+            ]
+          },
+          {
+            "id": "leadership",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "PM Mentoring", "Product Team Leadership", "OKR Setting",
+              "Executive Communication"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "Technical depth", "P&L ownership", "International markets",
+          "Platform products", "API products", "Machine Learning product sense"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Owns a product area with full P&L awareness",
+          "Manages or mentors junior PMs",
+          "Partners with engineering leadership on technical strategy",
+          "Represents product perspective in executive meetings",
+          "Sets quarterly OKRs and tracks team performance"
+        ],
+        "redFlagPhrases": ["rockstar", "visionary only", "no process"],
+        "redFlagMessage": "Vague senior PM JDs without defined scope or team context may reflect organizational immaturity",
+        "resumeTips": [
+          "Show strategic product bets and their outcomes",
+          "Include revenue or growth impact tied to your roadmap",
+          "Demonstrate stakeholder management at VP/C-level",
+          "Highlight PM mentorship or team building"
+        ]
+      }
+    },
+
+    {
+      "key": "UX Designer",
+      "category": "Product & Design",
+      "match": [
+        "ux designer", "product designer", "user experience designer",
+        "ui/ux designer", "interaction designer", "experience designer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior UX Designer",
+      "score": {
+        "yoeRange": { "min": 1, "max": 5 },
+        "mustHaveGroups": [
+          {
+            "id": "design-tools",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Figma", "Sketch", "Adobe XD", "InVision"]
+          },
+          {
+            "id": "ux-process",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "User Research", "Wireframing", "Prototyping", "Usability Testing",
+              "Information Architecture", "User Journey Mapping"
+            ]
+          },
+          {
+            "id": "design-principles",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Visual Design", "Interaction Design", "Accessibility",
+              "Design Systems", "Component Libraries"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "HTML/CSS basics", "Framer", "Maze", "UserTesting.com",
+          "Lottie Animations", "Motion Design", "Copywriting",
+          "Quantitative Research", "Jobs-to-be-Done"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Creates wireframes, prototypes, and high-fidelity designs",
+          "Facilitates user research and synthesizes findings",
+          "Collaborates with product managers on feature scope",
+          "Ensures design system consistency",
+          "Presents design rationale to stakeholders"
+        ],
+        "redFlagPhrases": ["rockstar designer", "pixel-perfect always", "no research budget"],
+        "redFlagMessage": "Roles that skip research in favor of pure visual output may undervalue UX function",
+        "resumeTips": [
+          "Include portfolio URL prominently",
+          "Show complete design process, not just final output",
+          "Quantify usability improvements (task completion, error rates)",
+          "Highlight cross-functional collaboration stories"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior UX Designer",
+      "category": "Product & Design",
+      "match": [
+        "senior ux designer", "senior product designer", "lead ux designer",
+        "principal designer", "staff designer", "design lead"
+      ],
+      "parentRole": "UX Designer",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "design-tools",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Figma", "Sketch"]
+          },
+          {
+            "id": "ux-leadership",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "Design Strategy", "Design System Ownership",
+              "Design Sprint Facilitation", "Research Operations"
+            ]
+          },
+          {
+            "id": "advanced-ux",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Quantitative Research", "Mixed Methods Research",
+              "Service Design", "Cross-platform Design", "Accessibility Audit"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "Design thinking facilitation", "NPS and CSAT analysis",
+          "A/B testing interpretation", "Design ethics",
+          "Workshop facilitation", "Executive presentation"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Defines design direction and sets quality bar for the team",
+          "Mentors junior and mid designers",
+          "Partners with engineering on design system implementation",
+          "Advocates for user experience in product and business decisions",
+          "Runs complex research programs and synthesizes insights"
+        ],
+        "redFlagPhrases": ["rockstar", "do it all", "no research time"],
+        "redFlagMessage": "Senior UX roles without dedicated research time or design system ownership may be misleveled",
+        "resumeTips": [
+          "Show design system contributions and adoption",
+          "Include complex research programs and their business impact",
+          "Demonstrate stakeholder influence and executive communication",
+          "Highlight mentorship and design team culture building"
+        ]
+      }
+    },
+
+    {
+      "key": "Engineering Manager",
+      "category": "Leadership & Management",
+      "match": [
+        "engineering manager", "software engineering manager", "em",
+        "manager software engineering", "development manager",
+        "engineering team lead"
+      ],
+      "parentRole": "Senior Backend Engineer",
+      "childRole": "Director of Engineering",
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "people-management",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": [
+              "People Management", "Performance Reviews", "1-on-1s",
+              "Hiring", "Career Development"
+            ]
+          },
+          {
+            "id": "technical-credibility",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Software Engineering", "System Design", "Code Review",
+              "Technical Architecture", "Engineering Best Practices"
+            ]
+          },
+          {
+            "id": "delivery",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": [
+              "Agile", "Scrum", "Sprint Planning", "Roadmap Execution",
+              "JIRA", "Risk Management"
+            ]
+          },
+          {
+            "id": "cross-functional",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": [
+              "Stakeholder Management", "Product Collaboration",
+              "Data-Driven Management", "OKRs"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "Budget management", "Headcount planning", "Interviewing certification",
+          "Organizational design", "Executive communication", "DEI initiatives"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Manages a team of 4–10 engineers",
+          "Responsible for team delivery, quality, and morale",
+          "Partners with product and design on roadmap",
+          "Conducts performance reviews and develops talent",
+          "Recruits and grows the engineering team"
+        ],
+        "redFlagPhrases": ["player-coach", "still coding 80%", "unlimited scope"],
+        "redFlagMessage": "Player-coach roles at scale are a red flag — clarify engineering vs management time expectations",
+        "resumeTips": [
+          "Quantify team size and growth under your leadership",
+          "Show engineering outcomes: delivery velocity, quality improvements",
+          "Highlight retention and team health metrics",
+          "Include hiring volume and diversity initiatives"
+        ]
+      }
+    },
+
+    {
+      "key": "Director of Engineering",
+      "category": "Leadership & Management",
+      "match": [
+        "director of engineering", "director engineering", "engineering director",
+        "vp of engineering", "head of engineering", "vp engineering"
+      ],
+      "parentRole": "Engineering Manager",
+      "childRole": "CTO",
+      "score": {
+        "yoeRange": { "min": 8, "max": 20 },
+        "mustHaveGroups": [
+          {
+            "id": "org-leadership",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": [
+              "Organizational Leadership", "Multi-team Management",
+              "Engineering Strategy", "Executive Communication"
+            ]
+          },
+          {
+            "id": "technical-strategy",
+            "logic": "OR",
+            "weight": 0.90,
+            "skills": [
+              "Technical Roadmap", "Platform Strategy", "Architecture Direction",
+              "Technical Debt Management"
+            ]
+          },
+          {
+            "id": "business",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Budget Management", "Headcount Planning", "OKR Setting",
+              "Business Alignment", "P&L Awareness"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "Board presentation experience", "M&A technical diligence",
+          "International team management", "Public company experience",
+          "Investor relations", "Open source strategy"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Manages multiple engineering managers and their teams",
+          "Sets engineering culture and organizational values",
+          "Represents engineering in executive leadership discussions",
+          "Owns engineering budget and headcount decisions",
+          "Drives org-level engineering strategy"
+        ],
+        "redFlagPhrases": ["hands-on director", "coding required", "no budget ownership"],
+        "redFlagMessage": "Director roles expecting IC-level coding output may reflect organizational misunderstanding of leadership functions",
+        "resumeTips": [
+          "Show org-level impact: team size, departments led",
+          "Quantify engineering org health improvements",
+          "Demonstrate business impact of engineering investments",
+          "Include board or executive communication examples"
+        ]
+      }
+    },
+
+    {
+      "key": "QA Engineer",
+      "category": "QA & Testing",
+      "match": [
+        "qa engineer", "quality assurance engineer", "test engineer",
+        "software tester", "sdet", "software development engineer in test",
+        "quality engineer", "automation engineer"
+      ],
+      "parentRole": null,
+      "childRole": "Senior QA Engineer",
+      "score": {
+        "yoeRange": { "min": 1, "max": 5 },
+        "mustHaveGroups": [
+          {
+            "id": "testing-fundamentals",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": ["Manual Testing", "Test Planning", "Bug Reporting", "Test Cases"]
+          },
+          {
+            "id": "automation",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": [
+              "Selenium", "Playwright", "Cypress", "Appium", "WebdriverIO",
+              "TestNG", "JUnit", "pytest", "Jest"
+            ]
+          },
+          {
+            "id": "programming",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["Python", "Java", "JavaScript", "TypeScript", "Ruby"]
+          },
+          {
+            "id": "api-testing",
+            "logic": "OR",
+            "weight": 0.70,
+            "skills": ["Postman", "REST Assured", "Insomnia", "API Testing"]
+          }
+        ],
+        "niceToHave": [
+          "Performance Testing", "Load Testing", "JMeter", "k6",
+          "Security Testing", "CI/CD integration", "JIRA", "TestRail",
+          "BDD", "Gherkin", "Cucumber"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Writes and maintains test cases and test plans",
+          "Participates in sprint ceremonies and story review",
+          "Identifies edge cases and regression risks",
+          "Collaborates closely with developers on bug reproduction",
+          "Maintains test automation suite"
+        ],
+        "redFlagPhrases": ["rockstar qa", "10x tester", "no QA process"],
+        "redFlagMessage": "Undefined QA process or over-reliance on manual testing at scale may indicate technical debt",
+        "resumeTips": [
+          "Quantify test coverage improvements",
+          "Show bug detection rates and regression reduction",
+          "Highlight automation framework contributions",
+          "Include release quality metrics"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior QA Engineer",
+      "category": "QA & Testing",
+      "match": [
+        "senior qa engineer", "senior sdet", "senior test engineer",
+        "lead qa engineer", "principal qa engineer", "qa lead",
+        "quality assurance lead"
+      ],
+      "parentRole": "QA Engineer",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "automation-mastery",
+            "logic": "OR",
+            "weight": 1.0,
+            "skills": ["Playwright", "Selenium", "Cypress", "Appium"]
+          },
+          {
+            "id": "qa-strategy",
+            "logic": "AND",
+            "weight": 0.90,
+            "skills": [
+              "Test Strategy", "Quality Metrics", "Risk-Based Testing",
+              "Shift-Left Testing"
+            ]
+          },
+          {
+            "id": "performance",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["Performance Testing", "Load Testing", "k6", "JMeter", "Gatling"]
+          },
+          {
+            "id": "cicd",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["CI/CD", "GitHub Actions", "GitLab CI", "Jenkins"]
+          }
+        ],
+        "niceToHave": [
+          "Contract Testing", "Pact", "Chaos Engineering",
+          "Observability for testing", "Test Data Management",
+          "Security Testing", "Accessibility Testing"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Defines quality strategy and test architecture",
+          "Mentors junior QA engineers",
+          "Drives shift-left testing culture across engineering",
+          "Establishes quality metrics and OKRs",
+          "Partners with DevOps on test pipeline integration"
+        ],
+        "redFlagPhrases": ["rockstar", "10x", "ninja"],
+        "redFlagMessage": "JD uses culture red flags — approach with caution",
+        "resumeTips": [
+          "Show quality metric improvements (defect escape rate, coverage)",
+          "Highlight test automation framework architecture",
+          "Include shift-left testing adoption and impact",
+          "Demonstrate cross-team quality enablement"
+        ]
+      }
+    },
+
+    {
+      "key": "Business Analyst",
+      "category": "Business & Analytics",
+      "match": [
+        "business analyst", "ba", "business systems analyst",
+        "functional analyst", "requirements analyst", "process analyst"
+      ],
+      "parentRole": null,
+      "childRole": "Senior Business Analyst",
+      "score": {
+        "yoeRange": { "min": 1, "max": 5 },
+        "mustHaveGroups": [
+          {
+            "id": "analysis",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": [
+              "Requirements Gathering", "Business Process Modeling",
+              "Stakeholder Management", "Documentation"
+            ]
+          },
+          {
+            "id": "data",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": ["SQL", "Excel", "Power BI", "Tableau", "Looker"]
+          },
+          {
+            "id": "methodologies",
+            "logic": "OR",
+            "weight": 0.75,
+            "skills": ["Agile", "Waterfall", "BPMN", "UML", "Use Cases"]
+          }
+        ],
+        "niceToHave": [
+          "JIRA", "Confluence", "Visio", "Lucidchart",
+          "Six Sigma", "CBAP certification", "API documentation"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Bridges communication between business and technology teams",
+          "Documents detailed requirements and acceptance criteria",
+          "Facilitates workshops and requirements sessions",
+          "Validates that delivered solutions meet business needs",
+          "Maintains process documentation and data dictionaries"
+        ],
+        "redFlagPhrases": ["rockstar", "project manager too", "do it all"],
+        "redFlagMessage": "BA + PM combined role may indicate insufficient resourcing — clarify scope",
+        "resumeTips": [
+          "Show requirements delivered that led to successful project outcomes",
+          "Include stakeholder communication and facilitation examples",
+          "Quantify business process improvements",
+          "Highlight cross-functional collaboration"
+        ]
+      }
+    },
+
+    {
+      "key": "Senior Business Analyst",
+      "category": "Business & Analytics",
+      "match": [
+        "senior business analyst", "lead business analyst", "principal ba",
+        "senior ba", "senior business systems analyst"
+      ],
+      "parentRole": "Business Analyst",
+      "childRole": null,
+      "score": {
+        "yoeRange": { "min": 5, "max": 12 },
+        "mustHaveGroups": [
+          {
+            "id": "advanced-analysis",
+            "logic": "AND",
+            "weight": 1.0,
+            "skills": [
+              "Strategic Requirements", "Enterprise Architecture",
+              "Business Strategy Alignment", "Change Management"
+            ]
+          },
+          {
+            "id": "data",
+            "logic": "OR",
+            "weight": 0.85,
+            "skills": ["SQL Advanced", "Power BI Advanced", "Tableau", "Python for analysis"]
+          },
+          {
+            "id": "leadership",
+            "logic": "OR",
+            "weight": 0.80,
+            "skills": [
+              "BA Team Leadership", "Mentoring", "Process Improvement",
+              "Organizational Change"
+            ]
+          }
+        ],
+        "niceToHave": [
+          "CBAP", "Six Sigma Green Belt", "PMP",
+          "Data Governance", "Business Architecture", "Enterprise tools (SAP, Salesforce)"
+        ],
+        "dealbreakers": []
+      },
+      "feedback": {
+        "implicitExpectations": [
+          "Leads complex, enterprise-level requirements projects",
+          "Mentors junior business analysts",
+          "Partners with C-level stakeholders on strategic initiatives",
+          "Drives business process transformation programs",
+          "Acts as the bridge between technology investment and business value"
+        ],
+        "redFlagPhrases": ["rockstar", "do it all", "no structure"],
+        "redFlagMessage": "Senior BA roles with undefined scope or mixed PM responsibilities may indicate organizational dysfunction",
+        "resumeTips": [
+          "Show strategic projects and their business value delivered",
+          "Include executive stakeholder management experience",
+          "Quantify process improvements and cost savings",
+          "Highlight cross-departmental program leadership"
+        ]
+      }
+    }
+
+  ]
+}

@@ -1,0 +1,1680 @@
+{
+  "_meta": {
+    "name": "IT Job Designation Ontology",
+    "version": "1.0.0",
+    "description": "A comprehensive ontology of IT industry job designations for use in NLP-based extractors and matchers. Modelled after the MIND Tech Skills Ontology structure.",
+    "stats": {
+      "designations": 120,
+      "seniority_levels": 7,
+      "domains": 20,
+      "designation_types": 8
+    },
+    "seniority_levels": [
+      "Intern",
+      "Junior",
+      "Mid",
+      "Senior",
+      "Lead",
+      "Principal",
+      "Staff",
+      "Distinguished",
+      "Fellow",
+      "Manager",
+      "Director",
+      "VP",
+      "C-Level"
+    ],
+    "designation_types": [
+      "Individual Contributor",
+      "Engineering Management",
+      "Technical Leadership",
+      "Architecture",
+      "Research",
+      "Product",
+      "Operations",
+      "Data & AI"
+    ],
+    "domains": [
+      "Software Engineering",
+      "Frontend",
+      "Backend",
+      "Fullstack",
+      "Mobile",
+      "Embedded Systems",
+      "DevOps",
+      "MLOps",
+      "Data Engineering",
+      "Data Science",
+      "ML/AI",
+      "Cybersecurity",
+      "Cloud",
+      "QA/Testing",
+      "Networking",
+      "Database",
+      "Game Development",
+      "AR/VR",
+      "IoT",
+      "Blockchain"
+    ]
+  },
+
+  "designations": [
+
+    {
+      "name": "Software Engineer",
+      "synonyms": [
+        "software engineer",
+        "software developer",
+        "SWE",
+        "sw engineer",
+        "sw developer",
+        "application developer",
+        "application engineer",
+        "programmer",
+        "coder",
+        "software programmer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Software Engineering", "Backend", "Fullstack"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff", "Principal"],
+      "impliesResponsibilities": [
+        "Writing and maintaining code",
+        "Code review",
+        "Unit testing",
+        "System design participation"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Engineering Manager", "Tech Lead", "Senior Software Engineer"],
+      "canProgressTo": ["Senior Software Engineer", "Tech Lead", "Staff Engineer"],
+      "seniorityVariants": [
+        "Junior Software Engineer",
+        "Software Engineer I",
+        "Software Engineer II",
+        "Senior Software Engineer",
+        "Staff Software Engineer",
+        "Principal Software Engineer"
+      ],
+      "relatedDesignations": ["Backend Engineer", "Frontend Engineer", "Fullstack Engineer"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Senior Software Engineer",
+      "synonyms": [
+        "senior software engineer",
+        "senior SWE",
+        "senior developer",
+        "senior software developer",
+        "Sr. software engineer",
+        "Sr SWE",
+        "SWE III",
+        "SWE 3",
+        "L5 engineer",
+        "E5 engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Software Engineering", "Backend", "Fullstack"],
+      "seniorityRange": ["Senior"],
+      "impliesResponsibilities": [
+        "Technical mentoring",
+        "Architecture input",
+        "Cross-team collaboration",
+        "System design ownership",
+        "Code review leadership"
+      ],
+      "impliesKnowingDesignations": ["Software Engineer"],
+      "reportsTo": ["Engineering Manager", "Staff Engineer", "Principal Engineer"],
+      "canProgressTo": ["Staff Engineer", "Principal Engineer", "Tech Lead", "Engineering Manager"],
+      "seniorityVariants": [],
+      "relatedDesignations": ["Staff Engineer", "Tech Lead"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Staff Engineer",
+      "synonyms": [
+        "staff engineer",
+        "staff software engineer",
+        "staff SWE",
+        "SWE IV",
+        "SWE 4",
+        "L6 engineer",
+        "E6 engineer"
+      ],
+      "type": ["Individual Contributor", "Technical Leadership"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Staff"],
+      "impliesResponsibilities": [
+        "Cross-team technical strategy",
+        "Driving large technical initiatives",
+        "Mentoring senior engineers",
+        "Architectural decisions"
+      ],
+      "impliesKnowingDesignations": ["Senior Software Engineer", "Software Engineer"],
+      "reportsTo": ["Principal Engineer", "VP of Engineering", "CTO"],
+      "canProgressTo": ["Principal Engineer", "Distinguished Engineer", "Fellow", "Engineering Manager"],
+      "seniorityVariants": [],
+      "relatedDesignations": ["Principal Engineer", "Distinguished Engineer"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Principal Engineer",
+      "synonyms": [
+        "principal engineer",
+        "principal software engineer",
+        "principal SWE",
+        "distinguished engineer",
+        "L7 engineer",
+        "E7 engineer",
+        "SWE V"
+      ],
+      "type": ["Individual Contributor", "Technical Leadership"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Principal", "Distinguished"],
+      "impliesResponsibilities": [
+        "Company-wide technical direction",
+        "Defining engineering standards",
+        "Cross-org influence",
+        "Strategic planning"
+      ],
+      "impliesKnowingDesignations": ["Staff Engineer", "Senior Software Engineer"],
+      "reportsTo": ["CTO", "VP of Engineering"],
+      "canProgressTo": ["Distinguished Engineer", "Fellow", "CTO"],
+      "seniorityVariants": [
+        "Principal Engineer I",
+        "Principal Engineer II",
+        "Distinguished Engineer",
+        "Fellow"
+      ],
+      "relatedDesignations": ["Staff Engineer", "Distinguished Engineer", "Fellow"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Frontend Engineer",
+      "synonyms": [
+        "frontend engineer",
+        "front-end engineer",
+        "front end engineer",
+        "frontend developer",
+        "front-end developer",
+        "UI engineer",
+        "UI developer",
+        "web frontend developer",
+        "client-side developer",
+        "client side engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Frontend"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff", "Principal"],
+      "impliesResponsibilities": [
+        "Building user interfaces",
+        "Implementing UI/UX designs",
+        "Performance optimisation",
+        "Cross-browser compatibility",
+        "Accessibility"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Engineering Manager", "Tech Lead"],
+      "canProgressTo": ["Senior Frontend Engineer", "Frontend Architect", "Fullstack Engineer"],
+      "seniorityVariants": [
+        "Junior Frontend Engineer",
+        "Frontend Engineer I",
+        "Frontend Engineer II",
+        "Senior Frontend Engineer",
+        "Staff Frontend Engineer"
+      ],
+      "relatedDesignations": ["UI/UX Engineer", "Fullstack Engineer"],
+      "industryStandardCodes": ["SOC 15-1254"]
+    },
+
+    {
+      "name": "Backend Engineer",
+      "synonyms": [
+        "backend engineer",
+        "back-end engineer",
+        "back end engineer",
+        "backend developer",
+        "back-end developer",
+        "server-side developer",
+        "server side engineer",
+        "API developer",
+        "API engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Backend"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff", "Principal"],
+      "impliesResponsibilities": [
+        "Designing and building APIs",
+        "Database management",
+        "Server infrastructure",
+        "Performance and scalability",
+        "Authentication and authorisation"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Engineering Manager", "Tech Lead"],
+      "canProgressTo": ["Senior Backend Engineer", "Backend Architect", "Fullstack Engineer"],
+      "seniorityVariants": [
+        "Junior Backend Engineer",
+        "Backend Engineer I",
+        "Backend Engineer II",
+        "Senior Backend Engineer",
+        "Staff Backend Engineer"
+      ],
+      "relatedDesignations": ["API Engineer", "Platform Engineer", "Fullstack Engineer"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Fullstack Engineer",
+      "synonyms": [
+        "fullstack engineer",
+        "full-stack engineer",
+        "full stack engineer",
+        "fullstack developer",
+        "full-stack developer",
+        "full stack developer",
+        "FSE",
+        "end-to-end developer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Fullstack", "Frontend", "Backend"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "Frontend and backend development",
+        "API design",
+        "Database integration",
+        "End-to-end feature ownership"
+      ],
+      "impliesKnowingDesignations": ["Frontend Engineer", "Backend Engineer"],
+      "reportsTo": ["Engineering Manager", "Tech Lead"],
+      "canProgressTo": ["Senior Fullstack Engineer", "Tech Lead", "Software Architect"],
+      "seniorityVariants": [
+        "Junior Fullstack Engineer",
+        "Senior Fullstack Engineer",
+        "Staff Fullstack Engineer"
+      ],
+      "relatedDesignations": ["Frontend Engineer", "Backend Engineer"],
+      "industryStandardCodes": ["SOC 15-1254"]
+    },
+
+    {
+      "name": "Mobile Engineer",
+      "synonyms": [
+        "mobile engineer",
+        "mobile developer",
+        "mobile application developer",
+        "mobile app developer",
+        "iOS developer",
+        "iOS engineer",
+        "Android developer",
+        "Android engineer",
+        "React Native developer",
+        "Flutter developer",
+        "cross-platform mobile developer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Mobile"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "Native or cross-platform mobile app development",
+        "App Store deployment",
+        "Push notifications",
+        "Mobile performance tuning"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Engineering Manager", "Tech Lead"],
+      "canProgressTo": ["Senior Mobile Engineer", "Mobile Architect"],
+      "seniorityVariants": [
+        "Junior Mobile Engineer",
+        "Senior Mobile Engineer",
+        "Staff Mobile Engineer"
+      ],
+      "relatedDesignations": ["iOS Engineer", "Android Engineer"],
+      "platformSpecializations": ["iOS", "Android", "React Native", "Flutter", "Xamarin"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "iOS Engineer",
+      "synonyms": [
+        "iOS engineer",
+        "iOS developer",
+        "iPhone developer",
+        "Swift developer",
+        "Objective-C developer",
+        "Apple platform developer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Mobile"],
+      "seniorityRange": ["Junior", "Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Swift / Objective-C development",
+        "Xcode proficiency",
+        "App Store submission",
+        "Apple HIG compliance"
+      ],
+      "impliesKnowingDesignations": ["Mobile Engineer"],
+      "reportsTo": ["Engineering Manager", "Tech Lead"],
+      "canProgressTo": ["Senior iOS Engineer", "Mobile Architect"],
+      "seniorityVariants": ["Junior iOS Engineer", "Senior iOS Engineer"],
+      "relatedDesignations": ["Android Engineer", "Mobile Engineer"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Android Engineer",
+      "synonyms": [
+        "Android engineer",
+        "Android developer",
+        "Kotlin developer",
+        "Java Android developer",
+        "Google Play developer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Mobile"],
+      "seniorityRange": ["Junior", "Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Kotlin / Java development",
+        "Android Studio proficiency",
+        "Google Play deployment",
+        "Material Design implementation"
+      ],
+      "impliesKnowingDesignations": ["Mobile Engineer"],
+      "reportsTo": ["Engineering Manager", "Tech Lead"],
+      "canProgressTo": ["Senior Android Engineer", "Mobile Architect"],
+      "seniorityVariants": ["Junior Android Engineer", "Senior Android Engineer"],
+      "relatedDesignations": ["iOS Engineer", "Mobile Engineer"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "DevOps Engineer",
+      "synonyms": [
+        "DevOps engineer",
+        "DevOps developer",
+        "dev ops engineer",
+        "deployment engineer",
+        "release engineer",
+        "infrastructure engineer",
+        "platform reliability engineer",
+        "build and release engineer",
+        "CI/CD engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["DevOps", "Cloud"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "CI/CD pipeline management",
+        "Infrastructure as code",
+        "Container orchestration",
+        "Monitoring and alerting",
+        "Cloud provisioning"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["DevOps Manager", "Head of Infrastructure", "VP Engineering"],
+      "canProgressTo": ["Senior DevOps Engineer", "Platform Engineer", "SRE", "Cloud Architect"],
+      "seniorityVariants": [
+        "Junior DevOps Engineer",
+        "Senior DevOps Engineer",
+        "Staff DevOps Engineer"
+      ],
+      "relatedDesignations": ["SRE", "Platform Engineer", "Cloud Engineer", "Infrastructure Engineer"],
+      "industryStandardCodes": ["SOC 15-1244"]
+    },
+
+    {
+      "name": "Site Reliability Engineer",
+      "synonyms": [
+        "site reliability engineer",
+        "SRE",
+        "reliability engineer",
+        "production engineer",
+        "operations engineer",
+        "platform operations engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["DevOps", "Cloud"],
+      "seniorityRange": ["Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "Service reliability and uptime SLOs/SLAs",
+        "Incident response and postmortems",
+        "Capacity planning",
+        "Automation to reduce toil",
+        "Observability engineering"
+      ],
+      "impliesKnowingDesignations": ["DevOps Engineer"],
+      "reportsTo": ["Engineering Manager", "VP Engineering"],
+      "canProgressTo": ["Senior SRE", "Staff SRE", "Infrastructure Architect"],
+      "seniorityVariants": ["Senior SRE", "Staff SRE", "Principal SRE"],
+      "relatedDesignations": ["DevOps Engineer", "Platform Engineer", "Cloud Engineer"],
+      "industryStandardCodes": ["SOC 15-1244"]
+    },
+
+    {
+      "name": "Platform Engineer",
+      "synonyms": [
+        "platform engineer",
+        "infrastructure platform engineer",
+        "developer platform engineer",
+        "internal platform engineer",
+        "IDP engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["DevOps", "Cloud"],
+      "seniorityRange": ["Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "Building internal developer platforms",
+        "Tooling and automation for developers",
+        "Self-service infrastructure",
+        "Kubernetes platform management"
+      ],
+      "impliesKnowingDesignations": ["DevOps Engineer"],
+      "reportsTo": ["Engineering Manager", "VP Engineering"],
+      "canProgressTo": ["Staff Platform Engineer", "Platform Architect"],
+      "seniorityVariants": ["Senior Platform Engineer", "Staff Platform Engineer"],
+      "relatedDesignations": ["SRE", "DevOps Engineer", "Cloud Engineer"],
+      "industryStandardCodes": ["SOC 15-1244"]
+    },
+
+    {
+      "name": "Cloud Engineer",
+      "synonyms": [
+        "cloud engineer",
+        "cloud developer",
+        "AWS engineer",
+        "Azure engineer",
+        "GCP engineer",
+        "cloud infrastructure engineer",
+        "cloud platform engineer",
+        "cloud solutions engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Cloud", "DevOps"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "Cloud infrastructure provisioning",
+        "Cloud cost optimisation",
+        "Multi-cloud or hybrid cloud management",
+        "Serverless architecture"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Cloud Architect", "Infrastructure Manager", "VP Engineering"],
+      "canProgressTo": ["Senior Cloud Engineer", "Cloud Architect", "Solutions Architect"],
+      "seniorityVariants": ["Junior Cloud Engineer", "Senior Cloud Engineer"],
+      "relatedDesignations": ["DevOps Engineer", "Platform Engineer", "SRE", "Cloud Architect"],
+      "cloudProviders": ["AWS", "Azure", "GCP", "OCI", "Alibaba Cloud"],
+      "industryStandardCodes": ["SOC 15-1244"]
+    },
+
+    {
+      "name": "Data Engineer",
+      "synonyms": [
+        "data engineer",
+        "data platform engineer",
+        "big data engineer",
+        "ETL developer",
+        "ETL engineer",
+        "data pipeline engineer",
+        "data infrastructure engineer",
+        "analytics engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Data Engineering"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "Building and maintaining data pipelines",
+        "Data warehousing",
+        "ETL/ELT processes",
+        "Data lake management",
+        "Data quality and governance"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Data Engineering Manager", "Head of Data", "VP of Data"],
+      "canProgressTo": ["Senior Data Engineer", "Staff Data Engineer", "Data Architect", "Analytics Engineer"],
+      "seniorityVariants": [
+        "Junior Data Engineer",
+        "Data Engineer I",
+        "Data Engineer II",
+        "Senior Data Engineer",
+        "Staff Data Engineer"
+      ],
+      "relatedDesignations": ["Data Scientist", "Analytics Engineer", "Database Administrator", "Data Architect"],
+      "industryStandardCodes": ["SOC 15-1243"]
+    },
+
+    {
+      "name": "Data Scientist",
+      "synonyms": [
+        "data scientist",
+        "applied scientist",
+        "quantitative analyst",
+        "statistical analyst",
+        "research scientist",
+        "ML scientist",
+        "AI scientist"
+      ],
+      "type": ["Individual Contributor", "Research"],
+      "domains": ["Data Science", "ML/AI"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff", "Principal"],
+      "impliesResponsibilities": [
+        "Statistical modelling",
+        "Exploratory data analysis",
+        "Predictive analytics",
+        "A/B testing",
+        "Communicating insights to stakeholders"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Head of Data Science", "VP of Data", "Chief Data Officer"],
+      "canProgressTo": ["Senior Data Scientist", "Staff Data Scientist", "Principal Data Scientist", "Head of Data Science"],
+      "seniorityVariants": [
+        "Junior Data Scientist",
+        "Data Scientist I",
+        "Data Scientist II",
+        "Senior Data Scientist",
+        "Staff Data Scientist",
+        "Principal Data Scientist"
+      ],
+      "relatedDesignations": ["ML Engineer", "Data Analyst", "Research Scientist"],
+      "industryStandardCodes": ["SOC 15-2051"]
+    },
+
+    {
+      "name": "Machine Learning Engineer",
+      "synonyms": [
+        "machine learning engineer",
+        "ML engineer",
+        "AI engineer",
+        "ML/AI engineer",
+        "applied ML engineer",
+        "deep learning engineer",
+        "NLP engineer",
+        "computer vision engineer",
+        "AI developer"
+      ],
+      "type": ["Individual Contributor", "Data & AI"],
+      "domains": ["ML/AI", "MLOps"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff", "Principal"],
+      "impliesResponsibilities": [
+        "Training and deploying ML models",
+        "Feature engineering",
+        "Model evaluation and monitoring",
+        "MLOps pipelines",
+        "Productionising research models"
+      ],
+      "impliesKnowingDesignations": ["Data Scientist"],
+      "reportsTo": ["ML Manager", "Head of AI", "VP of Engineering"],
+      "canProgressTo": ["Senior ML Engineer", "Staff ML Engineer", "Principal ML Engineer", "Head of ML"],
+      "seniorityVariants": [
+        "Junior ML Engineer",
+        "ML Engineer I",
+        "ML Engineer II",
+        "Senior ML Engineer",
+        "Staff ML Engineer",
+        "Principal ML Engineer"
+      ],
+      "relatedDesignations": ["Data Scientist", "MLOps Engineer", "Research Engineer", "AI Researcher"],
+      "specializationVariants": [
+        "NLP Engineer",
+        "Computer Vision Engineer",
+        "Recommender Systems Engineer",
+        "Reinforcement Learning Engineer",
+        "Generative AI Engineer",
+        "LLM Engineer"
+      ],
+      "industryStandardCodes": ["SOC 15-2051"]
+    },
+
+    {
+      "name": "MLOps Engineer",
+      "synonyms": [
+        "MLOps engineer",
+        "ML platform engineer",
+        "AI infrastructure engineer",
+        "ML infrastructure engineer",
+        "model deployment engineer",
+        "ML DevOps engineer"
+      ],
+      "type": ["Individual Contributor", "Data & AI"],
+      "domains": ["MLOps", "DevOps", "ML/AI"],
+      "seniorityRange": ["Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "ML model deployment and serving",
+        "Model monitoring and drift detection",
+        "Feature stores",
+        "ML workflow orchestration",
+        "GPU infrastructure management"
+      ],
+      "impliesKnowingDesignations": ["DevOps Engineer", "Machine Learning Engineer"],
+      "reportsTo": ["Head of MLOps", "VP of Engineering", "Head of AI"],
+      "canProgressTo": ["Senior MLOps Engineer", "ML Platform Architect"],
+      "seniorityVariants": ["Senior MLOps Engineer", "Staff MLOps Engineer"],
+      "relatedDesignations": ["ML Engineer", "Platform Engineer", "Data Engineer"],
+      "industryStandardCodes": ["SOC 15-1244"]
+    },
+
+    {
+      "name": "Data Analyst",
+      "synonyms": [
+        "data analyst",
+        "business intelligence analyst",
+        "BI analyst",
+        "insights analyst",
+        "reporting analyst",
+        "analytics analyst",
+        "product analyst",
+        "marketing analyst"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Data Science", "Data Engineering"],
+      "seniorityRange": ["Junior", "Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Data querying and reporting",
+        "Dashboard creation",
+        "Business insights",
+        "A/B test analysis",
+        "Stakeholder reporting"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Head of Analytics", "VP of Data", "Head of Data Science"],
+      "canProgressTo": ["Senior Data Analyst", "Data Scientist", "Analytics Engineer", "Head of Analytics"],
+      "seniorityVariants": ["Junior Data Analyst", "Senior Data Analyst", "Lead Data Analyst"],
+      "relatedDesignations": ["Data Scientist", "Analytics Engineer", "Business Intelligence Developer"],
+      "industryStandardCodes": ["SOC 15-2041"]
+    },
+
+    {
+      "name": "QA Engineer",
+      "synonyms": [
+        "QA engineer",
+        "quality assurance engineer",
+        "quality engineer",
+        "test engineer",
+        "software tester",
+        "SDET",
+        "software development engineer in test",
+        "automation engineer",
+        "test automation engineer",
+        "QA automation engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["QA/Testing"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "Manual and automated testing",
+        "Test plan and strategy design",
+        "Bug reporting and tracking",
+        "Regression testing",
+        "Performance and load testing"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["QA Manager", "Engineering Manager"],
+      "canProgressTo": ["Senior QA Engineer", "QA Lead", "SDET", "QA Manager"],
+      "seniorityVariants": [
+        "Junior QA Engineer",
+        "QA Engineer I",
+        "QA Engineer II",
+        "Senior QA Engineer",
+        "Lead QA Engineer",
+        "Staff QA Engineer"
+      ],
+      "relatedDesignations": ["SDET", "Performance Engineer", "Security QA Engineer"],
+      "industryStandardCodes": ["SOC 15-1253"]
+    },
+
+    {
+      "name": "Security Engineer",
+      "synonyms": [
+        "security engineer",
+        "cybersecurity engineer",
+        "application security engineer",
+        "AppSec engineer",
+        "information security engineer",
+        "infosec engineer",
+        "cloud security engineer",
+        "product security engineer",
+        "network security engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Cybersecurity"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff", "Principal"],
+      "impliesResponsibilities": [
+        "Vulnerability assessment and remediation",
+        "Threat modelling",
+        "Security code review",
+        "Penetration testing",
+        "Security tooling and automation"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["CISO", "Security Manager", "VP Engineering"],
+      "canProgressTo": ["Senior Security Engineer", "Security Architect", "CISO"],
+      "seniorityVariants": [
+        "Junior Security Engineer",
+        "Senior Security Engineer",
+        "Staff Security Engineer",
+        "Principal Security Engineer"
+      ],
+      "relatedDesignations": ["Penetration Tester", "Security Architect", "SecOps Engineer"],
+      "specializationVariants": [
+        "Penetration Tester",
+        "Red Team Engineer",
+        "Blue Team Engineer",
+        "SOC Analyst",
+        "Cloud Security Engineer",
+        "AppSec Engineer"
+      ],
+      "industryStandardCodes": ["SOC 15-1212"]
+    },
+
+    {
+      "name": "Embedded Systems Engineer",
+      "synonyms": [
+        "embedded systems engineer",
+        "embedded engineer",
+        "embedded software engineer",
+        "embedded developer",
+        "firmware engineer",
+        "firmware developer",
+        "embedded C developer",
+        "RTOS engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Embedded Systems"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "Firmware development",
+        "Hardware-software integration",
+        "Low-level programming",
+        "RTOS configuration",
+        "Hardware debugging"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Engineering Manager", "Hardware Engineering Lead"],
+      "canProgressTo": ["Senior Embedded Engineer", "Embedded Architect"],
+      "seniorityVariants": ["Junior Embedded Engineer", "Senior Embedded Engineer"],
+      "relatedDesignations": ["IoT Engineer", "Hardware Engineer", "Systems Engineer"],
+      "industryStandardCodes": ["SOC 17-2061"]
+    },
+
+    {
+      "name": "IoT Engineer",
+      "synonyms": [
+        "IoT engineer",
+        "Internet of Things engineer",
+        "IoT developer",
+        "IoT solutions engineer",
+        "connected devices engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["IoT", "Embedded Systems"],
+      "seniorityRange": ["Mid", "Senior"],
+      "impliesResponsibilities": [
+        "IoT device connectivity",
+        "Edge computing",
+        "IoT platform integration",
+        "Sensor data pipelines",
+        "MQTT/CoAP protocol management"
+      ],
+      "impliesKnowingDesignations": ["Embedded Systems Engineer"],
+      "reportsTo": ["Engineering Manager", "Head of IoT"],
+      "canProgressTo": ["Senior IoT Engineer", "IoT Architect"],
+      "seniorityVariants": ["Senior IoT Engineer"],
+      "relatedDesignations": ["Embedded Systems Engineer", "Cloud Engineer"],
+      "industryStandardCodes": ["SOC 17-2061"]
+    },
+
+    {
+      "name": "Game Developer",
+      "synonyms": [
+        "game developer",
+        "game engineer",
+        "game programmer",
+        "Unity developer",
+        "Unreal developer",
+        "game software engineer",
+        "gameplay engineer",
+        "graphics programmer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Game Development"],
+      "seniorityRange": ["Junior", "Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Game mechanics implementation",
+        "Rendering optimisation",
+        "Physics simulation",
+        "Multiplayer networking",
+        "Asset pipeline management"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Lead Game Developer", "Engineering Manager"],
+      "canProgressTo": ["Senior Game Developer", "Lead Game Developer", "Technical Director"],
+      "seniorityVariants": ["Junior Game Developer", "Senior Game Developer"],
+      "relatedDesignations": ["Graphics Engineer", "AR/VR Engineer"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Blockchain Engineer",
+      "synonyms": [
+        "blockchain engineer",
+        "blockchain developer",
+        "smart contract developer",
+        "web3 developer",
+        "web3 engineer",
+        "DeFi engineer",
+        "Solidity developer",
+        "Ethereum developer",
+        "crypto engineer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Blockchain"],
+      "seniorityRange": ["Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Smart contract development",
+        "DApp backend",
+        "Wallet integration",
+        "On-chain data indexing",
+        "Protocol development"
+      ],
+      "impliesKnowingDesignations": ["Backend Engineer"],
+      "reportsTo": ["Engineering Manager", "CTO"],
+      "canProgressTo": ["Senior Blockchain Engineer", "Blockchain Architect"],
+      "seniorityVariants": ["Senior Blockchain Engineer"],
+      "relatedDesignations": ["Smart Contract Auditor", "Backend Engineer"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Database Administrator",
+      "synonyms": [
+        "database administrator",
+        "DBA",
+        "database engineer",
+        "database developer",
+        "SQL DBA",
+        "NoSQL DBA",
+        "DB admin",
+        "database reliability engineer"
+      ],
+      "type": ["Individual Contributor", "Operations"],
+      "domains": ["Database"],
+      "seniorityRange": ["Junior", "Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Database performance tuning",
+        "Backup and recovery",
+        "Schema design",
+        "Query optimisation",
+        "Replication and high availability"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Data Engineering Manager", "IT Manager"],
+      "canProgressTo": ["Senior DBA", "Data Architect", "Database Architect"],
+      "seniorityVariants": ["Junior DBA", "Senior DBA", "Lead DBA"],
+      "relatedDesignations": ["Data Engineer", "Data Architect"],
+      "industryStandardCodes": ["SOC 15-1243"]
+    },
+
+    {
+      "name": "Network Engineer",
+      "synonyms": [
+        "network engineer",
+        "network administrator",
+        "network architect",
+        "network operations engineer",
+        "NOC engineer",
+        "CCNA engineer",
+        "CCNP engineer",
+        "telecommunications engineer"
+      ],
+      "type": ["Individual Contributor", "Operations"],
+      "domains": ["Networking"],
+      "seniorityRange": ["Junior", "Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Network design and implementation",
+        "Routing and switching",
+        "Firewall management",
+        "VPN configuration",
+        "Network monitoring"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["IT Manager", "Head of Infrastructure"],
+      "canProgressTo": ["Senior Network Engineer", "Network Architect", "Head of IT"],
+      "seniorityVariants": ["Junior Network Engineer", "Senior Network Engineer"],
+      "relatedDesignations": ["Security Engineer", "Cloud Engineer", "Systems Administrator"],
+      "industryStandardCodes": ["SOC 15-1241"]
+    },
+
+    {
+      "name": "Tech Lead",
+      "synonyms": [
+        "tech lead",
+        "technical lead",
+        "team lead",
+        "lead engineer",
+        "lead software engineer",
+        "technical team lead",
+        "engineering lead",
+        "TL"
+      ],
+      "type": ["Technical Leadership", "Individual Contributor"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Lead"],
+      "impliesResponsibilities": [
+        "Technical direction for a team",
+        "Code review and standards",
+        "Mentoring junior engineers",
+        "Collaborating with product and design",
+        "Technical planning and estimation"
+      ],
+      "impliesKnowingDesignations": ["Senior Software Engineer"],
+      "reportsTo": ["Engineering Manager", "VP of Engineering"],
+      "canProgressTo": ["Staff Engineer", "Principal Engineer", "Engineering Manager", "Software Architect"],
+      "seniorityVariants": [],
+      "relatedDesignations": ["Engineering Manager", "Staff Engineer", "Principal Engineer"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Software Architect",
+      "synonyms": [
+        "software architect",
+        "solutions architect",
+        "system architect",
+        "technical architect",
+        "enterprise architect",
+        "application architect",
+        "IT architect",
+        "chief architect"
+      ],
+      "type": ["Architecture", "Technical Leadership"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Senior", "Principal"],
+      "impliesResponsibilities": [
+        "System-wide architectural design",
+        "Technology selection",
+        "Non-functional requirements (scalability, security, performance)",
+        "Architectural documentation",
+        "Cross-team technical governance"
+      ],
+      "impliesKnowingDesignations": ["Senior Software Engineer", "Tech Lead"],
+      "reportsTo": ["CTO", "VP of Engineering"],
+      "canProgressTo": ["Principal Architect", "CTO"],
+      "seniorityVariants": [
+        "Solutions Architect",
+        "Enterprise Architect",
+        "Chief Architect",
+        "Principal Architect"
+      ],
+      "relatedDesignations": ["Tech Lead", "Principal Engineer", "CTO"],
+      "architectureSpecializations": [
+        "Cloud Architect",
+        "Data Architect",
+        "Security Architect",
+        "Integration Architect",
+        "Frontend Architect",
+        "Backend Architect"
+      ],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Cloud Architect",
+      "synonyms": [
+        "cloud architect",
+        "AWS architect",
+        "Azure architect",
+        "GCP architect",
+        "cloud solutions architect",
+        "cloud infrastructure architect",
+        "multi-cloud architect"
+      ],
+      "type": ["Architecture", "Technical Leadership"],
+      "domains": ["Cloud", "DevOps"],
+      "seniorityRange": ["Senior", "Principal"],
+      "impliesResponsibilities": [
+        "Cloud strategy and governance",
+        "Cloud-native architecture patterns",
+        "Cost optimisation strategy",
+        "Security architecture on cloud",
+        "Migration planning"
+      ],
+      "impliesKnowingDesignations": ["Cloud Engineer", "Software Architect"],
+      "reportsTo": ["CTO", "VP of Engineering"],
+      "canProgressTo": ["Principal Cloud Architect", "CTO"],
+      "seniorityVariants": ["Senior Cloud Architect", "Principal Cloud Architect"],
+      "relatedDesignations": ["Software Architect", "DevOps Engineer", "SRE"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Data Architect",
+      "synonyms": [
+        "data architect",
+        "enterprise data architect",
+        "big data architect",
+        "data platform architect",
+        "analytics architect"
+      ],
+      "type": ["Architecture"],
+      "domains": ["Data Engineering", "Data Science"],
+      "seniorityRange": ["Senior", "Principal"],
+      "impliesResponsibilities": [
+        "Enterprise data modelling",
+        "Data governance framework",
+        "Data platform strategy",
+        "Master data management",
+        "Data cataloguing"
+      ],
+      "impliesKnowingDesignations": ["Data Engineer", "Database Administrator"],
+      "reportsTo": ["CDO", "VP of Data", "CTO"],
+      "canProgressTo": ["Principal Data Architect", "CDO"],
+      "seniorityVariants": ["Principal Data Architect"],
+      "relatedDesignations": ["Data Engineer", "Software Architect"],
+      "industryStandardCodes": ["SOC 15-1243"]
+    },
+
+    {
+      "name": "Security Architect",
+      "synonyms": [
+        "security architect",
+        "cybersecurity architect",
+        "information security architect",
+        "enterprise security architect",
+        "cloud security architect",
+        "zero trust architect"
+      ],
+      "type": ["Architecture"],
+      "domains": ["Cybersecurity"],
+      "seniorityRange": ["Senior", "Principal"],
+      "impliesResponsibilities": [
+        "Security strategy and frameworks",
+        "Secure design patterns",
+        "Threat landscape analysis",
+        "Compliance architecture (SOC2, ISO 27001, GDPR)",
+        "Security tooling selection"
+      ],
+      "impliesKnowingDesignations": ["Security Engineer"],
+      "reportsTo": ["CISO", "CTO"],
+      "canProgressTo": ["Principal Security Architect", "CISO"],
+      "seniorityVariants": ["Principal Security Architect"],
+      "relatedDesignations": ["Security Engineer", "CISO"],
+      "industryStandardCodes": ["SOC 15-1212"]
+    },
+
+    {
+      "name": "Engineering Manager",
+      "synonyms": [
+        "engineering manager",
+        "software engineering manager",
+        "development manager",
+        "EM",
+        "manager of engineering",
+        "engineering team manager",
+        "dev manager",
+        "software development manager"
+      ],
+      "type": ["Engineering Management"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Manager"],
+      "impliesResponsibilities": [
+        "Team hiring and performance management",
+        "Sprint planning and delivery oversight",
+        "Engineer career development",
+        "Cross-functional collaboration",
+        "Budget and headcount planning"
+      ],
+      "impliesKnowingDesignations": ["Senior Software Engineer", "Tech Lead"],
+      "reportsTo": ["Director of Engineering", "VP of Engineering"],
+      "canProgressTo": ["Senior Engineering Manager", "Director of Engineering", "VP of Engineering"],
+      "seniorityVariants": ["Senior Engineering Manager"],
+      "relatedDesignations": ["Tech Lead", "Director of Engineering"],
+      "industryStandardCodes": ["SOC 11-3021"]
+    },
+
+    {
+      "name": "Director of Engineering",
+      "synonyms": [
+        "director of engineering",
+        "engineering director",
+        "director of software engineering",
+        "head of engineering",
+        "director of product engineering",
+        "director of development"
+      ],
+      "type": ["Engineering Management"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Director"],
+      "impliesResponsibilities": [
+        "Managing multiple engineering teams",
+        "Engineering strategy",
+        "Budget ownership",
+        "Roadmap alignment with product and business",
+        "Organisational design"
+      ],
+      "impliesKnowingDesignations": ["Engineering Manager"],
+      "reportsTo": ["VP of Engineering", "CTO"],
+      "canProgressTo": ["VP of Engineering", "CTO"],
+      "seniorityVariants": ["Senior Director of Engineering"],
+      "relatedDesignations": ["VP of Engineering", "Engineering Manager"],
+      "industryStandardCodes": ["SOC 11-3021"]
+    },
+
+    {
+      "name": "VP of Engineering",
+      "synonyms": [
+        "VP of engineering",
+        "vice president of engineering",
+        "VP engineering",
+        "head of engineering",
+        "SVP engineering",
+        "EVP engineering"
+      ],
+      "type": ["Engineering Management"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["VP"],
+      "impliesResponsibilities": [
+        "Entire engineering organisation leadership",
+        "Engineering culture and hiring",
+        "Technology vision with CTO",
+        "Execution of engineering roadmap",
+        "Executive stakeholder management"
+      ],
+      "impliesKnowingDesignations": ["Director of Engineering", "Engineering Manager"],
+      "reportsTo": ["CTO", "CEO"],
+      "canProgressTo": ["CTO", "CEO"],
+      "seniorityVariants": ["SVP of Engineering", "EVP of Engineering"],
+      "relatedDesignations": ["CTO", "Director of Engineering"],
+      "industryStandardCodes": ["SOC 11-3021"]
+    },
+
+    {
+      "name": "Chief Technology Officer",
+      "synonyms": [
+        "CTO",
+        "chief technology officer",
+        "chief technical officer",
+        "head of technology",
+        "chief engineer",
+        "co-founder and CTO"
+      ],
+      "type": ["Engineering Management", "Technical Leadership"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["C-Level"],
+      "impliesResponsibilities": [
+        "Company-wide technology vision",
+        "Technology strategy and roadmap",
+        "Build vs buy decisions",
+        "R&D leadership",
+        "Board-level reporting on technology"
+      ],
+      "impliesKnowingDesignations": ["VP of Engineering", "Principal Engineer", "Software Architect"],
+      "reportsTo": ["CEO", "Board of Directors"],
+      "canProgressTo": ["CEO"],
+      "seniorityVariants": [],
+      "relatedDesignations": ["VP of Engineering", "CPO", "CEO"],
+      "industryStandardCodes": ["SOC 11-1011"]
+    },
+
+    {
+      "name": "Chief Information Officer",
+      "synonyms": [
+        "CIO",
+        "chief information officer",
+        "head of IT",
+        "global CIO",
+        "group CIO"
+      ],
+      "type": ["Engineering Management", "Operations"],
+      "domains": ["Software Engineering", "Networking"],
+      "seniorityRange": ["C-Level"],
+      "impliesResponsibilities": [
+        "IT strategy and governance",
+        "Enterprise systems management",
+        "Digital transformation leadership",
+        "IT budget ownership",
+        "Vendor and procurement management"
+      ],
+      "impliesKnowingDesignations": ["Director of Engineering", "IT Manager"],
+      "reportsTo": ["CEO", "Board of Directors"],
+      "canProgressTo": ["CEO"],
+      "seniorityVariants": [],
+      "relatedDesignations": ["CTO", "CISO"],
+      "industryStandardCodes": ["SOC 11-3021"]
+    },
+
+    {
+      "name": "Chief Information Security Officer",
+      "synonyms": [
+        "CISO",
+        "chief information security officer",
+        "head of security",
+        "VP of security",
+        "chief security officer",
+        "CSO"
+      ],
+      "type": ["Engineering Management"],
+      "domains": ["Cybersecurity"],
+      "seniorityRange": ["C-Level"],
+      "impliesResponsibilities": [
+        "Enterprise security strategy",
+        "Compliance and regulatory oversight",
+        "Security incident response",
+        "Security culture and training",
+        "Board risk reporting on security"
+      ],
+      "impliesKnowingDesignations": ["Security Architect", "Security Engineer"],
+      "reportsTo": ["CEO", "CTO", "Board of Directors"],
+      "canProgressTo": ["CEO", "CTO"],
+      "seniorityVariants": [],
+      "relatedDesignations": ["CTO", "CIO", "Security Architect"],
+      "industryStandardCodes": ["SOC 11-3021"]
+    },
+
+    {
+      "name": "Chief Data Officer",
+      "synonyms": [
+        "CDO",
+        "chief data officer",
+        "head of data",
+        "VP of data",
+        "chief analytics officer",
+        "CAO"
+      ],
+      "type": ["Engineering Management", "Data & AI"],
+      "domains": ["Data Science", "Data Engineering"],
+      "seniorityRange": ["C-Level"],
+      "impliesResponsibilities": [
+        "Data strategy and governance",
+        "Data monetisation",
+        "Data privacy and compliance",
+        "Analytics platform oversight",
+        "AI/ML investment direction"
+      ],
+      "impliesKnowingDesignations": ["Data Architect", "Head of Data Science"],
+      "reportsTo": ["CEO", "Board of Directors"],
+      "canProgressTo": ["CEO"],
+      "seniorityVariants": [],
+      "relatedDesignations": ["CTO", "CIO", "Data Architect"],
+      "industryStandardCodes": ["SOC 11-3021"]
+    },
+
+    {
+      "name": "Product Manager",
+      "synonyms": [
+        "product manager",
+        "PM",
+        "technical product manager",
+        "TPM",
+        "product owner",
+        "PO",
+        "digital product manager",
+        "platform product manager",
+        "group product manager",
+        "GPM"
+      ],
+      "type": ["Product"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Principal"],
+      "impliesResponsibilities": [
+        "Product roadmap ownership",
+        "Stakeholder management",
+        "User story and requirements definition",
+        "Prioritisation",
+        "Data-driven product decisions"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Director of Product", "VP of Product", "CPO"],
+      "canProgressTo": ["Senior PM", "Group PM", "Director of Product", "CPO"],
+      "seniorityVariants": [
+        "Associate Product Manager",
+        "APM",
+        "Product Manager I",
+        "Product Manager II",
+        "Senior Product Manager",
+        "Principal Product Manager",
+        "Group Product Manager",
+        "Director of Product"
+      ],
+      "relatedDesignations": ["Tech Lead", "Engineering Manager", "UX Designer"],
+      "industryStandardCodes": ["SOC 11-2021"]
+    },
+
+    {
+      "name": "Chief Product Officer",
+      "synonyms": [
+        "CPO",
+        "chief product officer",
+        "head of product",
+        "VP of product",
+        "head of product management"
+      ],
+      "type": ["Product"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["C-Level"],
+      "impliesResponsibilities": [
+        "Product strategy and vision",
+        "Product portfolio management",
+        "GTM collaboration",
+        "Product team leadership",
+        "OKR definition"
+      ],
+      "impliesKnowingDesignations": ["Director of Product", "Senior Product Manager"],
+      "reportsTo": ["CEO", "Board of Directors"],
+      "canProgressTo": ["CEO"],
+      "seniorityVariants": [],
+      "relatedDesignations": ["CTO", "CEO"],
+      "industryStandardCodes": ["SOC 11-1011"]
+    },
+
+    {
+      "name": "UX Designer",
+      "synonyms": [
+        "UX designer",
+        "user experience designer",
+        "UI/UX designer",
+        "UI designer",
+        "product designer",
+        "interaction designer",
+        "visual designer",
+        "experience designer",
+        "UX/UI designer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Frontend"],
+      "seniorityRange": ["Junior", "Mid", "Senior", "Staff"],
+      "impliesResponsibilities": [
+        "User research",
+        "Wireframing and prototyping",
+        "Usability testing",
+        "Design system contribution",
+        "Interaction design"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Design Manager", "Head of Design", "Product Manager"],
+      "canProgressTo": ["Senior UX Designer", "Lead UX Designer", "Head of Design"],
+      "seniorityVariants": [
+        "Junior UX Designer",
+        "UX Designer I",
+        "Senior UX Designer",
+        "Staff UX Designer",
+        "Lead UX Designer"
+      ],
+      "relatedDesignations": ["Product Designer", "Frontend Engineer", "Product Manager"],
+      "industryStandardCodes": ["SOC 15-1255"]
+    },
+
+    {
+      "name": "IT Support Engineer",
+      "synonyms": [
+        "IT support engineer",
+        "IT support specialist",
+        "helpdesk engineer",
+        "technical support engineer",
+        "desktop support engineer",
+        "systems support engineer",
+        "IT helpdesk technician",
+        "L1 support",
+        "L2 support",
+        "L3 support",
+        "IT analyst"
+      ],
+      "type": ["Operations", "Individual Contributor"],
+      "domains": ["Networking"],
+      "seniorityRange": ["Junior", "Mid", "Senior"],
+      "impliesResponsibilities": [
+        "End-user support",
+        "Hardware and software troubleshooting",
+        "Ticket resolution",
+        "Asset management",
+        "OS and endpoint management"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["IT Manager", "Head of IT"],
+      "canProgressTo": ["Senior IT Support Engineer", "Systems Administrator", "Network Engineer"],
+      "seniorityVariants": [
+        "L1 IT Support",
+        "L2 IT Support",
+        "L3 IT Support",
+        "Senior IT Support Engineer"
+      ],
+      "relatedDesignations": ["Systems Administrator", "Network Engineer"],
+      "industryStandardCodes": ["SOC 15-1232"]
+    },
+
+    {
+      "name": "Systems Administrator",
+      "synonyms": [
+        "systems administrator",
+        "sysadmin",
+        "Linux administrator",
+        "Windows administrator",
+        "server administrator",
+        "IT systems administrator",
+        "infrastructure administrator"
+      ],
+      "type": ["Operations", "Individual Contributor"],
+      "domains": ["Networking", "Cloud"],
+      "seniorityRange": ["Junior", "Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Server provisioning and maintenance",
+        "OS patching and upgrades",
+        "User and access management",
+        "Backup management",
+        "On-premise infrastructure management"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["IT Manager", "Head of Infrastructure"],
+      "canProgressTo": ["Senior SysAdmin", "DevOps Engineer", "Cloud Engineer"],
+      "seniorityVariants": ["Junior SysAdmin", "Senior SysAdmin"],
+      "relatedDesignations": ["DevOps Engineer", "Network Engineer", "IT Support Engineer"],
+      "industryStandardCodes": ["SOC 15-1244"]
+    },
+
+    {
+      "name": "Research Engineer",
+      "synonyms": [
+        "research engineer",
+        "AI research engineer",
+        "ML research engineer",
+        "applied research engineer",
+        "research software engineer",
+        "research scientist engineer"
+      ],
+      "type": ["Research", "Individual Contributor"],
+      "domains": ["ML/AI"],
+      "seniorityRange": ["Mid", "Senior", "Staff", "Principal"],
+      "impliesResponsibilities": [
+        "Novel algorithm development",
+        "Research paper implementation",
+        "Experimentation infrastructure",
+        "Benchmark evaluation",
+        "Bridging research and production"
+      ],
+      "impliesKnowingDesignations": ["Machine Learning Engineer", "Data Scientist"],
+      "reportsTo": ["Head of Research", "VP of AI", "CTO"],
+      "canProgressTo": ["Senior Research Engineer", "Principal Research Engineer", "AI Researcher"],
+      "seniorityVariants": ["Senior Research Engineer", "Staff Research Engineer", "Principal Research Engineer"],
+      "relatedDesignations": ["ML Engineer", "AI Researcher", "Data Scientist"],
+      "industryStandardCodes": ["SOC 15-2051"]
+    },
+
+    {
+      "name": "Developer Advocate",
+      "synonyms": [
+        "developer advocate",
+        "developer evangelist",
+        "devrel engineer",
+        "developer relations engineer",
+        "technical evangelist",
+        "community engineer",
+        "developer experience engineer",
+        "DX engineer"
+      ],
+      "type": ["Individual Contributor", "Product"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Developer community engagement",
+        "Technical content creation (blogs, talks, demos)",
+        "SDK and API feedback loop",
+        "Hackathon and conference participation",
+        "Open source advocacy"
+      ],
+      "impliesKnowingDesignations": ["Software Engineer"],
+      "reportsTo": ["Head of DevRel", "VP Marketing", "CTO"],
+      "canProgressTo": ["Senior Developer Advocate", "Head of Developer Relations"],
+      "seniorityVariants": ["Senior Developer Advocate", "Lead Developer Advocate"],
+      "relatedDesignations": ["Technical Writer", "Software Engineer", "Product Manager"],
+      "industryStandardCodes": ["SOC 15-1252"]
+    },
+
+    {
+      "name": "Technical Writer",
+      "synonyms": [
+        "technical writer",
+        "documentation engineer",
+        "API writer",
+        "docs engineer",
+        "technical documentation specialist",
+        "content engineer",
+        "developer documentation writer"
+      ],
+      "type": ["Individual Contributor"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Junior", "Mid", "Senior"],
+      "impliesResponsibilities": [
+        "API and SDK documentation",
+        "Developer guides and tutorials",
+        "Changelog and release notes",
+        "Docs-as-code practices",
+        "Information architecture"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Head of Developer Relations", "Head of Product", "VP Engineering"],
+      "canProgressTo": ["Senior Technical Writer", "Lead Technical Writer"],
+      "seniorityVariants": ["Junior Technical Writer", "Senior Technical Writer", "Lead Technical Writer"],
+      "relatedDesignations": ["Developer Advocate", "Product Manager"],
+      "industryStandardCodes": ["SOC 27-3042"]
+    },
+
+    {
+      "name": "Scrum Master",
+      "synonyms": [
+        "scrum master",
+        "agile coach",
+        "agile scrum master",
+        "agile practitioner",
+        "release train engineer",
+        "RTE",
+        "delivery manager"
+      ],
+      "type": ["Operations"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Facilitating sprint ceremonies",
+        "Removing blockers",
+        "Coaching agile practices",
+        "Metrics tracking (velocity, burndown)",
+        "Cross-team dependency management"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Engineering Manager", "Director of Engineering"],
+      "canProgressTo": ["Senior Scrum Master", "Agile Coach", "Delivery Manager"],
+      "seniorityVariants": ["Senior Scrum Master"],
+      "relatedDesignations": ["Engineering Manager", "Product Manager"],
+      "industryStandardCodes": ["SOC 15-1299"]
+    },
+
+    {
+      "name": "IT Project Manager",
+      "synonyms": [
+        "IT project manager",
+        "technical project manager",
+        "TPM",
+        "IT program manager",
+        "software project manager",
+        "digital project manager",
+        "delivery lead",
+        "project lead"
+      ],
+      "type": ["Operations"],
+      "domains": ["Software Engineering"],
+      "seniorityRange": ["Mid", "Senior"],
+      "impliesResponsibilities": [
+        "Project planning and scheduling",
+        "Risk and issue management",
+        "Stakeholder communication",
+        "Budget tracking",
+        "Resource allocation"
+      ],
+      "impliesKnowingDesignations": [],
+      "reportsTo": ["Director of Engineering", "PMO", "VP Engineering"],
+      "canProgressTo": ["Senior IT PM", "Program Manager", "PMO Director"],
+      "seniorityVariants": ["Senior IT Project Manager", "Program Manager"],
+      "relatedDesignations": ["Scrum Master", "Engineering Manager", "Product Manager"],
+      "industryStandardCodes": ["SOC 11-3021"]
+    }
+
+  ],
+
+  "seniority_prefix_patterns": {
+    "description": "Common seniority-level prefixes to strip or tag when normalising designations in an extractor",
+    "junior": ["jr", "jr.", "junior", "entry level", "entry-level", "associate", "grad", "graduate", "L1", "L2", "I", "1"],
+    "mid": ["mid", "mid-level", "mid level", "L3", "L4", "II", "2"],
+    "senior": ["sr", "sr.", "senior", "snr", "L5", "III", "3"],
+    "staff": ["staff", "L6", "IV", "4"],
+    "principal": ["principal", "L7", "V", "5"],
+    "distinguished": ["distinguished", "L8", "fellow"],
+    "lead": ["lead", "tech lead", "technical lead"],
+    "manager": ["manager", "mgr"],
+    "director": ["director", "dir"],
+    "vp": ["vp", "vice president", "svp", "evp"],
+    "c_level": ["chief", "c-suite", "c-level"]
+  },
+
+  "normalization_rules": {
+    "description": "Rules for a Java extractor to normalise raw designation strings to canonical names",
+    "caseInsensitive": true,
+    "stripPunctuation": true,
+    "expandAbbreviations": {
+      "SWE": "Software Engineer",
+      "SRE": "Site Reliability Engineer",
+      "DBA": "Database Administrator",
+      "ML": "Machine Learning",
+      "AI": "Artificial Intelligence",
+      "QA": "Quality Assurance",
+      "EM": "Engineering Manager",
+      "PM": "Product Manager",
+      "PO": "Product Owner",
+      "CTO": "Chief Technology Officer",
+      "CIO": "Chief Information Officer",
+      "CISO": "Chief Information Security Officer",
+      "CDO": "Chief Data Officer",
+      "CPO": "Chief Product Officer",
+      "TL": "Tech Lead",
+      "TPM": "Technical Project Manager",
+      "SDET": "Software Development Engineer in Test",
+      "DX": "Developer Experience",
+      "IDP": "Internal Developer Platform",
+      "RTE": "Release Train Engineer",
+      "GPM": "Group Product Manager",
+      "APM": "Associate Product Manager"
+    },
+    "seniorityLevelExtractionOrder": [
+      "C-Level",
+      "VP",
+      "Director",
+      "Principal",
+      "Distinguished",
+      "Fellow",
+      "Staff",
+      "Lead",
+      "Senior",
+      "Mid",
+      "Junior",
+      "Intern"
+    ]
+  }
+}

@@ -1,0 +1,2328 @@
+{
+  "_meta": {
+    "version": "2.0.0",
+    "lastUpdated": "2026-04",
+    "description": "Comprehensive soft-skills ontology for SOTA resume feedback. Covers leadership, collaboration, communication, problem-solving, adaptability, ownership, innovation, and anti-patterns (buzzwords).",
+    "schema": {
+      "key": "Canonical identifier",
+      "category": "Top-level skill domain",
+      "subcategory": "Fine-grained cluster within domain",
+      "match": "Surface-form variants (case-insensitive, partial match supported)",
+      "score": {
+        "type": "Signal classification: LEADERSHIP_SIGNAL | OWNERSHIP_SIGNAL | COLLABORATION_SIGNAL | COMMUNICATION_SIGNAL | PROBLEM_SOLVING_SIGNAL | INNOVATION_SIGNAL | ADAPTABILITY_SIGNAL | GROWTH_SIGNAL | BUZZWORD | WEAK_SIGNAL | NEGATIVE_SIGNAL",
+        "baseWeight": "Float in [-1.0, 1.0]",
+        "bonusIfOutcomePresent": "Float bonus added when a quantified result follows",
+        "bonusIfScopePresent": "Float bonus added when org scope (e.g. cross-team, company-wide) is stated",
+        "bonusIfToolNamed": "Float bonus when a specific methodology/tool is named"
+      },
+      "feedback": {
+        "suggestion": "Actionable rewrite advice",
+        "exampleStrong": "Gold-standard phrasing example",
+        "impliesSeniority": "Seniority levels this phrase typically signals",
+        "redFlag": "True if phrase is a net-negative signal",
+        "preserveIf": "Condition under which even a weak phrase is acceptable"
+      },
+      "relations": {
+        "strengthens": "Keys of phrases that compound positively with this one",
+        "weakenedBy": "Keys whose co-occurrence dilutes signal"
+      }
+    }
+  },
+  "categories": [
+    "LEADERSHIP",
+    "COLLABORATION",
+    "COMMUNICATION",
+    "PROBLEM_SOLVING",
+    "OWNERSHIP",
+    "INNOVATION",
+    "ADAPTABILITY",
+    "GROWTH_MINDSET",
+    "EXECUTION",
+    "ANTI_PATTERN"
+  ],
+  "phrases": [
+    {
+      "key": "mentored_junior_engineers",
+      "category": "LEADERSHIP",
+      "subcategory": "Coaching & Development",
+      "match": [
+        "mentored junior engineers",
+        "mentored junior developers",
+        "mentored junior devs",
+        "coached junior engineers",
+        "coached junior developers",
+        "coached junior devs",
+        "coached junior team members",
+        "onboarded new hires",
+        "onboarded new engineers",
+        "onboarded new team members",
+        "onboarded new joiners",
+        "upskilled team members",
+        "upskilled engineers",
+        "upskilled developers",
+        "ramped up new hires",
+        "guided junior staff",
+        "supported junior colleagues",
+        "developed junior talent",
+        "trained new engineers",
+        "trained junior developers"
+      ],
+      "score": {
+        "type": "LEADERSHIP_SIGNAL",
+        "baseWeight": 0.7,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Strong signal. Sharpen it with a concrete outcome — e.g. 'reduced average ramp time from 6 weeks to 3', 'improved test coverage from 40% to 80%', or 'all mentees promoted within 12 months'.",
+        "exampleStrong": "Mentored 4 junior engineers, reducing average onboarding time by 35% and contributing to 3 promotions within 18 months.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Lead",
+          "Principal"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "defined_career_development_plans",
+          "led_performance_reviews",
+          "pair_programming"
+        ],
+        "weakenedBy": [
+          "team_player",
+          "hard_worker"
+        ]
+      }
+    },
+    {
+      "key": "led_team",
+      "category": "LEADERSHIP",
+      "subcategory": "Team Leadership",
+      "match": [
+        "led a team",
+        "led team of",
+        "managed a team",
+        "managed team of",
+        "headed a team",
+        "directed a team",
+        "oversaw a team",
+        "ran a team",
+        "led engineering team",
+        "managed engineering team",
+        "led cross-functional team",
+        "managed cross-functional team",
+        "led product team",
+        "led design team"
+      ],
+      "score": {
+        "type": "LEADERSHIP_SIGNAL",
+        "baseWeight": 0.75,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "State team size, tenure, and a tangible outcome. 'Led a team' without context is vague. Add: team size, reporting structure, and what the team shipped or improved.",
+        "exampleStrong": "Led a team of 8 engineers across 3 time zones, shipping 2 major product features on time and reducing on-call incidents by 40%.",
+        "impliesSeniority": [
+          "Lead",
+          "Manager",
+          "Director",
+          "VP",
+          "Senior"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "mentored_junior_engineers",
+          "defined_team_roadmap",
+          "ran_sprint_ceremonies"
+        ],
+        "weakenedBy": [
+          "team_player",
+          "helped_with"
+        ]
+      }
+    },
+    {
+      "key": "defined_team_roadmap",
+      "category": "LEADERSHIP",
+      "subcategory": "Strategy & Planning",
+      "match": [
+        "defined team roadmap",
+        "defined product roadmap",
+        "defined technical roadmap",
+        "created team roadmap",
+        "built team roadmap",
+        "developed roadmap",
+        "owned product roadmap",
+        "set team priorities",
+        "set engineering priorities",
+        "shaped team strategy",
+        "drove team strategy",
+        "established team vision",
+        "set technical direction",
+        "defined engineering strategy"
+      ],
+      "score": {
+        "type": "LEADERSHIP_SIGNAL",
+        "baseWeight": 0.8,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Extremely strong signal at Staff/Principal/Director level. Add the planning horizon (quarterly, annual), stakeholder scope (exec-reviewed?), and at least one outcome from executing on the roadmap.",
+        "exampleStrong": "Defined the 12-month technical roadmap for a 20-person platform team, aligning 4 product squads and reducing unplanned work by 30%.",
+        "impliesSeniority": [
+          "Staff",
+          "Principal",
+          "Lead",
+          "Director",
+          "VP"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "led_team",
+          "drove_alignment",
+          "presented_to_executives"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "led_performance_reviews",
+      "category": "LEADERSHIP",
+      "subcategory": "People Management",
+      "match": [
+        "led performance reviews",
+        "conducted performance reviews",
+        "ran performance reviews",
+        "delivered performance feedback",
+        "managed performance cycles",
+        "wrote performance reviews",
+        "facilitated performance conversations",
+        "managed promotions process",
+        "managed leveling decisions"
+      ],
+      "score": {
+        "type": "LEADERSHIP_SIGNAL",
+        "baseWeight": 0.65,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Differentiator at EM/Director level. Pair with a promotion count or team attrition stat to ground it.",
+        "exampleStrong": "Conducted bi-annual performance reviews for 10 direct reports, resulting in 3 promotions and 0% voluntary attrition over 18 months.",
+        "impliesSeniority": [
+          "Manager",
+          "Director",
+          "VP"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "mentored_junior_engineers",
+          "defined_career_development_plans"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "defined_career_development_plans",
+      "category": "LEADERSHIP",
+      "subcategory": "People Management",
+      "match": [
+        "defined career development plans",
+        "created career development plans",
+        "built career development plans",
+        "established individual development plans",
+        "created IDPs",
+        "coached engineers on career growth",
+        "supported career progression",
+        "facilitated career conversations",
+        "built growth frameworks",
+        "developed leveling rubrics",
+        "created engineering ladder"
+      ],
+      "score": {
+        "type": "LEADERSHIP_SIGNAL",
+        "baseWeight": 0.7,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "High-value signal for EMs and senior ICs who act as informal managers. Mention adoption (e.g. used by all 30 engineers in org) or promotion outcomes.",
+        "exampleStrong": "Built the engineering career ladder adopted by 30 engineers across 4 teams, accelerating 6 promotions in the first cycle.",
+        "impliesSeniority": [
+          "Manager",
+          "Director",
+          "Senior",
+          "Staff"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "mentored_junior_engineers",
+          "led_performance_reviews"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "drove_alignment",
+      "category": "LEADERSHIP",
+      "subcategory": "Influence & Stakeholder Management",
+      "match": [
+        "drove alignment",
+        "built alignment",
+        "achieved alignment",
+        "aligned stakeholders",
+        "aligned cross-functional partners",
+        "gained buy-in",
+        "secured buy-in",
+        "built consensus",
+        "drove consensus",
+        "facilitated alignment",
+        "bridged stakeholder gaps",
+        "unified teams around",
+        "rallied teams around"
+      ],
+      "score": {
+        "type": "LEADERSHIP_SIGNAL",
+        "baseWeight": 0.65,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.15,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Signals influence at scale. Specify who was aligned (exec, cross-org?) and what decision or outcome resulted. Vague alignment claims ring hollow.",
+        "exampleStrong": "Drove alignment across engineering, product, and legal on a GDPR compliance initiative, unblocking a 6-month-delayed product launch.",
+        "impliesSeniority": [
+          "Staff",
+          "Principal",
+          "Lead",
+          "Director",
+          "Senior"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "presented_to_executives",
+          "defined_team_roadmap"
+        ],
+        "weakenedBy": [
+          "team_player"
+        ]
+      }
+    },
+    {
+      "key": "presented_to_executives",
+      "category": "LEADERSHIP",
+      "subcategory": "Executive Communication",
+      "match": [
+        "presented to executives",
+        "presented to c-suite",
+        "presented to leadership",
+        "presented to senior leadership",
+        "briefed executives",
+        "briefed c-suite",
+        "presented to vp",
+        "presented to cto",
+        "presented to ceo",
+        "presented to board",
+        "delivered executive briefings",
+        "presented at all-hands",
+        "presented company-wide"
+      ],
+      "score": {
+        "type": "LEADERSHIP_SIGNAL",
+        "baseWeight": 0.7,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Strong for mid-to-senior roles. Name the audience level (VP, CTO, board), the topic, and what decision it influenced.",
+        "exampleStrong": "Presented quarterly infrastructure reliability metrics to the CTO and board, leading to approval of a $2M observability investment.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Principal",
+          "Lead",
+          "Director"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "drove_alignment",
+          "defined_team_roadmap"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "hired_engineers",
+      "category": "LEADERSHIP",
+      "subcategory": "Talent Acquisition",
+      "match": [
+        "hired engineers",
+        "hired developers",
+        "hired team members",
+        "recruited engineers",
+        "recruited developers",
+        "built the team",
+        "grew the team",
+        "scaled the team",
+        "conducted interviews",
+        "ran hiring panels",
+        "designed interview process",
+        "improved interview process",
+        "built recruiting pipeline",
+        "sourced candidates",
+        "closed candidates"
+      ],
+      "score": {
+        "type": "LEADERSHIP_SIGNAL",
+        "baseWeight": 0.6,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Add headcount numbers and outcome (e.g. time-to-fill, offer acceptance rate, team performance post-hire).",
+        "exampleStrong": "Hired 12 engineers in 6 months, redesigning the technical interview to reduce time-to-offer by 40% and improving offer acceptance rate to 85%.",
+        "impliesSeniority": [
+          "Manager",
+          "Director",
+          "Lead",
+          "Senior"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "led_team",
+          "defined_career_development_plans"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "ran_sprint_ceremonies",
+      "category": "LEADERSHIP",
+      "subcategory": "Agile Leadership",
+      "match": [
+        "ran sprint ceremonies",
+        "facilitated sprint ceremonies",
+        "ran standups",
+        "facilitated standups",
+        "ran retrospectives",
+        "facilitated retrospectives",
+        "ran sprint planning",
+        "facilitated sprint planning",
+        "scrum master",
+        "acted as scrum master",
+        "ran agile ceremonies",
+        "facilitated agile ceremonies",
+        "ran kanban process",
+        "managed sprint cadence"
+      ],
+      "score": {
+        "type": "LEADERSHIP_SIGNAL",
+        "baseWeight": 0.45,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Process facilitation alone is low signal. Elevate it by citing team velocity improvement, defect reduction, or delivery predictability gains.",
+        "exampleStrong": "Facilitated agile ceremonies for a 10-person team, increasing sprint predictability from 60% to 90% over two quarters.",
+        "impliesSeniority": [
+          "Lead",
+          "Manager",
+          "Mid-level"
+        ],
+        "redFlag": false,
+        "preserveIf": "Acceptable standalone for roles where Agile delivery is a primary responsibility (Scrum Master, Delivery Manager)."
+      },
+      "relations": {
+        "strengthens": [
+          "led_team",
+          "drove_alignment"
+        ],
+        "weakenedBy": [
+          "team_player"
+        ]
+      }
+    },
+    {
+      "key": "collaborated_cross_functionally",
+      "category": "COLLABORATION",
+      "subcategory": "Cross-functional Partnership",
+      "match": [
+        "collaborated cross-functionally",
+        "worked cross-functionally",
+        "partnered cross-functionally",
+        "collaborated with cross-functional teams",
+        "worked with cross-functional stakeholders",
+        "partnered with product and design",
+        "partnered with engineering and product",
+        "worked with product managers",
+        "collaborated with designers",
+        "collaborated with data scientists",
+        "worked with legal and compliance",
+        "partnered with finance",
+        "coordinated across teams",
+        "coordinated with multiple stakeholders",
+        "facilitated cross-team collaboration"
+      ],
+      "score": {
+        "type": "COLLABORATION_SIGNAL",
+        "baseWeight": 0.55,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Name the specific functions (Product, Design, Legal, Finance) and the output of the collaboration. Generic cross-functional claims are common; specificity differentiates.",
+        "exampleStrong": "Partnered with Product, Design, and Legal to launch a GDPR-compliant onboarding flow, cutting time-to-consent by 20%.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Lead",
+          "Staff"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "drove_alignment",
+          "shipped_feature"
+        ],
+        "weakenedBy": [
+          "team_player",
+          "worked_well_with_others"
+        ]
+      }
+    },
+    {
+      "key": "pair_programming",
+      "category": "COLLABORATION",
+      "subcategory": "Engineering Collaboration",
+      "match": [
+        "pair programming",
+        "paired with engineers",
+        "paired on features",
+        "mob programming",
+        "ensemble programming",
+        "code pairing sessions",
+        "conducted pairing sessions",
+        "facilitated mob sessions"
+      ],
+      "score": {
+        "type": "COLLABORATION_SIGNAL",
+        "baseWeight": 0.5,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Good signal for engineering quality culture. Add what it produced — defect rate reduction, knowledge transfer, faster feature delivery.",
+        "exampleStrong": "Introduced pair programming sessions for critical modules, reducing post-release defects by 25% over one quarter.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "mentored_junior_engineers",
+          "code_review"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "code_review",
+      "category": "COLLABORATION",
+      "subcategory": "Engineering Collaboration",
+      "match": [
+        "code review",
+        "reviewed pull requests",
+        "reviewed code",
+        "conducted code reviews",
+        "led code review culture",
+        "improved code review process",
+        "defined code review standards",
+        "established review guidelines",
+        "mentored through code review"
+      ],
+      "score": {
+        "type": "COLLABORATION_SIGNAL",
+        "baseWeight": 0.45,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Expected at all engineering levels — mention volume or process impact to stand out. 'Reviewed PRs' alone is table stakes.",
+        "exampleStrong": "Established code review standards for a 15-person team, reducing PR cycle time from 3 days to under 4 hours.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Lead",
+          "Staff"
+        ],
+        "redFlag": false,
+        "preserveIf": "Acceptable on junior resumes where it signals engagement with team process."
+      },
+      "relations": {
+        "strengthens": [
+          "pair_programming",
+          "mentored_junior_engineers"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "partnered_with_external_stakeholders",
+      "category": "COLLABORATION",
+      "subcategory": "External Partnership",
+      "match": [
+        "partnered with external stakeholders",
+        "worked with external vendors",
+        "collaborated with third-party vendors",
+        "managed vendor relationships",
+        "worked with clients",
+        "collaborated with customers",
+        "partnered with enterprise customers",
+        "worked with partners",
+        "managed partner integrations",
+        "collaborated with agency",
+        "worked with consultants"
+      ],
+      "score": {
+        "type": "COLLABORATION_SIGNAL",
+        "baseWeight": 0.55,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Valuable for senior/client-facing roles. Name the partner type and the commercial or technical outcome.",
+        "exampleStrong": "Partnered with AWS Professional Services to architect a multi-region failover solution, achieving 99.99% uptime SLA.",
+        "impliesSeniority": [
+          "Senior",
+          "Lead",
+          "Director",
+          "Manager"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "drove_alignment",
+          "negotiated_contracts"
+        ],
+        "weakenedBy": [
+          "team_player"
+        ]
+      }
+    },
+    {
+      "key": "technical_writing",
+      "category": "COMMUNICATION",
+      "subcategory": "Documentation",
+      "match": [
+        "technical writing",
+        "wrote technical documentation",
+        "wrote documentation",
+        "authored runbooks",
+        "created runbooks",
+        "authored playbooks",
+        "wrote API documentation",
+        "documented architecture",
+        "wrote design docs",
+        "authored RFCs",
+        "wrote engineering proposals",
+        "created onboarding guides",
+        "documented processes",
+        "maintained internal wikis",
+        "maintained confluence",
+        "maintained notion docs"
+      ],
+      "score": {
+        "type": "COMMUNICATION_SIGNAL",
+        "baseWeight": 0.55,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Underrated signal for senior ICs and EMs. Add scope (team-wide? org-wide?) and impact (reduced support tickets, improved onboarding time).",
+        "exampleStrong": "Authored 30+ runbooks and postmortem templates adopted across 6 teams, reducing mean time to resolve incidents by 45%.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Staff",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "drove_alignment",
+          "mentored_junior_engineers"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "wrote_rfcs",
+      "category": "COMMUNICATION",
+      "subcategory": "Technical Leadership Communication",
+      "match": [
+        "wrote RFCs",
+        "authored RFCs",
+        "produced RFCs",
+        "wrote design documents",
+        "authored design documents",
+        "wrote architecture decision records",
+        "authored ADRs",
+        "created ADRs",
+        "wrote technical proposals",
+        "authored engineering proposals",
+        "wrote technical specs",
+        "authored technical specifications"
+      ],
+      "score": {
+        "type": "COMMUNICATION_SIGNAL",
+        "baseWeight": 0.7,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "High-value signal at Staff/Principal. Mention the number of RFCs, adoption rate, or the system decisions they influenced.",
+        "exampleStrong": "Authored 12 RFCs over 18 months, establishing platform standards adopted by all 40 engineers and replacing 3 competing legacy patterns.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Principal",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "defined_team_roadmap",
+          "drove_alignment"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "public_speaking",
+      "category": "COMMUNICATION",
+      "subcategory": "Public Communication",
+      "match": [
+        "public speaking",
+        "conference speaker",
+        "spoke at conference",
+        "presented at conference",
+        "keynote speaker",
+        "delivered keynote",
+        "gave talk at",
+        "spoke at meetup",
+        "presented at meetup",
+        "panelist at",
+        "tech talk",
+        "delivered tech talk",
+        "lunch and learn",
+        "ran lunch and learn",
+        "facilitated lunch and learn",
+        "delivered internal talks",
+        "gave lightning talk"
+      ],
+      "score": {
+        "type": "COMMUNICATION_SIGNAL",
+        "baseWeight": 0.65,
+        "bonusIfOutcomePresent": 0.1,
+        "bonusIfScopePresent": 0.15,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Excellent differentiator. Name the event, audience size, and topic. External conferences carry more weight than internal talks.",
+        "exampleStrong": "Keynoted QCon London 2025 on distributed tracing at scale (800+ attendees), leading to 3 enterprise partnership inquiries.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Principal",
+          "Director"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "technical_writing",
+          "wrote_rfcs"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "wrote_blog_posts",
+      "category": "COMMUNICATION",
+      "subcategory": "Thought Leadership",
+      "match": [
+        "wrote blog posts",
+        "authored blog posts",
+        "published blog posts",
+        "wrote engineering blog",
+        "contributed to engineering blog",
+        "published technical articles",
+        "wrote on medium",
+        "wrote on substack",
+        "published on dev.to",
+        "wrote newsletter",
+        "authored newsletter",
+        "wrote white papers",
+        "authored white papers",
+        "published research"
+      ],
+      "score": {
+        "type": "COMMUNICATION_SIGNAL",
+        "baseWeight": 0.55,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Name the publication, topic, and reach (views, shares, or backlinks). Viral content is far more impressive than volume alone.",
+        "exampleStrong": "Published 8 articles on Stripe's engineering blog reaching 50K+ readers, two of which trended on Hacker News.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Staff",
+          "Principal"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "public_speaking",
+          "technical_writing"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "facilitated_workshops",
+      "category": "COMMUNICATION",
+      "subcategory": "Facilitation",
+      "match": [
+        "facilitated workshops",
+        "ran workshops",
+        "led workshops",
+        "hosted workshops",
+        "designed workshops",
+        "facilitated training sessions",
+        "delivered training sessions",
+        "ran training programs",
+        "facilitated design sprints",
+        "ran design sprints",
+        "led hackathons",
+        "organized hackathons",
+        "ran brainstorming sessions"
+      ],
+      "score": {
+        "type": "COMMUNICATION_SIGNAL",
+        "baseWeight": 0.55,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Add participant count, recurrence, and tangible output from the workshop (decision made, prototype built, process adopted).",
+        "exampleStrong": "Designed and facilitated quarterly architecture workshops for 25 engineers, producing 6 ADRs that unified platform standards.",
+        "impliesSeniority": [
+          "Senior",
+          "Lead",
+          "Staff",
+          "Manager"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "mentored_junior_engineers",
+          "drove_alignment"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "diagnosed_root_cause",
+      "category": "PROBLEM_SOLVING",
+      "subcategory": "Incident & Debugging",
+      "match": [
+        "diagnosed root cause",
+        "identified root cause",
+        "performed root cause analysis",
+        "conducted RCA",
+        "ran RCA",
+        "identified underlying issue",
+        "traced bug to root cause",
+        "debugged complex issue",
+        "investigated production incident",
+        "triaged production incident",
+        "resolved critical bug",
+        "fixed critical issue",
+        "diagnosed performance bottleneck",
+        "identified memory leak",
+        "tracked down race condition"
+      ],
+      "score": {
+        "type": "PROBLEM_SOLVING_SIGNAL",
+        "baseWeight": 0.65,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Frame with business impact: what was the system impact, how long did diagnosis take, and what was the outcome?",
+        "exampleStrong": "Diagnosed a memory leak causing 3 daily pod crashes in production; root cause was unbounded gRPC connection pooling. Fix deployed in 4 hours, restoring 99.9% uptime.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Staff",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "wrote_postmortems",
+          "reduced_incidents"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "wrote_postmortems",
+      "category": "PROBLEM_SOLVING",
+      "subcategory": "Incident Management",
+      "match": [
+        "wrote postmortems",
+        "authored postmortems",
+        "led postmortem process",
+        "facilitated blameless postmortems",
+        "ran blameless postmortems",
+        "wrote incident reports",
+        "authored incident reviews",
+        "led post-incident reviews",
+        "established postmortem culture",
+        "introduced blameless culture"
+      ],
+      "score": {
+        "type": "PROBLEM_SOLVING_SIGNAL",
+        "baseWeight": 0.6,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "High signal for reliability-focused roles. Mention action items completed, recurrence reduction, or cultural change driven.",
+        "exampleStrong": "Led blameless postmortem process for 15+ incidents, driving 8 systemic fixes that reduced P1 recurrence rate by 60% in 6 months.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Lead",
+          "SRE"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "diagnosed_root_cause",
+          "reduced_incidents"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "solved_ambiguous_problem",
+      "category": "PROBLEM_SOLVING",
+      "subcategory": "Strategic Problem Solving",
+      "match": [
+        "solved ambiguous problem",
+        "tackled undefined problem",
+        "defined the problem space",
+        "structured an unstructured problem",
+        "broke down complex problem",
+        "decomposed large problem",
+        "navigated ambiguity",
+        "drove clarity in ambiguous situation",
+        "created structure from ambiguity",
+        "turned ambiguous requirements into",
+        "translated vague requirements"
+      ],
+      "score": {
+        "type": "PROBLEM_SOLVING_SIGNAL",
+        "baseWeight": 0.7,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Powerful signal at Staff+ and EM level. Ground it in a specific scenario: what was ambiguous, how was it framed, and what decision or output resulted.",
+        "exampleStrong": "Decomposed a vague exec directive ('improve reliability') into a prioritized 6-month OKR set, gaining eng and PM sign-off in one planning cycle.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Principal",
+          "Lead",
+          "Director"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "defined_team_roadmap",
+          "drove_alignment"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "data_driven_decision",
+      "category": "PROBLEM_SOLVING",
+      "subcategory": "Analytical Thinking",
+      "match": [
+        "data-driven decision",
+        "data-driven decisions",
+        "made data-driven decisions",
+        "used data to decide",
+        "analysed data to",
+        "analyzed data to",
+        "leveraged analytics to",
+        "used metrics to",
+        "built dashboards to",
+        "used A/B testing",
+        "ran experiments to",
+        "used hypothesis-driven approach",
+        "validated with data",
+        "evidence-based decision"
+      ],
+      "score": {
+        "type": "PROBLEM_SOLVING_SIGNAL",
+        "baseWeight": 0.55,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.1
+      },
+      "feedback": {
+        "suggestion": "Strong when concrete. Name the metric, analysis type, and decision it drove. 'Data-driven' alone is becoming a buzzword — specificity rescues it.",
+        "exampleStrong": "Ran 12 A/B experiments using Statsig, uncovering a checkout friction point that, once fixed, improved conversion by 14%.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Staff",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "defined_team_roadmap",
+          "shipped_feature"
+        ],
+        "weakenedBy": [
+          "hard_worker",
+          "go_getter"
+        ]
+      }
+    },
+    {
+      "key": "owned_system",
+      "category": "OWNERSHIP",
+      "subcategory": "Technical Ownership",
+      "match": [
+        "owned system",
+        "owned platform",
+        "owned service",
+        "owned product",
+        "owned feature",
+        "took full ownership",
+        "end-to-end ownership",
+        "sole owner of",
+        "primary owner of",
+        "owned end-to-end delivery",
+        "drove end-to-end",
+        "owned from design to deployment",
+        "owned zero to one",
+        "built zero to one",
+        "launched zero to one"
+      ],
+      "score": {
+        "type": "OWNERSHIP_SIGNAL",
+        "baseWeight": 0.7,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Ownership without outcomes feels hollow. Add: what you owned, how long, and the scale (traffic, users, revenue impact).",
+        "exampleStrong": "Sole owner of the payments service serving 2M daily transactions — designed, shipped, and maintained with 99.95% uptime over 2 years.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Principal",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "shipped_feature",
+          "reduced_incidents"
+        ],
+        "weakenedBy": [
+          "assisted_with",
+          "helped_with"
+        ]
+      }
+    },
+    {
+      "key": "shipped_feature",
+      "category": "OWNERSHIP",
+      "subcategory": "Delivery",
+      "match": [
+        "shipped feature",
+        "shipped product",
+        "launched feature",
+        "launched product",
+        "released feature",
+        "released product",
+        "delivered feature",
+        "delivered product",
+        "shipped MVP",
+        "launched MVP",
+        "shipped v1",
+        "launched v1",
+        "shipped to production",
+        "deployed to production",
+        "took feature to production",
+        "shipped at scale"
+      ],
+      "score": {
+        "type": "OWNERSHIP_SIGNAL",
+        "baseWeight": 0.6,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Shipping is table stakes. Elevate with: timeline, scale, and business impact. What changed because you shipped it?",
+        "exampleStrong": "Shipped real-time notification system in 6 weeks (solo), supporting 500K users at launch and driving a 22% increase in DAU.",
+        "impliesSeniority": [
+          "Junior",
+          "Mid-level",
+          "Senior",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "owned_system",
+          "data_driven_decision"
+        ],
+        "weakenedBy": [
+          "assisted_with",
+          "helped_with"
+        ]
+      }
+    },
+    {
+      "key": "reduced_incidents",
+      "category": "OWNERSHIP",
+      "subcategory": "Reliability Ownership",
+      "match": [
+        "reduced incidents",
+        "reduced on-call burden",
+        "reduced pagerduty alerts",
+        "improved reliability",
+        "improved system reliability",
+        "improved uptime",
+        "improved SLA",
+        "improved SLO",
+        "improved error rate",
+        "reduced error rate",
+        "reduced p99 latency",
+        "improved latency",
+        "reduced toil",
+        "eliminated toil",
+        "reduced MTTR",
+        "improved MTTR",
+        "reduced MTTD",
+        "reduced mean time to recovery",
+        "improved system stability"
+      ],
+      "score": {
+        "type": "OWNERSHIP_SIGNAL",
+        "baseWeight": 0.75,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Excellent signal for SRE, Platform, and senior backend roles. Always pair with before/after numbers.",
+        "exampleStrong": "Reduced on-call pages from 40/week to 3/week by eliminating toil through automated remediation runbooks and SLO-based alerting.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "SRE",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "wrote_postmortems",
+          "diagnosed_root_cause"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "cost_optimisation",
+      "category": "OWNERSHIP",
+      "subcategory": "Financial Ownership",
+      "match": [
+        "cost optimisation",
+        "cost optimization",
+        "reduced cloud costs",
+        "reduced infrastructure costs",
+        "reduced AWS costs",
+        "reduced GCP costs",
+        "reduced Azure costs",
+        "cut costs",
+        "saved costs",
+        "infrastructure cost savings",
+        "optimised cloud spend",
+        "reduced spend",
+        "FinOps",
+        "implemented FinOps",
+        "rightsized infrastructure",
+        "reduced compute costs",
+        "reduced storage costs"
+      ],
+      "score": {
+        "type": "OWNERSHIP_SIGNAL",
+        "baseWeight": 0.75,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.1
+      },
+      "feedback": {
+        "suggestion": "Always quote the dollar (or %) saving and the baseline. 'Reduced costs' without a number is near-useless.",
+        "exampleStrong": "Rightsized 200+ EC2 instances and migrated cold data to S3 Glacier, saving $480K/year (38% of infra budget).",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Principal",
+          "Lead",
+          "Director"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "owned_system",
+          "data_driven_decision"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "negotiated_contracts",
+      "category": "OWNERSHIP",
+      "subcategory": "Commercial Ownership",
+      "match": [
+        "negotiated contracts",
+        "negotiated vendor contracts",
+        "negotiated SLAs",
+        "negotiated enterprise deals",
+        "closed enterprise deals",
+        "negotiated pricing",
+        "led contract negotiations",
+        "managed vendor negotiations",
+        "renegotiated contracts",
+        "secured partnerships",
+        "closed partnerships"
+      ],
+      "score": {
+        "type": "OWNERSHIP_SIGNAL",
+        "baseWeight": 0.7,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Quantify the deal value, savings, or improved terms. Pure negotiation without outcome is weak.",
+        "exampleStrong": "Renegotiated Snowflake enterprise contract, securing a 30% price reduction and improved SLA from 99.5% to 99.9% uptime.",
+        "impliesSeniority": [
+          "Senior",
+          "Director",
+          "VP",
+          "Manager"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "drove_alignment",
+          "cost_optimisation"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "introduced_new_technology",
+      "category": "INNOVATION",
+      "subcategory": "Technical Innovation",
+      "match": [
+        "introduced new technology",
+        "introduced new tooling",
+        "championed new technology",
+        "advocated for new technology",
+        "evaluated new technology",
+        "led technology adoption",
+        "drove technology adoption",
+        "pioneered use of",
+        "first to adopt",
+        "early adopter of",
+        "brought in new framework",
+        "introduced framework",
+        "standardised tooling",
+        "evaluated build vs buy"
+      ],
+      "score": {
+        "type": "INNOVATION_SIGNAL",
+        "baseWeight": 0.65,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.1
+      },
+      "feedback": {
+        "suggestion": "Name the technology, the adoption scope, and the measured improvement. Beware: introducing tech that was later abandoned is neutral or negative.",
+        "exampleStrong": "Championed adoption of OpenTelemetry across 12 services, replacing 3 proprietary monitoring vendors and saving $120K/year.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Principal",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "wrote_rfcs",
+          "drove_alignment"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "built_proof_of_concept",
+      "category": "INNOVATION",
+      "subcategory": "Prototyping",
+      "match": [
+        "built proof of concept",
+        "built poc",
+        "created proof of concept",
+        "created poc",
+        "developed prototype",
+        "built prototype",
+        "ran technical spike",
+        "conducted technical spike",
+        "ran feasibility study",
+        "conducted feasibility study",
+        "explored new approach",
+        "prototyped solution",
+        "built experiment"
+      ],
+      "score": {
+        "type": "INNOVATION_SIGNAL",
+        "baseWeight": 0.5,
+        "bonusIfOutcomePresent": 0.25,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.1
+      },
+      "feedback": {
+        "suggestion": "POCs without outcomes are dead ends on a resume. Always state whether it was productionised, how it influenced a decision, or what it validated.",
+        "exampleStrong": "Built a LangChain POC for automated code review in 2 weeks; validated at 85% precision, leading to a funded Q3 productionisation project.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Staff"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "introduced_new_technology",
+          "shipped_feature"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "established_engineering_standards",
+      "category": "INNOVATION",
+      "subcategory": "Process Innovation",
+      "match": [
+        "established engineering standards",
+        "defined engineering standards",
+        "created coding standards",
+        "established best practices",
+        "defined best practices",
+        "created development guidelines",
+        "established linting rules",
+        "introduced static analysis",
+        "introduced type safety",
+        "defined testing standards",
+        "established test coverage requirements",
+        "created style guides",
+        "standardised architecture patterns",
+        "defined API standards",
+        "introduced API versioning"
+      ],
+      "score": {
+        "type": "INNOVATION_SIGNAL",
+        "baseWeight": 0.65,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Standards without adoption are useless. State who adopted them (N teams, N engineers) and the quality impact.",
+        "exampleStrong": "Defined API versioning standards adopted by all 8 backend teams, reducing breaking changes from 12/quarter to 1.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Principal",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "drove_alignment",
+          "wrote_rfcs"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "pivoted_strategy",
+      "category": "ADAPTABILITY",
+      "subcategory": "Strategic Agility",
+      "match": [
+        "pivoted strategy",
+        "changed approach",
+        "adapted plan",
+        "changed direction",
+        "adjusted priorities",
+        "responded to change",
+        "adapted to new requirements",
+        "navigated organisational change",
+        "navigated organizational change",
+        "adapted during acquisition",
+        "adapted during merger",
+        "led team through restructure",
+        "led team through reorg",
+        "adapted to new tech stack",
+        "migrated to new platform"
+      ],
+      "score": {
+        "type": "ADAPTABILITY_SIGNAL",
+        "baseWeight": 0.6,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Pivots need a before-state, trigger, action, and after-state to be credible. What changed and how did you lead through it?",
+        "exampleStrong": "Pivoted team from a monolith rebuild to a service-by-service extraction after a strategic product shift, delivering first service in 4 weeks with no team attrition.",
+        "impliesSeniority": [
+          "Senior",
+          "Lead",
+          "Staff",
+          "Manager",
+          "Director"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "drove_alignment",
+          "led_team"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "led_through_uncertainty",
+      "category": "ADAPTABILITY",
+      "subcategory": "Resilience",
+      "match": [
+        "led through uncertainty",
+        "operated in ambiguity",
+        "thrived in ambiguity",
+        "navigated uncertainty",
+        "maintained delivery through uncertainty",
+        "kept team focused during uncertainty",
+        "led during rapid growth",
+        "led through hypergrowth",
+        "led during downsizing",
+        "led during layoffs",
+        "maintained morale during",
+        "kept team engaged during"
+      ],
+      "score": {
+        "type": "ADAPTABILITY_SIGNAL",
+        "baseWeight": 0.6,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Leadership through adversity is compelling. Be specific about the challenge, the actions you took, and the outcome (retention, delivery, morale scores).",
+        "exampleStrong": "Maintained 100% team retention and on-time delivery of 2 major features during a 40% company-wide layoff round, through proactive communication and reprioritisation.",
+        "impliesSeniority": [
+          "Lead",
+          "Manager",
+          "Director",
+          "Staff"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "led_team",
+          "drove_alignment"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "learned_new_skill_quickly",
+      "category": "ADAPTABILITY",
+      "subcategory": "Learning Agility",
+      "match": [
+        "learned new skill quickly",
+        "quickly ramped up on",
+        "self-taught",
+        "rapidly learned",
+        "picked up quickly",
+        "upskilled in",
+        "transitioned from X to Y",
+        "changed domain",
+        "moved from backend to fullstack",
+        "moved from mobile to backend",
+        "transitioned to engineering from",
+        "career changer"
+      ],
+      "score": {
+        "type": "ADAPTABILITY_SIGNAL",
+        "baseWeight": 0.5,
+        "bonusIfOutcomePresent": 0.25,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.1
+      },
+      "feedback": {
+        "suggestion": "Learning agility is underrated but only credible with a timeline and a shipped outcome. 'Quickly learned Rust' is fine; 'learned Rust and shipped a latency-critical service in 3 months' is great.",
+        "exampleStrong": "Transitioned from mobile to backend in 4 months, shipping a Go microservice handling 50K RPS within my first quarter on the platform team.",
+        "impliesSeniority": [
+          "Junior",
+          "Mid-level",
+          "Career-changer"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "shipped_feature",
+          "introduced_new_technology"
+        ],
+        "weakenedBy": [
+          "hard_worker",
+          "fast_learner_buzzword"
+        ]
+      }
+    },
+    {
+      "key": "sought_feedback",
+      "category": "GROWTH_MINDSET",
+      "subcategory": "Self-Improvement",
+      "match": [
+        "sought feedback",
+        "actively sought feedback",
+        "requested feedback",
+        "implemented feedback",
+        "incorporated feedback",
+        "used 360 feedback",
+        "participated in 360 reviews",
+        "embraced constructive criticism",
+        "built feedback culture",
+        "created feedback loops",
+        "established feedback mechanisms"
+      ],
+      "score": {
+        "type": "GROWTH_SIGNAL",
+        "baseWeight": 0.45,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Modest signal unless paired with a visible change. What did you do differently as a result of the feedback?",
+        "exampleStrong": "After 360 feedback flagged communication gaps, restructured weekly team updates and increased stakeholder satisfaction scores by 30% in next survey.",
+        "impliesSeniority": [
+          "All levels"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "mentored_junior_engineers",
+          "facilitated_workshops"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "open_source_contribution",
+      "category": "GROWTH_MINDSET",
+      "subcategory": "Community Contribution",
+      "match": [
+        "open source contribution",
+        "contributed to open source",
+        "maintained open source project",
+        "created open source project",
+        "open source maintainer",
+        "OSS contributor",
+        "OSS maintainer",
+        "contributed to github",
+        "published npm package",
+        "published pypi package",
+        "contributed to kubernetes",
+        "contributed to linux kernel",
+        "contributed to react",
+        "contributed to terraform"
+      ],
+      "score": {
+        "type": "GROWTH_SIGNAL",
+        "baseWeight": 0.6,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.15,
+        "bonusIfToolNamed": 0.1
+      },
+      "feedback": {
+        "suggestion": "Name the project, your role (maintainer vs contributor), and scale (stars, downloads, merged PRs). Maintainer of a 5K-star project is elite signal.",
+        "exampleStrong": "Core maintainer of an open-source observability toolkit (8.2K GitHub stars, 1M+ monthly downloads) used by teams at Shopify and Cloudflare.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Staff",
+          "Principal"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "technical_writing",
+          "public_speaking"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "delivered_on_time",
+      "category": "EXECUTION",
+      "subcategory": "Delivery Excellence",
+      "match": [
+        "delivered on time",
+        "delivered on schedule",
+        "met deadline",
+        "met all deadlines",
+        "shipped on schedule",
+        "launched on schedule",
+        "delivered within budget",
+        "delivered on time and within budget",
+        "hit launch date",
+        "maintained delivery cadence"
+      ],
+      "score": {
+        "type": "OWNERSHIP_SIGNAL",
+        "baseWeight": 0.5,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.1,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Add stakes: how complex was the project, how many people were involved, what was at risk? On-time delivery of a solo task is minimal signal.",
+        "exampleStrong": "Delivered a 6-month platform migration on time and $80K under budget, coordinating 3 engineering teams and zero production incidents during cutover.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Lead",
+          "Manager"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "led_team",
+          "shipped_feature"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "increased_test_coverage",
+      "category": "EXECUTION",
+      "subcategory": "Code Quality",
+      "match": [
+        "increased test coverage",
+        "improved test coverage",
+        "added test coverage",
+        "wrote unit tests",
+        "wrote integration tests",
+        "wrote end-to-end tests",
+        "introduced TDD",
+        "championed TDD",
+        "introduced BDD",
+        "built testing framework",
+        "established testing culture",
+        "improved code quality",
+        "reduced technical debt"
+      ],
+      "score": {
+        "type": "OWNERSHIP_SIGNAL",
+        "baseWeight": 0.55,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Quantify the coverage delta (% before and after) and tie to a reliability or deployment frequency improvement.",
+        "exampleStrong": "Raised unit test coverage from 18% to 82% over one quarter, reducing production regressions by 65% and enabling weekly deployments.",
+        "impliesSeniority": [
+          "Mid-level",
+          "Senior",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "reduced_incidents",
+          "shipped_feature"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "improved_ci_cd",
+      "category": "EXECUTION",
+      "subcategory": "Engineering Efficiency",
+      "match": [
+        "improved CI/CD",
+        "improved ci cd",
+        "improved ci pipeline",
+        "improved cd pipeline",
+        "optimised build pipeline",
+        "optimized build pipeline",
+        "reduced build time",
+        "reduced deploy time",
+        "improved deployment frequency",
+        "increased deployment frequency",
+        "automated deployments",
+        "introduced blue-green deployments",
+        "introduced canary deployments",
+        "implemented feature flags",
+        "introduced feature toggles"
+      ],
+      "score": {
+        "type": "OWNERSHIP_SIGNAL",
+        "baseWeight": 0.65,
+        "bonusIfOutcomePresent": 0.2,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.1
+      },
+      "feedback": {
+        "suggestion": "DORA metrics are the gold standard here. Mention deploy frequency, lead time, change failure rate, or MTTR.",
+        "exampleStrong": "Rebuilt CI pipeline using Buildkite, cutting build time from 28 minutes to 4 and increasing deploy frequency from weekly to 15+ per day.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "DevOps",
+          "Platform",
+          "Lead"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "reduced_incidents",
+          "increased_test_coverage"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "scaled_system",
+      "category": "EXECUTION",
+      "subcategory": "Systems Scale",
+      "match": [
+        "scaled system",
+        "scaled platform",
+        "scaled infrastructure",
+        "scaled service",
+        "scaled to millions",
+        "scaled to billions",
+        "handled peak traffic",
+        "handled traffic spike",
+        "supported rapid growth",
+        "scaled from X to Y users",
+        "scaled from X to Y requests",
+        "improved throughput",
+        "improved system capacity",
+        "handled 10x traffic",
+        "zero-downtime scaling"
+      ],
+      "score": {
+        "type": "OWNERSHIP_SIGNAL",
+        "baseWeight": 0.75,
+        "bonusIfOutcomePresent": 0.15,
+        "bonusIfScopePresent": 0.05,
+        "bonusIfToolNamed": 0.05
+      },
+      "feedback": {
+        "suggestion": "Scaling claims need hard numbers — orders of magnitude, peak RPS, user count, or data volume. Vague scaling claims are ignored.",
+        "exampleStrong": "Scaled search infrastructure from 10K to 2M QPS over 8 months using Elasticsearch sharding optimisation and query caching, maintaining p99 < 120ms.",
+        "impliesSeniority": [
+          "Senior",
+          "Staff",
+          "Principal"
+        ],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [
+          "owned_system",
+          "reduced_incidents"
+        ],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "team_player",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Generic Filler",
+      "match": [
+        "team player",
+        "collaborative team member",
+        "works well with others",
+        "great team player",
+        "excellent team player",
+        "strong team player",
+        "good team player",
+        "enjoys working in a team",
+        "enjoys team environments",
+        "team-oriented",
+        "team-focused"
+      ],
+      "score": {
+        "type": "BUZZWORD",
+        "baseWeight": -0.3,
+        "bonusIfOutcomePresent": 0.0,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Remove immediately. This is universally expected and reads as filler. Replace with a specific cross-team collaboration that had a measurable outcome.",
+        "exampleStrong": "N/A — delete this phrase entirely.",
+        "impliesSeniority": [],
+        "redFlag": true,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "hard_worker",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Generic Filler",
+      "match": [
+        "hard worker",
+        "hard-working",
+        "hardworking",
+        "strong work ethic",
+        "dedicated worker",
+        "diligent worker",
+        "committed employee",
+        "loyal employee",
+        "dependable employee",
+        "reliable employee",
+        "punctual",
+        "always on time"
+      ],
+      "score": {
+        "type": "BUZZWORD",
+        "baseWeight": -0.35,
+        "bonusIfOutcomePresent": 0.0,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Remove. Every candidate claims this. Show it through output: what did your dedication actually produce?",
+        "exampleStrong": "N/A — delete this phrase entirely.",
+        "impliesSeniority": [],
+        "redFlag": true,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "go_getter",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Generic Filler",
+      "match": [
+        "go-getter",
+        "go getter",
+        "self-starter",
+        "self starter",
+        "proactive individual",
+        "results-oriented",
+        "results oriented",
+        "goal-oriented",
+        "goal oriented",
+        "driven individual",
+        "motivated individual",
+        "highly motivated",
+        "passionate about",
+        "enthusiastic about",
+        "excited about"
+      ],
+      "score": {
+        "type": "BUZZWORD",
+        "baseWeight": -0.25,
+        "bonusIfOutcomePresent": 0.0,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Remove — these adjectives are self-reported and unverifiable. Show initiative through a specific example of taking ownership without being asked.",
+        "exampleStrong": "N/A — delete this phrase entirely.",
+        "impliesSeniority": [],
+        "redFlag": true,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "fast_learner_buzzword",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Self-Reported Claim",
+      "match": [
+        "fast learner",
+        "quick learner",
+        "rapid learner",
+        "learns quickly",
+        "picks things up fast",
+        "adaptable learner",
+        "eager to learn",
+        "always learning",
+        "continuous learner",
+        "lifelong learner"
+      ],
+      "score": {
+        "type": "WEAK_SIGNAL",
+        "baseWeight": -0.2,
+        "bonusIfOutcomePresent": 0.1,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Weak when stated directly. Prove it: 'Picked up Rust in 8 weeks and shipped a latency-critical service' is far stronger than claiming you learn fast.",
+        "exampleStrong": "N/A — replace with evidence: a new skill acquired and a shipped outcome.",
+        "impliesSeniority": [],
+        "redFlag": false,
+        "preserveIf": "Acceptable only for career changers or recent grads where it contextualises a non-traditional background — but still only with supporting evidence."
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "detail_oriented",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Self-Reported Claim",
+      "match": [
+        "detail-oriented",
+        "detail oriented",
+        "attention to detail",
+        "meticulous",
+        "thorough",
+        "precise individual",
+        "highly accurate",
+        "error-free work"
+      ],
+      "score": {
+        "type": "WEAK_SIGNAL",
+        "baseWeight": -0.2,
+        "bonusIfOutcomePresent": 0.1,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Overused self-descriptor. If accuracy matters in your role, show it through: defect rates, audit pass rates, or quality-related outcomes.",
+        "exampleStrong": "N/A — replace with: 'Achieved 0 critical defects across 3 production releases by introducing automated regression suite.'",
+        "impliesSeniority": [],
+        "redFlag": false,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "helped_with",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Agency Dilution",
+      "match": [
+        "helped with",
+        "assisted with",
+        "supported with",
+        "contributed to",
+        "involved in",
+        "part of the team that",
+        "member of the team that",
+        "was involved in",
+        "participated in",
+        "took part in",
+        "aided in",
+        "assisted in"
+      ],
+      "score": {
+        "type": "WEAK_SIGNAL",
+        "baseWeight": -0.4,
+        "bonusIfOutcomePresent": 0.0,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Critical issue — passive language hides your actual impact. Rewrite with an active verb that reflects YOUR specific contribution.",
+        "exampleStrong": "Instead of 'helped with the migration', write: 'Designed the data model and wrote the migration scripts for a 200-table Postgres-to-Aurora migration.'",
+        "impliesSeniority": [],
+        "redFlag": true,
+        "preserveIf": "Acceptable ONLY if you were genuinely a minor contributor and want to be honest — but consider whether this bullet adds any value at all."
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "responsible_for",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Agency Dilution",
+      "match": [
+        "responsible for",
+        "responsibilities included",
+        "my responsibilities were",
+        "duties included",
+        "accountable for",
+        "tasked with",
+        "assigned to",
+        "in charge of"
+      ],
+      "score": {
+        "type": "WEAK_SIGNAL",
+        "baseWeight": -0.3,
+        "bonusIfOutcomePresent": 0.05,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Describes a job description, not an achievement. Replace with an action verb and a result. Responsibility ≠ impact.",
+        "exampleStrong": "Instead of 'Responsible for backend API', write: 'Designed and maintained the core REST API serving 4M daily requests at p95 < 50ms.'",
+        "impliesSeniority": [],
+        "redFlag": true,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "excellent_communication_skills",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Self-Reported Claim",
+      "match": [
+        "excellent communication skills",
+        "strong communication skills",
+        "great communicator",
+        "effective communicator",
+        "good communication skills",
+        "strong verbal and written communication",
+        "excellent interpersonal skills",
+        "strong interpersonal skills",
+        "people skills",
+        "good with people"
+      ],
+      "score": {
+        "type": "BUZZWORD",
+        "baseWeight": -0.25,
+        "bonusIfOutcomePresent": 0.0,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Everyone claims this. Show it: 'Authored RFC that aligned 5 teams' or 'Keynoted internal conference of 300 engineers' demonstrates communication without stating it.",
+        "exampleStrong": "N/A — delete and show communication through specific high-impact written or verbal acts.",
+        "impliesSeniority": [],
+        "redFlag": true,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "worked_well_with_others",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Generic Filler",
+      "match": [
+        "worked well with others",
+        "gets along with everyone",
+        "easy to work with",
+        "pleasant to work with",
+        "positive attitude",
+        "can-do attitude",
+        "good attitude",
+        "brings positive energy",
+        "great culture fit"
+      ],
+      "score": {
+        "type": "BUZZWORD",
+        "baseWeight": -0.3,
+        "bonusIfOutcomePresent": 0.0,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Delete. This reads as filler and signals a lack of strong accomplishments. Hiring teams look for impact, not likability claims.",
+        "exampleStrong": "N/A — delete entirely.",
+        "impliesSeniority": [],
+        "redFlag": true,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "strategic_thinker",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Self-Reported Claim",
+      "match": [
+        "strategic thinker",
+        "strategic mindset",
+        "big picture thinker",
+        "visionary leader",
+        "thought leader",
+        "innovative thinker",
+        "creative thinker",
+        "out of the box thinker",
+        "outside the box thinker",
+        "dynamic leader"
+      ],
+      "score": {
+        "type": "BUZZWORD",
+        "baseWeight": -0.3,
+        "bonusIfOutcomePresent": 0.0,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Never self-describe as a 'thought leader' or 'visionary'. These are earned designations. Replace with the strategic outcome you produced.",
+        "exampleStrong": "N/A — delete and replace with: 'Defined 3-year platform vision adopted by CTO and board, reallocating $4M in roadmap investment.'",
+        "impliesSeniority": [],
+        "redFlag": true,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "passionate_about_technology",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Generic Filler",
+      "match": [
+        "passionate about technology",
+        "passionate about software",
+        "passionate about engineering",
+        "love for technology",
+        "love of coding",
+        "love of programming",
+        "enjoy problem solving",
+        "enjoy building software",
+        "thrive in fast-paced environments",
+        "thrives in fast paced",
+        "enjoy challenging problems",
+        "love working on hard problems"
+      ],
+      "score": {
+        "type": "BUZZWORD",
+        "baseWeight": -0.2,
+        "bonusIfOutcomePresent": 0.0,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Remove from professional summary. Passion is demonstrated through OSS contributions, side projects, publications, and conference talks — not stated.",
+        "exampleStrong": "N/A — replace with a proof of passion: a notable side project, open-source contribution, or published work.",
+        "impliesSeniority": [],
+        "redFlag": false,
+        "preserveIf": "Marginally acceptable in objective/summary for junior candidates on their first 1-2 roles where they lack sufficient professional evidence."
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    },
+    {
+      "key": "synergy",
+      "category": "ANTI_PATTERN",
+      "subcategory": "Corporate Jargon",
+      "match": [
+        "synergy",
+        "synergies",
+        "created synergies",
+        "leveraged synergies",
+        "holistic approach",
+        "holistic solution",
+        "paradigm shift",
+        "paradigm-shifting",
+        "move the needle",
+        "moved the needle",
+        "bandwidth",
+        "circle back",
+        "take offline",
+        "boil the ocean",
+        "low-hanging fruit",
+        "touch base",
+        "deep dive",
+        "best of breed",
+        "value add",
+        "value-add",
+        "game changer",
+        "game-changer",
+        "disruptive",
+        "disrupted the market",
+        "bleeding edge",
+        "cutting edge technology"
+      ],
+      "score": {
+        "type": "NEGATIVE_SIGNAL",
+        "baseWeight": -0.4,
+        "bonusIfOutcomePresent": 0.0,
+        "bonusIfScopePresent": 0.0,
+        "bonusIfToolNamed": 0.0
+      },
+      "feedback": {
+        "suggestion": "Corporate jargon is an active negative signal — it reads as either lazy or inexperienced. Replace with plain language describing the actual action and outcome.",
+        "exampleStrong": "N/A — delete entirely and rewrite in plain language.",
+        "impliesSeniority": [],
+        "redFlag": true,
+        "preserveIf": null
+      },
+      "relations": {
+        "strengthens": [],
+        "weakenedBy": []
+      }
+    }
+  ]
+}

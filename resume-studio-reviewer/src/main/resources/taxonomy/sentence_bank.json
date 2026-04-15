@@ -1,0 +1,1569 @@
+{
+  "meta": {
+    "version": "2.0.0",
+    "description": "Resume feedback NLG sentence bank. Each signal has scored tiers (0-100). Each tier contains observation/interpretation/action sentence arrays — pick one per layer randomly at runtime for LLM-like variety. Use {{token}} for dynamic interpolation.",
+    "scoring": {
+      "scale": "0–100 per signal. Signals are weighted and combined into a composite resume score.",
+      "tiers": {
+        "EXCELLENT": "80–100",
+        "GOOD": "60–79",
+        "FAIR": "40–59",
+        "POOR": "20–39",
+        "CRITICAL": "0–19"
+      }
+    },
+    "signal_weights": {
+      "filename":           { "weight": 2,  "note": "Hygiene signal. Low weight — doesn't affect hiring, but affects first impression." },
+      "file_format":        { "weight": 2,  "note": "ATS compatibility risk." },
+      "title_match":        { "weight": 12, "note": "First recruiter filter. High weight." },
+      "summary":            { "weight": 8,  "note": "Narrative hook and orientation." },
+      "years_of_experience":{ "weight": 12, "note": "Hard filter in most roles." },
+      "skills_visibility":  { "weight": 18, "note": "Core keyword matching. Highest weight." },
+      "skills_format":      { "weight": 8,  "note": "Scannability and layout quality." },
+      "bullet_quality":     { "weight": 10, "note": "Impact and specificity of work bullets." },
+      "company_context":    { "weight": 6,  "note": "Trust signal and credibility." },
+      "employment_gaps":    { "weight": 5,  "note": "Red flag mitigation." },
+      "chronology":         { "weight": 5,  "note": "Timeline consistency and trust." },
+      "education":          { "weight": 4,  "note": "Relevance and recency." },
+      "certifications":     { "weight": 3,  "note": "Supporting signal for skills claims." },
+      "resume_length":      { "weight": 4,  "note": "Conciseness and respect for recruiter time." },
+      "layout_readability": { "weight": 5,  "note": "ATS parse-ability and visual scan." },
+      "contact_info":       { "weight": 3,  "note": "Reachability and basic hygiene." },
+      "anomalies":          { "weight": 6,  "note": "Credibility red flags (date errors, impossible claims)." },
+      "overall_tailoring":  { "weight": 7,  "note": "How tuned this resume is to this specific JD." }
+    },
+    "interpolation_tokens": [
+      "{{candidate_title}}", "{{jd_title}}", "{{calculated_yoe}}", "{{jd_yoe_min}}",
+      "{{jd_yoe_max}}", "{{skill_name}}", "{{company_name}}", "{{gap_duration}}",
+      "{{gap_start}}", "{{bullet_count}}", "{{page_count}}", "{{degree}}",
+      "{{institution}}", "{{cert_name}}", "{{anomaly_detail}}", "{{file_extension}}"
+    ]
+  },
+
+  "signals": {
+
+    "filename": {
+      "signal_id": "filename",
+      "display_name": "File naming",
+      "weight": 2,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [80, 100],
+          "conditions": ["filename_professional", "has_name", "has_role", "correct_format", "appropriate_length"],
+          "observation": [
+            "Your filename is clean, professional, and immediately identifies you.",
+            "The file is named correctly — your name and role are both present.",
+            "Your filename follows best practice: no versioning, no clutter, clear attribution."
+          ],
+          "interpretation": [
+            "It signals care and professionalism before the document is even opened.",
+            "In a recruiter's downloads folder of 80 generic files, yours is identifiable at a glance.",
+            "Zero friction before they open it — a small but clean signal."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [60, 79],
+          "conditions": ["has_name_but_missing_role", "slightly_long"],
+          "observation": [
+            "Your filename includes your name but is missing the target role.",
+            "The filename is identifiable but could be more descriptive.",
+            "Your name is present in the filename, though the role context is absent."
+          ],
+          "interpretation": [
+            "Better than most, but a recruiter won't know what role you're applying for from the filename alone.",
+            "Identifiable but not fully optimised — a minor missed opportunity.",
+            "Functional but not tailored. Close to best practice."
+          ],
+          "action": [
+            "Update your filename to FirstName_LastName_RoleTitle.pdf — e.g. Jane_Smith_BackendEngineer.pdf",
+            "Add the target role to your filename. It takes 10 seconds and removes ambiguity.",
+            "Include the specific role you're applying for in the filename — makes it easier to track across multiple applications."
+          ]
+        },
+        "FAIR": {
+          "score_range": [40, 59],
+          "conditions": ["generic_name", "no_name_but_has_role"],
+          "observation": [
+            "Your filename is partially informative but missing key components.",
+            "The file name is functional but doesn't clearly identify you or the role.",
+            "Your filename hints at who this is but lacks enough detail to stand alone."
+          ],
+          "interpretation": [
+            "A recruiter can guess, but shouldn't have to — the filename should do the work.",
+            "Passable, but it's a gap that's trivial to fix.",
+            "Not a dealbreaker, but it's an easy win left on the table."
+          ],
+          "action": [
+            "Rename to FirstName_LastName_RoleTitle.pdf — all three components should be present.",
+            "A strong filename is: YourName_TargetRole.pdf. Add whichever component is missing.",
+            "Fix your filename: include your full name and the role you're applying for, separated by underscores."
+          ]
+        },
+        "POOR": {
+          "score_range": [20, 39],
+          "conditions": ["has_versioning", "no_name"],
+          "observation": [
+            "Your filename contains versioning markers like 'final', 'v2', or 'updated'.",
+            "There's no personal identifier in the filename — it can't be attributed to you without opening it.",
+            "Your filename looks like an internal draft, not a professional submission."
+          ],
+          "interpretation": [
+            "Versioning words signal a disorganised submission process before the resume is read.",
+            "A recruiter saving this file has no idea whose resume it is — unnecessary friction.",
+            "It implies this wasn't prepared specifically for this application. First impressions matter."
+          ],
+          "action": [
+            "Rename your file to FirstName_LastName_RoleTitle.pdf — strip all draft markers.",
+            "Remove version suffixes entirely. The submitted file should look deliberate, not iterated.",
+            "Use a clean, permanent name: YourName_Role.pdf. Leave the versioning for your local backup folder."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 19],
+          "conditions": ["wrong_format", "completely_unreadable_name"],
+          "observation": [
+            "Your resume is submitted as a {{file_extension}} file, not a PDF.",
+            "The file format is {{file_extension}} — not the industry standard for resume submissions.",
+            "A non-PDF format was detected. This creates ATS and formatting risk immediately."
+          ],
+          "interpretation": [
+            "Most ATS systems parse non-PDF files inconsistently — your carefully formatted layout may be destroyed on ingestion.",
+            ".docx and similar formats render differently across systems. What you see may not be what the recruiter sees.",
+            "PDF is the universal standard because it locks formatting. Any other format introduces unnecessary risk."
+          ],
+          "action": [
+            "Export as PDF before submitting. File > Export > PDF in Word, Google Docs, or Pages — takes one click.",
+            "Convert to PDF immediately. Never submit a .docx — formatting breaks across different systems and ATS tools.",
+            "Submit only as PDF. It's the only format that guarantees your layout, fonts, and structure are preserved everywhere."
+          ]
+        }
+      }
+    },
+
+    "title_match": {
+      "signal_id": "title_match",
+      "display_name": "Title alignment",
+      "weight": 12,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["exact_match"],
+          "observation": [
+            "Your title '{{candidate_title}}' is an exact match for this role.",
+            "The headline on your resume — '{{candidate_title}}' — mirrors the job title precisely.",
+            "There's a clean, exact alignment between your stated title and '{{jd_title}}'."
+          ],
+          "interpretation": [
+            "This is the first filter a recruiter applies — you pass it without hesitation.",
+            "No ambiguity, no inference required. The recruiter knows within two seconds you're relevant.",
+            "Exact title alignment removes the most common early rejection trigger."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [65, 84],
+          "conditions": ["adjacent_match"],
+          "observation": [
+            "Your title '{{candidate_title}}' is adjacent to the target role '{{jd_title}}'.",
+            "The title on your resume is close to '{{jd_title}}' but not an exact match.",
+            "'{{candidate_title}}' reads as a near-neighbour to '{{jd_title}}' — one step away."
+          ],
+          "interpretation": [
+            "Close enough that most recruiters will keep reading, but the slight mismatch was noted.",
+            "Adjacent titles pass the filter most of the time — but your skills section has to confirm the relevance quickly.",
+            "A small gap. Experienced recruiters understand title variations; junior screeners may not."
+          ],
+          "action": [
+            "Bridge the gap in your summary: 'I've operated as a {{candidate_title}}, performing the core responsibilities of a {{jd_title}}.'",
+            "If you do this work under a different title, say so explicitly in your opening line.",
+            "Add a one-line clarifier in your summary that maps your title to the JD's language."
+          ]
+        },
+        "FAIR": {
+          "score_range": [40, 64],
+          "conditions": ["related_domain_match"],
+          "observation": [
+            "Your title '{{candidate_title}}' is from a related domain but doesn't directly read as '{{jd_title}}'.",
+            "The recruiter sees '{{candidate_title}}' where they expected something closer to '{{jd_title}}'.",
+            "Your headline is in a related area but creates ambiguity about fit for this specific role."
+          ],
+          "interpretation": [
+            "A recruiter will pause here — it's unclear from the title alone whether the required depth is present.",
+            "Related-domain titles require the recruiter to do extra work to confirm fit. Many won't bother.",
+            "You may be entirely qualified — but the title framing makes that hard to see quickly."
+          ],
+          "action": [
+            "Add a subtitle or clarifying line under your name: e.g. '{{candidate_title}} — specialising in {{jd_title}} responsibilities'.",
+            "Use your summary to explicitly reframe your background in the language of this JD. Don't make the recruiter connect the dots.",
+            "Consider whether '{{jd_title}}' is an accurate reflection of your work. If it is, lead with it."
+          ]
+        },
+        "POOR": {
+          "score_range": [15, 39],
+          "conditions": ["title_miss"],
+          "observation": [
+            "Your title '{{candidate_title}}' doesn't immediately read as '{{jd_title}}' to a recruiter.",
+            "The headline on your resume and the job title are clearly misaligned.",
+            "There is a significant gap between how you've titled yourself and what this role requires."
+          ],
+          "interpretation": [
+            "In a 10-second scan, a title mismatch often ends the review entirely.",
+            "Recruiters are pattern-matching fast — a mismatched title is a skip signal, not a pause signal.",
+            "Your skills may be perfect, but the title is the first gate — and this one isn't passing easily."
+          ],
+          "action": [
+            "If you legitimately do this work, retitle your resume headline to '{{jd_title}}' or as close as is accurate.",
+            "Use your summary to close the gap fast: 'Although titled {{candidate_title}}, I have spent the last X years doing {{jd_title}} work across...'",
+            "Your skills section needs to compensate hard here — every required keyword must appear in the top third of the resume."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 14],
+          "conditions": ["no_title", "completely_unrelated_title"],
+          "observation": [
+            "No clear professional title was found in your resume header.",
+            "Your resume doesn't lead with a title — a recruiter has to read the whole document to understand what you do.",
+            "The title present — '{{candidate_title}}' — is unrelated to this role in any recognisable way."
+          ],
+          "interpretation": [
+            "Without a clear title, the recruiter has to invest time they don't have to understand your fit.",
+            "A missing or irrelevant title is the highest rejection-risk signal at the top of a resume.",
+            "Most screeners will not continue past an unrelated or absent title — the first 5 seconds are lost."
+          ],
+          "action": [
+            "Add a professional title directly below your name. This is non-negotiable.",
+            "Your header should read: Name → Title → Contact. Right now the title element is missing or wrong.",
+            "Choose the most accurate title that maps to this role and place it at the very top of your resume, immediately below your name."
+          ]
+        }
+      }
+    },
+
+    "summary": {
+      "signal_id": "summary",
+      "display_name": "Summary / professional profile",
+      "weight": 8,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [80, 100],
+          "conditions": ["present", "specific", "mentions_yoe", "mentions_skills", "mentions_domain"],
+          "observation": [
+            "Your summary states your title, years of experience, core technical skills, and domain context.",
+            "The summary at the top of your resume is specific, technical, and immediately informative.",
+            "Your opening profile covers all the key signals: who you are, how long you've been doing it, and what you specialise in."
+          ],
+          "interpretation": [
+            "This is exactly what a summary should do — it orients the recruiter in under two seconds.",
+            "A recruiter reading this summary can make a provisional fit decision before reaching your experience section.",
+            "Strong summaries like this reduce recruiter cognitive load. It does the positioning work so the rest of the resume confirms it."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [60, 79],
+          "conditions": ["present", "mentions_yoe_or_skills", "not_generic"],
+          "observation": [
+            "Your summary is present and substantive, though it's missing one or two key elements.",
+            "A solid summary is there — it covers your background but skips some specific signals.",
+            "Your profile section communicates your role clearly but doesn't fully surface your skills or domain."
+          ],
+          "interpretation": [
+            "Better than most — a recruiter will read it. Small additions would make it significantly stronger.",
+            "It does the job at a surface level but leaves some positioning work to the reader.",
+            "A partial summary is far better than none, but the missing specifics are leaving value on the table."
+          ],
+          "action": [
+            "Add what's missing — typically: years of experience, 2–3 core technical skills, and the domain you've worked in.",
+            "Tighten your summary to the formula: [Title] with [X] years in [domain], specialising in [2–3 skills].",
+            "Punch up the summary with one specific skill or domain anchor — something a recruiter can use to slot you immediately."
+          ]
+        },
+        "FAIR": {
+          "score_range": [40, 59],
+          "conditions": ["present", "generic_phrases", "no_technical_specifics"],
+          "observation": [
+            "Your summary uses soft skill language with no technical specifics.",
+            "The opening profile is present but reads as generic — phrases like 'results-driven' and 'team player' dominate.",
+            "Your summary says a lot without communicating anything concrete about your technical profile."
+          ],
+          "interpretation": [
+            "Generic phrases like 'passionate problem solver' don't tell a technical recruiter anything about fit.",
+            "A summary full of soft skills in a technical role review is almost worse than no summary — it wastes the recruiter's attention.",
+            "Recruiters skim summaries for hard signals. Soft language registers as noise."
+          ],
+          "action": [
+            "Rewrite your summary from scratch. Formula: [Title] with [X] years of experience in [domain], building [specific outputs] using [core tech stack].",
+            "Remove all generic adjectives. Replace every soft-skill phrase with a concrete technical one.",
+            "Try this template: 'Backend Engineer with 6 years building distributed Java/Spring Boot APIs, primarily in fintech and SaaS environments.' Then adjust for your reality."
+          ]
+        },
+        "POOR": {
+          "score_range": [20, 39],
+          "conditions": ["present", "too_short", "only_objective_statement"],
+          "observation": [
+            "Your summary is present but too brief to communicate anything useful.",
+            "What's there reads as an objective statement rather than a professional profile.",
+            "The summary section exists but is essentially a single vague sentence."
+          ],
+          "interpretation": [
+            "A one-line summary is a missed opportunity — recruiters spend the most time on the top third of a resume.",
+            "Objective statements ('Looking for a challenging role...') are outdated and tell the recruiter about your needs, not your value.",
+            "The summary slot is prime real estate. A thin entry there is a gap, not a feature."
+          ],
+          "action": [
+            "Expand your summary to 2–3 lines. Cover: what you are, how long you've done it, what you've built, where you've done it.",
+            "Replace the objective statement with a profile statement. Objective = what you want. Profile = what you offer.",
+            "Two sentences minimum: one for title + YOE + domain, one for your core technical specialisation."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 19],
+          "conditions": ["missing"],
+          "observation": [
+            "No summary or profile section was found on your resume.",
+            "Your resume goes straight from contact details to work experience — there's no summary.",
+            "The top of your resume is missing a professional summary entirely."
+          ],
+          "interpretation": [
+            "The recruiter had no narrative hook — they go straight to experience with no context about who you are.",
+            "Without a summary, the recruiter has to read your entire experience section to understand your positioning. Most won't.",
+            "A missing summary is the single easiest improvement to make. It's an unforced error."
+          ],
+          "action": [
+            "Add a 2–3 line summary directly below your contact information. This is the highest-ROI addition you can make to this resume.",
+            "Write a profile using this formula: [Title] with [X] years of experience in [core skills]. Known for [specific strength or domain]. E.g. 'Backend Engineer with 5 years building Java/Spring Boot APIs at scale across fintech and SaaS.'",
+            "Don't skip the summary. It's the recruiter's orientation point — without it, your resume is context-free."
+          ]
+        }
+      }
+    },
+
+    "years_of_experience": {
+      "signal_id": "years_of_experience",
+      "display_name": "Years of experience",
+      "weight": 12,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["in_range", "clearly_stated"],
+          "observation": [
+            "Your {{calculated_yoe}} years of experience falls squarely within the {{jd_yoe_min}}–{{jd_yoe_max}} year requirement for this role.",
+            "At {{calculated_yoe}} years, you meet the experience requirement of {{jd_yoe_min}}–{{jd_yoe_max}} years with room to spare.",
+            "Experience level: {{calculated_yoe}} years — right in the target range of {{jd_yoe_min}}–{{jd_yoe_max}} years."
+          ],
+          "interpretation": [
+            "You pass the experience filter without any caveats or asterisks.",
+            "No gaps, no overqualification flags, no calculation needed. Straight pass.",
+            "The dates are clean and the total lands exactly where recruiters want to see it for this role."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [65, 84],
+          "conditions": ["in_range", "calculated_from_dates"],
+          "observation": [
+            "Your {{calculated_yoe}} years of experience meets the {{jd_yoe_min}}–{{jd_yoe_max}} year requirement — calculated from your listed dates.",
+            "Based on your work history dates, you have approximately {{calculated_yoe}} years of experience, which aligns with this role.",
+            "The dates on your resume add up to {{calculated_yoe}} years — within the required range."
+          ],
+          "interpretation": [
+            "The dates were clean enough to calculate quickly. No ambiguity in the timeline.",
+            "A recruiter had to do the maths here, but the result is positive — you qualify.",
+            "Calculating from dates adds minor friction, but the outcome is a pass."
+          ],
+          "action": [
+            "State your total years of experience explicitly in your summary — remove the need for a recruiter to calculate it.",
+            "Add a line to your profile: '{{calculated_yoe}} years of experience in [domain].' Don't make the recruiter do arithmetic.",
+            "Consider stating your YOE directly in your headline or summary to make this a zero-effort read."
+          ]
+        },
+        "FAIR": {
+          "score_range": [40, 64],
+          "conditions": ["under_range_minor"],
+          "observation": [
+            "At {{calculated_yoe}} years, you're slightly below the {{jd_yoe_min}}–{{jd_yoe_max}} year requirement.",
+            "Your experience — {{calculated_yoe}} years — is close to but just under the stated {{jd_yoe_min}} year minimum.",
+            "You fall slightly short of the {{jd_yoe_min}}–{{jd_yoe_max}} year requirement with {{calculated_yoe}} years of experience."
+          ],
+          "interpretation": [
+            "Recruiters treat YOE requirements as guidelines, not hard rules — close is often close enough.",
+            "A minor gap here can be compensated by strong skills visibility and high-quality bullets.",
+            "You're within striking distance. The YOE flag is minor if the rest of your resume is strong."
+          ],
+          "action": [
+            "Lead with quality over duration in your summary. Frame your experience around impact, not years.",
+            "If you have strong project work, open-source contributions, or freelance experience, make sure it's counted and dated.",
+            "Don't apologise for the gap — outperform on skills and impact instead."
+          ]
+        },
+        "POOR": {
+          "score_range": [15, 39],
+          "conditions": ["under_range_significant", "vague_yoe", "over_range"],
+          "observation": [
+            "Your {{calculated_yoe}} years of experience is significantly below the {{jd_yoe_min}}–{{jd_yoe_max}} year requirement.",
+            "At {{calculated_yoe}} years, there's a meaningful gap against the {{jd_yoe_min}} year minimum this role asks for.",
+            "Your experience is described in vague terms — phrases like 'several years' rather than specific dates.",
+            "At {{calculated_yoe}} years, you may be overqualified for a role requiring {{jd_yoe_min}}–{{jd_yoe_max}} years."
+          ],
+          "interpretation": [
+            "A significant YOE gap is one of the most common hard rejection filters — many recruiters won't proceed past it.",
+            "Vague experience language means a recruiter can't verify your seniority. They assume the worst and move on.",
+            "Overqualification flags are real — recruiters worry about salary expectations and long-term interest in a more junior scope."
+          ],
+          "action": [
+            "Add explicit dates to every role (Month Year – Month Year). Remove all vague time references.",
+            "Consider targeting roles where your {{calculated_yoe}} years makes you a strong candidate, not a stretch.",
+            "If you are overqualified, address it directly in your cover letter — explain why this role is the right move for you."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 14],
+          "conditions": ["missing_dates", "unreliable_chronology", "no_yoe_signal"],
+          "observation": [
+            "No dates were found on one or more roles — years of experience cannot be verified.",
+            "The chronology of your work history is inconsistent and cannot be reliably used to calculate experience.",
+            "Employment dates are absent from your resume — a recruiter cannot determine your experience level."
+          ],
+          "interpretation": [
+            "Missing dates mean the recruiter cannot verify experience level. This is a significant credibility gap.",
+            "An unverifiable chronology means recruiters don't trust any of the downstream experience claims either.",
+            "Without dates, your resume fails a basic completeness check — most ATS systems will also fail to parse it correctly."
+          ],
+          "action": [
+            "Add dates to every role using the format: Month Year – Month Year (or 'Present' for your current role). No exceptions.",
+            "Fix your chronology first. Align work history, education, and career breaks into one clear, consistent timeline.",
+            "Every role needs: company name, your title, start date, end date (or present), and a location. Without all five, credibility drops."
+          ]
+        }
+      }
+    },
+
+    "skills_visibility": {
+      "signal_id": "skills_visibility",
+      "display_name": "JD skill visibility",
+      "weight": 18,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["surface_visible", "in_skills_section"],
+          "observation": [
+            "'{{skill_name}}' is prominently visible in your skills section.",
+            "The required skill '{{skill_name}}' appears right where a recruiter scans first — your skills section.",
+            "'{{skill_name}}' is surfaced in the top third of your resume, exactly where it needs to be."
+          ],
+          "interpretation": [
+            "A recruiter scanning for this core requirement will find it in under one second.",
+            "No hunting required. The skill is where the eye goes naturally.",
+            "This is keyword placement best practice — visible without reading a single bullet."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [65, 84],
+          "conditions": ["mentioned_in_recent_bullet", "not_in_skills_section"],
+          "observation": [
+            "'{{skill_name}}' appears in a bullet point in your most recent role but not in your skills section.",
+            "The skill '{{skill_name}}' is mentioned in your experience bullets, but is absent from your dedicated skills section.",
+            "'{{skill_name}}' shows up in your work history — just not where a recruiter looks first."
+          ],
+          "interpretation": [
+            "A recruiter's eye doesn't consistently reach bullet points in a 10-second scan — this skill is at risk of being missed.",
+            "Bullet-only placement means the skill depends on the recruiter reading, not scanning. Many won't get that far.",
+            "The skill is technically on your resume — but its position reduces its impact significantly."
+          ],
+          "action": [
+            "Move '{{skill_name}}' into your skills section so it's visible at a glance.",
+            "Add '{{skill_name}}' to your technical skills section. Keep it in the bullet too — double visibility is the goal.",
+            "Your skills section is scanned first. '{{skill_name}}' needs to be there, not hidden in experience bullets."
+          ]
+        },
+        "FAIR": {
+          "score_range": [35, 64],
+          "conditions": ["mentioned_in_older_role", "buried_in_bullets"],
+          "observation": [
+            "'{{skill_name}}' only appears in an older or less prominent role — it's not surfaced where recruiters look.",
+            "The skill '{{skill_name}}' is buried in experience bullets from a previous position.",
+            "'{{skill_name}}' is technically on your resume, but deep in your work history where it won't register on a fast scan."
+          ],
+          "interpretation": [
+            "A skill in an old role bullet is effectively invisible on a first pass.",
+            "Recruiters scanning your skills section and recent experience won't see '{{skill_name}}' — it's categorised as a historical skill, not a current one.",
+            "Buried skills fail the recruiter's fast-scan test. If it doesn't appear in the top third, it often doesn't count."
+          ],
+          "action": [
+            "Move '{{skill_name}}' into your skills section. If you've used it recently, mention it in your current or most recent role.",
+            "Rescue '{{skill_name}}' from the older role and resurface it — either in your skills list or in a more recent bullet.",
+            "If '{{skill_name}}' is still relevant and current, treat it as current. Surface it in your skills section immediately."
+          ]
+        },
+        "POOR": {
+          "score_range": [10, 34],
+          "conditions": ["mentioned_once_in_passing"],
+          "observation": [
+            "'{{skill_name}}' is mentioned only once and in passing — it doesn't read as a real proficiency.",
+            "The skill '{{skill_name}}' appears as a footnote rather than a feature of your profile.",
+            "'{{skill_name}}' is technically present but so lightly referenced it provides no confidence to a recruiter."
+          ],
+          "interpretation": [
+            "A single passing mention tells a recruiter you've touched the technology, not that you can be hired for it.",
+            "Recruiters aren't just looking for the keyword — they're looking for evidence of use. One passing mention doesn't provide that.",
+            "This is the weakest version of having a skill on a resume. It's unlikely to pass a technical screener."
+          ],
+          "action": [
+            "If '{{skill_name}}' is genuinely a skill you have, add it to your skills section and reference it with a concrete bullet in your most relevant role.",
+            "Back the skill with evidence: add a bullet that shows what you built or did with '{{skill_name}}'.",
+            "A skill mentioned in passing is nearly as bad as missing. Surface it properly or cut it."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 9],
+          "conditions": ["missing_entirely"],
+          "observation": [
+            "'{{skill_name}}' does not appear anywhere on your resume.",
+            "The required skill '{{skill_name}}' is completely absent from your resume.",
+            "There is no mention of '{{skill_name}}' — not in your skills section, not in your bullets, not anywhere."
+          ],
+          "interpretation": [
+            "A missing must-have skill is typically a hard rejection filter. Most recruiters stop here.",
+            "This is the most critical skill gap — it doesn't just hurt your score, it ends the review for automated screeners.",
+            "If '{{skill_name}}' is listed as required in the JD and absent from your resume, ATS scoring will likely disqualify this application."
+          ],
+          "action": [
+            "If you have experience with '{{skill_name}}', add it immediately — to your skills section and at least one bullet.",
+            "If you genuinely lack '{{skill_name}}', this role may not be the right fit yet. Consider upskilling before applying.",
+            "Missing required skills are the single biggest fixable problem on a resume. If you've used '{{skill_name}}' at all, it must be visible."
+          ]
+        }
+      }
+    },
+
+    "skills_format": {
+      "signal_id": "skills_format",
+      "display_name": "Skills section format",
+      "weight": 8,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["categorised", "relevant_skills_first", "no_soft_skills_mixed", "no_ratings"],
+          "observation": [
+            "Your skills are grouped by category with the most relevant skills listed first in each group.",
+            "The skills section is well-structured: categorised, ordered by relevance, and free of noise.",
+            "Your skills are organised into clear categories with the highest-priority skills leading."
+          ],
+          "interpretation": [
+            "A recruiter scanning for core requirements finds them in under one second. This is best practice.",
+            "Categorised, ordered skills sections dramatically reduce recruiter effort. This one is optimised.",
+            "The structure signals technical maturity — you know which skills matter most for this role."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [65, 84],
+          "conditions": ["categorised_but_unordered", "flat_but_ordered"],
+          "observation": [
+            "Your skills are grouped by category but the order doesn't prioritise the most relevant skills.",
+            "Your skills are listed in a flat format, but the most relevant ones appear near the top.",
+            "The skills section is well-formatted but the internal ordering doesn't optimise for this role."
+          ],
+          "interpretation": [
+            "Good structure, minor optimisation left. The recruiter finds the skills — just not instantly.",
+            "A flat but ordered list is scannable enough to work. Categories would improve it further.",
+            "Ordering matters — recruiters read left-to-right and top-to-bottom. Small reorder, meaningful improvement."
+          ],
+          "action": [
+            "Reorder your skills so the most JD-relevant skill appears first in its category — or first on the flat list.",
+            "Put your most in-demand skills at the front. A recruiter's eye lands on the first item in each group.",
+            "Quick win: move the skills that appear in the JD to the top of your skills section."
+          ]
+        },
+        "FAIR": {
+          "score_range": [40, 64],
+          "conditions": ["flat_unordered", "bullet_list_format", "mixed_soft_and_hard"],
+          "observation": [
+            "Your skills are in a flat list with key skills buried mid-way through.",
+            "Technical and soft skills are mixed together in the same section.",
+            "Skills are formatted as one per bullet point — functional but space-inefficient."
+          ],
+          "interpretation": [
+            "A recruiter scanning fast could easily miss the key skill buried at position 8 in a flat list.",
+            "Soft skills mixed into a technical skills section dilute the technical signal. Recruiters scan for Java, not 'Communication'.",
+            "Bullet-per-skill lists take up excessive space and can look junior to experienced recruiters."
+          ],
+          "action": [
+            "Move your most relevant skills to the top of the list. Better yet, group them: 'Languages: Java, Python, Go'.",
+            "Separate technical and soft skills. Create distinct sections or remove soft skills from your skills area entirely.",
+            "Switch from bullet-per-skill to a comma-separated list grouped by category. It's more compact and more professional."
+          ]
+        },
+        "POOR": {
+          "score_range": [15, 39],
+          "conditions": ["prose_format", "self_rated", "over_versioned", "generic_only"],
+          "observation": [
+            "Your skills are written in paragraph form rather than a scannable list.",
+            "Your skills section includes self-assessed proficiency ratings (e.g. 'Java — Expert').",
+            "Your skills list includes version numbers for most technologies — e.g. 'Java 8, Java 11, Java 17'.",
+            "Your skills section contains only soft skills — no technical skills are listed."
+          ],
+          "interpretation": [
+            "Skills in paragraph form require reading rather than scanning. In a 10-second review, prose skills are ignored.",
+            "Self-assessed proficiency ratings carry zero weight with technical recruiters — and create awkward questions in interviews.",
+            "Version numbers belong in interviews, not skills sections. They add visual noise without adding useful signal.",
+            "A technical role with no technical skills in the skills section is a critical miss — the section is doing nothing for you."
+          ],
+          "action": [
+            "Reformat your skills as a comma-separated list grouped by category. Remove all sentences.",
+            "Remove all proficiency ratings. Let your experience bullets demonstrate your depth instead.",
+            "Strip the version numbers. List 'Java', not 'Java 8 / Java 11 / Java 17'. Recruiters know Java evolved.",
+            "Replace soft skills with your actual technical stack. Soft skills can live in your summary or be cut entirely."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 14],
+          "conditions": ["no_skills_section"],
+          "observation": [
+            "No dedicated skills section was found on your resume.",
+            "There is no skills section — technical keywords are only present in experience bullets.",
+            "Your resume is missing a skills section entirely."
+          ],
+          "interpretation": [
+            "Without a skills section, a recruiter has to hunt through bullet points for technical keywords. Most won't.",
+            "ATS systems rely heavily on skills sections for keyword extraction. Without one, your resume will score poorly in automated screening.",
+            "The absence of a skills section is the single biggest structural problem this resume has for technical role applications."
+          ],
+          "action": [
+            "Add a dedicated 'Technical Skills' or 'Skills' section near the top of your resume — above or immediately after your summary.",
+            "This is a non-negotiable fix. Create a skills section today: group your technologies by category and list them clearly.",
+            "Place a skills section in the top third of your resume. This is the highest-impact structural change you can make."
+          ]
+        }
+      }
+    },
+
+    "bullet_quality": {
+      "signal_id": "bullet_quality",
+      "display_name": "Work bullet quality",
+      "weight": 10,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["quantified_impact", "strong_action_verb", "tech_specific", "outcome_stated"],
+          "observation": [
+            "Your experience bullets are specific, quantified, and lead with strong action verbs.",
+            "Most bullets follow the impact formula: action verb + specific task + measurable outcome.",
+            "Your bullets demonstrate what you built, how you built it, and the result — the gold standard."
+          ],
+          "interpretation": [
+            "This is what strong engineering bullets look like. A recruiter reads these and sees evidence, not claims.",
+            "Quantified bullets give a technical recruiter something to anchor a comp discussion on — they signal seniority.",
+            "Specific, outcome-focused bullets survive both the ATS scan and the human review. These work."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [60, 79],
+          "conditions": ["specific_but_not_quantified", "tech_mentioned", "action_verb_present"],
+          "observation": [
+            "Your bullets are specific and action-oriented but lack quantified outcomes.",
+            "Good action verbs and technical specificity — but most bullets don't state the result or scale.",
+            "Your experience bullets describe what you did clearly, but not the impact of doing it."
+          ],
+          "interpretation": [
+            "Specific bullets are good — but 'reduced latency' is weaker than 'reduced latency by 40%'. Numbers close the loop.",
+            "A recruiter can see what you did. They can't see the scale or significance without numbers.",
+            "One step away from excellent. Adding even rough metrics transforms good bullets into standout ones."
+          ],
+          "action": [
+            "Add a result or scale to your strongest bullets. Even rough numbers help: 'reduced load time by ~30%' is better than none.",
+            "For every bullet, ask: so what? The answer is what's missing. Add it.",
+            "Review your top 3 bullets and add one metric to each. Percentage improvement, scale (users, requests, records), or time saved."
+          ]
+        },
+        "FAIR": {
+          "score_range": [35, 59],
+          "conditions": ["responsibility_focused", "weak_verbs", "vague_language"],
+          "observation": [
+            "Most of your bullets describe responsibilities rather than achievements.",
+            "Your experience bullets use weak verbs like 'assisted', 'supported', 'helped with', or 'involved in'.",
+            "The language in your bullets is vague — it's hard to gauge the scale or complexity of your work."
+          ],
+          "interpretation": [
+            "Responsibility bullets ('Responsible for...') describe a job description, not a candidate. Recruiters see this as undifferentiated.",
+            "Weak verbs understate your contribution. 'Assisted' implies you were peripheral. 'Engineered' or 'Built' implies you were central.",
+            "Vague bullets leave the recruiter guessing at your seniority level — and they'll guess low."
+          ],
+          "action": [
+            "Rewrite 'responsible for X' as 'built / designed / led / engineered X that achieved Y'.",
+            "Cut every 'assisted', 'supported', and 'helped'. Replace with the direct verb: what did YOU do?",
+            "Add specificity to your vaguest bullets: what was the scale, the tech used, the team size, the outcome?"
+          ]
+        },
+        "POOR": {
+          "score_range": [10, 34],
+          "conditions": ["duty_list", "no_tech_mentioned", "very_short_bullets"],
+          "observation": [
+            "Your bullets read as a duty list rather than an achievement record.",
+            "No technical context is mentioned in your experience bullets — tools and technologies are absent.",
+            "Most bullets are a single short line with no context, scale, or outcome."
+          ],
+          "interpretation": [
+            "A list of duties tells a recruiter what your job was, not whether you were good at it.",
+            "Experience bullets with no technical context are difficult to evaluate for a technical role — the recruiter has nothing to assess.",
+            "Short, decontextualised bullets signal junior thinking about how to present work — regardless of the work's actual quality."
+          ],
+          "action": [
+            "For each bullet, add: what you built, what tech you used, and what happened as a result. Three elements, one sentence.",
+            "Add the tech stack to every bullet where it's relevant. Recruiters need to see the tools you actually used.",
+            "Expand your shortest bullets. Context is not padding — it's evidence."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 9],
+          "conditions": ["no_bullets", "single_bullet_per_role", "paragraph_format"],
+          "observation": [
+            "Your work experience is written in paragraph form rather than bullet points.",
+            "Some roles have only a single bullet — not enough to represent your contribution.",
+            "One or more roles have no descriptions at all — just the job title and dates."
+          ],
+          "interpretation": [
+            "Paragraph-format experience is very difficult to scan. In 10 seconds, a recruiter won't read a paragraph — they'll skip it.",
+            "A single bullet per role tells a recruiter almost nothing. It suggests either junior experience or a failure to articulate value.",
+            "Roles with no description are dead weight — they add to your timeline but subtract from your credibility."
+          ],
+          "action": [
+            "Reformat all experience into bullet points. 3–5 bullets per role is the target.",
+            "Add at least 3 bullets to each significant role. Each bullet = one achievement or responsibility.",
+            "Every role deserves a description. Even a brief one. 'Led backend development for X feature' is infinitely better than nothing."
+          ]
+        }
+      }
+    },
+
+    "company_context": {
+      "signal_id": "company_context",
+      "display_name": "Company context and credibility",
+      "weight": 6,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["faang_or_tier1", "well_known_brand"],
+          "observation": [
+            "{{company_name}} is a well-recognised top-tier company.",
+            "{{company_name}} is an immediately recognisable name — no context needed.",
+            "Your current employer, {{company_name}}, is a strong signal on its own."
+          ],
+          "interpretation": [
+            "Engineering bar, scale, and culture are all inferred without reading a word. Strong trust signal.",
+            "Top-tier company names do credibility work passively — recruiters read the rest of your resume with a different lens.",
+            "A recognisable employer is the fastest possible way to establish credibility before any detail is read."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [60, 79],
+          "conditions": ["scale_up", "known_in_industry"],
+          "observation": [
+            "{{company_name}} is known in the industry, even if not universally recognised.",
+            "{{company_name}} is a credible name — most experienced recruiters will know it.",
+            "Your employer is a recognised scale-up — provides some credibility context."
+          ],
+          "interpretation": [
+            "Clear enough context that a positive signal is conveyed. Mild trust indicator.",
+            "Not FAANG, but not unknown either. Most technical recruiters will have a frame of reference.",
+            "Decent company recognition. Unlikely to be a barrier — but won't be a major positive either."
+          ],
+          "action": []
+        },
+        "FAIR": {
+          "score_range": [40, 59],
+          "conditions": ["described_unknown", "company_with_descriptor"],
+          "observation": [
+            "{{company_name}} isn't widely known, but you've provided some context in your description.",
+            "Your employer isn't immediately recognisable, though the role description adds some framing.",
+            "{{company_name}} is unfamiliar to most recruiters but the surrounding context helps."
+          ],
+          "interpretation": [
+            "Unknown name, but the descriptor partially fills the gap. It reduces the ambiguity without eliminating it.",
+            "A recruiter outside your industry may still lack a frame of reference even with context.",
+            "Providing some context is better than none — but a more explicit descriptor would do more work."
+          ],
+          "action": [
+            "Add a brief descriptor directly after the company name: e.g. '{{company_name}} (Series B fintech, 200 engineers)'.",
+            "A bracketed descriptor — stage, industry, scale — gives any recruiter an instant frame of reference.",
+            "One line of context makes an unknown company legible. Add it to every employer a recruiter might not recognise."
+          ]
+        },
+        "POOR": {
+          "score_range": [15, 39],
+          "conditions": ["early_stage_startup", "no_descriptor"],
+          "observation": [
+            "{{company_name}} is an early-stage company with no additional context provided.",
+            "Your employer is listed with no descriptor — a recruiter has no frame of reference.",
+            "{{company_name}} isn't recognisable and no context is given to help a recruiter understand the engineering environment."
+          ],
+          "interpretation": [
+            "No company tier signal. A recruiter has no way to infer team size, scale, or engineering standards.",
+            "Without context, an unknown employer is a neutral-to-negative signal — uncertainty defaults to scepticism.",
+            "Recruiters who can't place your employer will spend less time on your resume, not more."
+          ],
+          "action": [
+            "Add a descriptor in brackets after the company name: e.g. '{{company_name}} (early-stage SaaS startup, 20-person engineering team)'.",
+            "Give recruiters the context they need: stage, industry, and scale. Three pieces of information — one parenthetical.",
+            "Don't let an unknown company name be an invisible barrier. Name the category: fintech, healthtech, B2B SaaS — whatever applies."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 14],
+          "conditions": ["company_name_missing", "all_employers_unknown_no_context"],
+          "observation": [
+            "One or more roles list no company name — just a title and dates.",
+            "Every employer on your resume is unrecognised and none have contextual descriptors.",
+            "Company information is missing or severely incomplete across your work history."
+          ],
+          "interpretation": [
+            "Missing company names are a red flag — they suggest something is being obscured, even if unintentionally.",
+            "A resume where every employer is unknown and uncontextualised gives a recruiter nothing to calibrate against.",
+            "Without any company credibility signal, a recruiter has no external validation of your experience claims."
+          ],
+          "action": [
+            "Add a company name to every role — no exceptions. A recruiter needs to know where you worked.",
+            "Add a descriptor to every employer a recruiter wouldn't recognise: industry, stage, and rough size.",
+            "Company context is one of the fastest trust signals on a resume. Invest the two lines needed to add it everywhere."
+          ]
+        }
+      }
+    },
+
+    "employment_gaps": {
+      "signal_id": "employment_gaps",
+      "display_name": "Employment gaps",
+      "weight": 5,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["no_gaps", "all_gaps_explained"],
+          "observation": [
+            "Your employment history has no unexplained gaps.",
+            "All periods between roles are either continuous or explicitly labelled.",
+            "Your work history is complete and continuous — no unexplained breaks."
+          ],
+          "interpretation": [
+            "A clean timeline removes a common recruiter concern before it's even raised.",
+            "No gaps means no distracting questions. The recruiter's attention stays on your skills and achievements.",
+            "Continuous or fully explained history is the baseline expectation — you meet it cleanly."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [60, 79],
+          "conditions": ["gap_under_3_months_explained"],
+          "observation": [
+            "There's a brief gap in your work history that is labelled and explained.",
+            "A short career break appears in your timeline — you've noted its reason.",
+            "A {{gap_duration}} gap between roles is present and accounted for."
+          ],
+          "interpretation": [
+            "A labelled gap raises no flags. It's the unexplained ones that concern recruiters.",
+            "Brief gaps are normal. The label is what makes the difference between a red flag and a non-event.",
+            "Explained breaks are visible but ignorable. You've handled this correctly."
+          ],
+          "action": []
+        },
+        "FAIR": {
+          "score_range": [35, 59],
+          "conditions": ["gap_under_6_months_unexplained"],
+          "observation": [
+            "There is a {{gap_duration}} gap in your employment history with no explanation.",
+            "A break of approximately {{gap_duration}} between {{gap_start}} and your next role is unexplained.",
+            "A short-to-medium employment gap appears without any label or context."
+          ],
+          "interpretation": [
+            "Recruiters notice unexplained gaps, even short ones — their imagination fills the void.",
+            "A brief unexplained gap is unlikely to be a dealbreaker, but it's an unnecessary distraction.",
+            "The gap itself isn't the issue — the absence of an explanation is."
+          ],
+          "action": [
+            "Add a one-line entry for this period: 'Career break — travel / personal reasons / upskilling / parental leave'. A label makes it a non-issue.",
+            "Label the gap. Whatever the reason — health, family, relocation, study — name it. Recruiters respect honesty over omission.",
+            "A labelled gap is a closed question. An unlabelled one is an open one. Close it."
+          ]
+        },
+        "POOR": {
+          "score_range": [10, 34],
+          "conditions": ["gap_over_6_months_unexplained"],
+          "observation": [
+            "There is a {{gap_duration}} gap in your work history starting around {{gap_start}} with no explanation.",
+            "A significant employment gap of {{gap_duration}} is unexplained on your resume.",
+            "Your employment history has a notable break of {{gap_duration}} that a recruiter will ask about."
+          ],
+          "interpretation": [
+            "A gap of this length without explanation is one of the most common recruiter pause points.",
+            "Unexplained gaps of 6+ months invite speculation — and speculation is almost always worse than the truth.",
+            "This will come up in every interview. Better to own it on the resume than be asked to explain it cold."
+          ],
+          "action": [
+            "Add a labelled entry for this period. Options: 'Career break — parental leave', 'Career break — health', 'Sabbatical — personal development / travel', 'Freelance work / consulting'.",
+            "A single honest line removes the question entirely. Recruiters respect self-awareness far more than unexplained omissions.",
+            "If you upskilled during this period, list it explicitly as an entry with dates. Courses, projects, certifications — all count."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 9],
+          "conditions": ["multiple_long_gaps_unexplained", "total_gap_over_1_year"],
+          "observation": [
+            "Multiple significant unexplained gaps appear across your employment history.",
+            "Your work history has over a year of unaccounted-for time spread across several breaks.",
+            "The pattern of unexplained employment gaps in your history creates a significant credibility concern."
+          ],
+          "interpretation": [
+            "Multiple unexplained gaps compound — each one adds to a pattern that recruiters find difficult to overlook.",
+            "The cumulative unaccounted time on this resume is significant enough to be a primary rejection factor.",
+            "At this level, the gaps aren't background noise — they're the loudest signal on the page."
+          ],
+          "action": [
+            "Address every gap. Every single one needs a label, even a brief one. This is not optional.",
+            "Work backwards through your history and add a one-line entry for every period over 1 month that isn't currently explained.",
+            "If you have freelance, consulting, or project work during any of these periods, document it as a role. Even informal work counts if it's real."
+          ]
+        }
+      }
+    },
+
+    "chronology": {
+      "signal_id": "chronology",
+      "display_name": "Timeline consistency",
+      "weight": 5,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["clean_reverse_chronological", "consistent_date_format", "no_overlaps"],
+          "observation": [
+            "Your work history follows a clean reverse-chronological order with consistent date formatting.",
+            "The timeline on your resume is clear, logical, and easy to verify.",
+            "Dates are formatted consistently throughout and the chronology is easy to follow."
+          ],
+          "interpretation": [
+            "Clean chronology removes friction from the experience verification process.",
+            "A recruiter can calculate your YOE, identify your progression, and spot any concerns in seconds.",
+            "Consistent dating and logical ordering is baseline professionalism — you've got it right."
+          ],
+          "action": []
+        },
+        "FAIR": {
+          "score_range": [40, 69],
+          "conditions": ["inconsistent_date_format", "missing_months", "functional_format"],
+          "observation": [
+            "Your date formatting is inconsistent — some roles show month and year, others just year.",
+            "Some roles are missing month-level detail, making the timeline harder to verify.",
+            "Your resume uses a functional format that groups skills rather than showing a chronological history."
+          ],
+          "interpretation": [
+            "Inconsistent dates mean a recruiter has to mentally standardise your timeline — added friction.",
+            "Year-only dates obscure short-tenure roles and make YOE calculations unreliable.",
+            "Functional formats hide your career progression. Most recruiters distrust them because of that ambiguity."
+          ],
+          "action": [
+            "Standardise all dates to: Month Year – Month Year (e.g. Jan 2020 – Mar 2023).",
+            "Use month-year for every role. Year-only formatting is associated with gaps or short tenures being hidden.",
+            "Switch to reverse-chronological format. Most recruiters and ATS systems expect it, and functional formats raise red flags."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 39],
+          "conditions": ["overlapping_dates", "backwards_order", "chronology_contradictions"],
+          "observation": [
+            "Your work history contains overlapping dates that make the timeline impossible to follow.",
+            "The chronology on your resume contains apparent contradictions — roles that don't add up sequentially.",
+            "Dates across your work history are inconsistent in ways that undermine the entire timeline."
+          ],
+          "interpretation": [
+            "Overlapping dates suggest errors, exaggeration, or a poorly formatted resume — none of which are good.",
+            "A recruiter who spots a chronological contradiction will question the entire resume, not just that role.",
+            "Chronology errors are credibility killers. If the dates can't be trusted, nothing downstream can be trusted."
+          ],
+          "action": [
+            "Fix every date error before submitting this resume anywhere. Start with the overlaps and work outwards.",
+            "Print your timeline and verify it manually. Every role should end before the next begins.",
+            "Align work history, education, and career breaks into one coherent timeline. Every period must be accounted for."
+          ]
+        }
+      }
+    },
+
+    "education": {
+      "signal_id": "education",
+      "display_name": "Education relevance",
+      "weight": 4,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [80, 100],
+          "conditions": ["relevant_degree", "top_institution", "recent_or_complemented_by_experience"],
+          "observation": [
+            "Your {{degree}} from {{institution}} is directly relevant to this role.",
+            "A relevant degree from a well-regarded institution — {{institution}} — strengthens your application.",
+            "Your educational background aligns well with the technical requirements of this role."
+          ],
+          "interpretation": [
+            "A relevant degree from a credible institution is a passive trust signal — it works without anyone noticing it.",
+            "Education rarely wins a technical role, but a strong relevant degree removes a background concern.",
+            "Your academic background does quiet supporting work throughout the review."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [60, 79],
+          "conditions": ["relevant_degree_average_institution", "related_field"],
+          "observation": [
+            "Your {{degree}} is in a related field — solid foundation for this type of role.",
+            "Your degree is relevant even if not directly matched — the underlying discipline applies.",
+            "A {{degree}} in a cognate field provides good academic grounding for this position."
+          ],
+          "interpretation": [
+            "Not an exact match, but close enough that education won't be a concern for experienced reviewers.",
+            "Related field degrees are viewed positively in most technical hiring contexts.",
+            "Your education contributes a supporting signal — not a defining one, but not a gap either."
+          ],
+          "action": []
+        },
+        "FAIR": {
+          "score_range": [35, 59],
+          "conditions": ["unrelated_degree", "no_compensating_certs"],
+          "observation": [
+            "Your {{degree}} is in an unrelated field with no technical bridge courses or certifications listed.",
+            "Your educational background doesn't directly connect to this role's requirements.",
+            "The degree on your resume is from a different discipline — the connection to this role isn't explicit."
+          ],
+          "interpretation": [
+            "An unrelated degree isn't disqualifying, but it adds a question mark that experience and skills need to answer.",
+            "For technical roles, an unrelated degree is a flag a recruiter notes — and expects your experience to override.",
+            "The gap between your degree and this role is visible. Compensating signals (certs, projects, experience) must close it."
+          ],
+          "action": [
+            "Add any relevant certifications or self-study to your education section to bridge the gap.",
+            "If you've taken any relevant courses, bootcamps, or completed significant projects, list them under education or a separate 'Training' section.",
+            "Your experience must carry this application. Make sure your skills and bullet points fully compensate for the education mismatch."
+          ]
+        },
+        "POOR": {
+          "score_range": [10, 34],
+          "conditions": ["no_education_listed", "incomplete_education"],
+          "observation": [
+            "No education section is present on your resume.",
+            "Your education section is incomplete — institution or degree details are missing.",
+            "Education details are absent or too sparse to be informative."
+          ],
+          "interpretation": [
+            "A missing education section raises questions — especially for roles that have a degree preference.",
+            "Incomplete education listings read as either an oversight or deliberate omission. Both are flags.",
+            "Even if your experience is strong, most ATS systems check for an education field. Its absence can cause scoring issues."
+          ],
+          "action": [
+            "Add an education section, even if brief. List your highest qualification, the institution, and the year of completion.",
+            "If you don't have a traditional degree, list any relevant certifications, bootcamps, or professional qualifications instead.",
+            "Incomplete information is worse than complete honest information. Fill in what you have."
+          ]
+        }
+      }
+    },
+
+    "certifications": {
+      "signal_id": "certifications",
+      "display_name": "Certifications",
+      "weight": 3,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["relevant_cert_present", "current_cert", "industry_recognised"],
+          "observation": [
+            "Your {{cert_name}} certification is directly relevant to this role and currently valid.",
+            "A current {{cert_name}} is listed — a strong supporting signal for your technical credentials.",
+            "Your certifications include {{cert_name}}, which is highly valued in this hiring context."
+          ],
+          "interpretation": [
+            "Industry-recognised certifications provide third-party validation of your skills — they're worth more than self-claims.",
+            "A current, relevant cert tells a recruiter you've invested in formal validation of your knowledge.",
+            "Certifications in the right areas are ATS keywords and trust signals simultaneously."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [55, 79],
+          "conditions": ["partially_relevant_cert", "expired_cert_noted"],
+          "observation": [
+            "You have certifications listed, though they're not directly aligned with this role's requirements.",
+            "{{cert_name}} is present but is from an adjacent area rather than a direct match.",
+            "Your certifications signal commitment to learning, even if not perfectly targeted."
+          ],
+          "interpretation": [
+            "Adjacent certifications contribute a small positive signal — they show commitment to professional development.",
+            "Not a direct keyword hit, but demonstrates a structured approach to learning.",
+            "Partially relevant certs are better than none — they fill gaps in the profile rather than leaving voids."
+          ],
+          "action": [
+            "If you're pursuing any JD-relevant certifications, add them in progress: e.g. 'AWS Solutions Architect (in progress, expected Q3 2025)'.",
+            "Prioritise getting certified in the specific areas this role demands — it directly addresses a visible gap.",
+            "Add any in-progress certifications with expected completion dates. Showing momentum matters."
+          ]
+        },
+        "FAIR": {
+          "score_range": [25, 54],
+          "conditions": ["outdated_cert", "no_certs_role_expects_them"],
+          "observation": [
+            "Your certifications are present but significantly out of date.",
+            "No certifications are listed despite this role typically expecting them.",
+            "Certifications on your resume have lapsed — their value is significantly reduced."
+          ],
+          "interpretation": [
+            "Outdated certifications can signal stagnation rather than strength — a recruiter notes when you last invested in formal learning.",
+            "For a role that values or expects certification, their absence is a visible gap against similarly qualified candidates.",
+            "Expired certifications raise the question of whether you've kept your skills current."
+          ],
+          "action": [
+            "Renew or update certifications that have lapsed — especially if they're in core areas for this role.",
+            "If you can't renew immediately, pursue the most relevant certification for this role and list it as 'in progress'.",
+            "Add the year to every certification. Current certs include a year; expired ones look current without one — don't mislead."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 24],
+          "conditions": ["required_cert_missing"],
+          "observation": [
+            "This role specifically requires or strongly prefers {{cert_name}} — it's absent from your resume.",
+            "A required certification is not present on your resume.",
+            "The JD lists {{cert_name}} as a key requirement. It doesn't appear anywhere on your resume."
+          ],
+          "interpretation": [
+            "A missing required certification is a hard filter in many hiring processes — ATS systems will score this against you.",
+            "When a cert is listed as required (not preferred), its absence can be an automatic screen-out in structured hiring pipelines.",
+            "This gap is addressable but needs to be addressed quickly — or acknowledged proactively in your application."
+          ],
+          "action": [
+            "If you can obtain {{cert_name}} quickly, prioritise it before applying to more roles of this type.",
+            "If you're applying anyway, note in your cover letter that you're pursuing {{cert_name}} and give an expected date.",
+            "Add {{cert_name}} as 'in progress' if you've started the process. Showing initiative partially offsets the gap."
+          ]
+        }
+      }
+    },
+
+    "resume_length": {
+      "signal_id": "resume_length",
+      "display_name": "Resume length",
+      "weight": 4,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [80, 100],
+          "conditions": ["1_to_2_pages", "appropriate_for_experience_level"],
+          "observation": [
+            "Your resume is {{page_count}} page(s) — appropriate for your level of experience.",
+            "At {{page_count}} pages, the length is well-calibrated to your career stage.",
+            "Your resume fits into {{page_count}} page(s) without padding or compression."
+          ],
+          "interpretation": [
+            "Length signals judgement. Right-sized resumes tell a recruiter you understand what matters.",
+            "A {{page_count}}-page resume at your experience level is exactly what's expected.",
+            "No length flags — the recruiter can focus on the content, not the format."
+          ],
+          "action": []
+        },
+        "FAIR": {
+          "score_range": [40, 74],
+          "conditions": ["slightly_long", "slightly_short"],
+          "observation": [
+            "At {{page_count}} pages, your resume is slightly longer than ideal for your experience level.",
+            "Your resume is on the shorter side — some relevant content may have been cut.",
+            "The resume runs {{page_count}} pages, which is borderline for a role at this level."
+          ],
+          "interpretation": [
+            "Slightly long resumes make recruiters work harder to find the signal in the noise.",
+            "A short resume can leave a recruiter without enough to evaluate — they fill gaps with uncertainty.",
+            "Length isn't a dealbreaker, but it's a friction signal — either too much or too little."
+          ],
+          "action": [
+            "Target a tighter {{page_count}} pages. Cut oldest roles to 1–2 bullets. Remove generic skills.",
+            "If you're under 2 pages and have 5+ years of experience, consider expanding the bullet detail on your most recent role.",
+            "Review every bullet and remove any that don't directly add to your case for this specific role."
+          ]
+        },
+        "POOR": {
+          "score_range": [10, 39],
+          "conditions": ["too_long_3_plus_pages", "way_too_short"],
+          "observation": [
+            "Your resume is {{page_count}} pages — significantly longer than the industry standard.",
+            "At {{page_count}} pages, the resume will not be read in full by most recruiters.",
+            "Your resume is a single brief page with limited content — too short for the experience level this role requires."
+          ],
+          "interpretation": [
+            "A {{page_count}}-page resume signals poor editorial judgment. Recruiters see it as an inability to prioritise.",
+            "Most recruiters spend 30–60 seconds per resume. A {{page_count}}-page document means pages 3+ will rarely be seen.",
+            "A very short resume for a senior role suggests either hidden experience or weak self-presentation."
+          ],
+          "action": [
+            "Cut to 2 pages maximum. Older roles (5+ years ago) should have 0–2 bullets. Roles from 10+ years ago may not need to appear at all.",
+            "Every line should earn its place. Remove: old roles, generic skills, soft skill sections, and any content not relevant to this JD.",
+            "Expand your most recent roles with 4–5 strong, specific bullets. Quality depth beats surface breadth."
+          ]
+        }
+      }
+    },
+
+    "layout_readability": {
+      "signal_id": "layout_readability",
+      "display_name": "Layout and ATS readability",
+      "weight": 5,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["clean_single_column", "standard_fonts", "ats_safe", "good_whitespace"],
+          "observation": [
+            "Your resume uses a clean, single-column layout with standard fonts and generous whitespace.",
+            "The layout is ATS-safe, visually clean, and easy to scan.",
+            "Your formatting is professional, consistent, and optimised for both human and automated review."
+          ],
+          "interpretation": [
+            "ATS-safe formatting means your resume is parsed correctly — no keyword extraction failures.",
+            "A clean layout lets the content do the work. No formatting quirks pull the recruiter's attention away.",
+            "This is the format that works universally — in every ATS system, on every screen, in every inbox."
+          ],
+          "action": []
+        },
+        "FAIR": {
+          "score_range": [40, 69],
+          "conditions": ["multi_column", "heavy_formatting", "small_font", "inconsistent_spacing"],
+          "observation": [
+            "Your resume uses a multi-column layout that may not parse correctly in ATS systems.",
+            "Heavy formatting — icons, graphics, or colour backgrounds — is present and may cause ATS parsing failures.",
+            "The font size in places drops below 10pt, making the document difficult to scan quickly.",
+            "Spacing and formatting are inconsistent across sections — the layout needs standardising."
+          ],
+          "interpretation": [
+            "Multi-column layouts break most ATS parsers — skills and experience from the second column are often lost entirely.",
+            "Design-heavy resumes may look great as PDFs but fail completely when parsed by automated systems.",
+            "Small fonts and inconsistent spacing slow down the recruiter's eye — even a strong resume reads as more effort."
+          ],
+          "action": [
+            "Switch to a single-column layout. Multi-column formats fail ATS parsing and are not worth the aesthetic trade-off.",
+            "Remove all icons, photos, graphics, and coloured backgrounds. Plain text and clean layout wins in every context.",
+            "Increase body font to a minimum of 10.5pt (ideally 11pt). Your resume shouldn't require squinting.",
+            "Pick one date format, one bullet style, and one font — then apply them consistently throughout."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 39],
+          "conditions": ["tables_used", "text_boxes", "headers_footers_with_content", "image_based_resume"],
+          "observation": [
+            "Your resume appears to use tables or text boxes for layout — these frequently fail ATS parsing.",
+            "Key content may be in the header or footer of the document — ATS systems often skip these areas.",
+            "Your resume may be image-based or contain embedded graphics that make text extraction impossible.",
+            "The layout structure of this document will likely cause significant ATS parsing failures."
+          ],
+          "interpretation": [
+            "ATS systems extract text linearly. Tables and text boxes break this extraction — your content may be partially or completely lost.",
+            "Content in headers and footers is routinely ignored by ATS parsers — contact info stored there may never be read.",
+            "An image-based resume is invisible to ATS systems. Every keyword, every skill, every company name — unreadable by automation.",
+            "Regardless of how strong your experience is, an unparseable resume will be automatically scored at or near zero."
+          ],
+          "action": [
+            "Rebuild your resume in a simple word processor or a trusted resume tool. Remove all tables, text boxes, and graphics.",
+            "Move all contact information out of the header/footer and into the main document body.",
+            "Use plain text formatting only: section headings, bullet points, and bold for emphasis. Nothing more.",
+            "Test your resume by copying and pasting it into a plain text editor. If the structure breaks completely, your ATS submission will fail."
+          ]
+        }
+      }
+    },
+
+    "contact_info": {
+      "signal_id": "contact_info",
+      "display_name": "Contact information",
+      "weight": 3,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["email_present", "phone_present", "linkedin_present", "location_present", "professional_email"],
+          "observation": [
+            "Your contact section is complete: email, phone, LinkedIn, and location are all present.",
+            "All key contact details are present and professional.",
+            "Your contact information covers every channel a recruiter might use to reach you."
+          ],
+          "interpretation": [
+            "A complete contact section means zero friction from the moment a recruiter decides to follow up.",
+            "Nothing is missing. A recruiter doesn't have to hunt for how to reach you.",
+            "Professionally formatted contact information signals attention to detail — even before the content is read."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [60, 79],
+          "conditions": ["email_and_phone_present", "missing_linkedin_or_location"],
+          "observation": [
+            "Email and phone are present. LinkedIn or location is missing.",
+            "Your contact info covers the basics but is missing a useful secondary channel.",
+            "Core reachability is covered, though a LinkedIn profile or location note would add context."
+          ],
+          "interpretation": [
+            "Email and phone are sufficient for basic reachability — the gap is minor.",
+            "LinkedIn is increasingly expected at senior levels — its absence is a small but noticeable gap.",
+            "Location context helps recruiters with relocation or remote screening — worth adding even as just 'Dublin, IE' or 'Remote'."
+          ],
+          "action": [
+            "Add your LinkedIn URL. Customise it: linkedin.com/in/yourname — not the default character string.",
+            "Add a location indicator even if brief: 'Dublin, IE' or 'Remote — open to relocation' provides useful context.",
+            "Both LinkedIn and location take 30 seconds to add. They're standard expectations for senior applications."
+          ]
+        },
+        "POOR": {
+          "score_range": [15, 49],
+          "conditions": ["missing_phone_or_email", "unprofessional_email", "no_contact_in_body"],
+          "observation": [
+            "Your email address uses an unprofessional handle that may reflect poorly.",
+            "A phone number is missing from your contact details.",
+            "Contact information is incomplete — a recruiter may struggle to reach you."
+          ],
+          "interpretation": [
+            "An unprofessional email (e.g. partylad99@...) is a trivially easy thing to fix — and a surprisingly easy thing to be judged for.",
+            "Missing a phone number reduces recruiter options. Some prefer calling to emailing for initial outreach.",
+            "Incomplete contact info creates friction at the worst possible moment — when a recruiter actually wants to act."
+          ],
+          "action": [
+            "Create a professional email address if you don't have one: firstname.lastname@gmail.com is the standard.",
+            "Add your phone number — including the country code for international applications.",
+            "Audit your contact section: you need a professional email, phone, LinkedIn, and location indicator at minimum."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 14],
+          "conditions": ["no_contact_info", "only_linkedin_no_email"],
+          "observation": [
+            "No contact information was found on your resume.",
+            "Critical contact details are missing — a recruiter cannot follow up on this application.",
+            "The contact section is either absent or so incomplete it provides no usable information."
+          ],
+          "interpretation": [
+            "A resume without contact information cannot lead to an interview. This is a functional failure of the document.",
+            "Even if every other element of this resume is excellent, missing contact info makes it impossible to act on.",
+            "This is the most critical administrative fix on this resume."
+          ],
+          "action": [
+            "Add your contact information immediately: full name, professional email, phone number, LinkedIn, and city/country.",
+            "Place contact info at the very top of the resume — it must be the first thing a recruiter sees.",
+            "Do not submit this resume until contact details are present and correct."
+          ]
+        }
+      }
+    },
+
+    "anomalies": {
+      "signal_id": "anomalies",
+      "display_name": "Credibility anomalies",
+      "weight": 6,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [90, 100],
+          "conditions": ["no_anomalies_detected"],
+          "observation": [
+            "No credibility anomalies or inconsistencies were detected.",
+            "Your resume is internally consistent — no red flags or impossible claims.",
+            "Everything checks out: dates, skill ages, company claims, and tenure lengths are all plausible."
+          ],
+          "interpretation": [
+            "A clean anomaly check means your resume can be read at face value. No trust erosion.",
+            "Consistency across all signals means a recruiter can build a coherent picture of your background.",
+            "No flags here — this is the baseline every resume should meet."
+          ],
+          "action": []
+        },
+        "POOR": {
+          "score_range": [10, 39],
+          "conditions": ["skill_age_mismatch", "implausible_yoe_for_skill", "tenure_too_short_pattern"],
+          "observation": [
+            "{{anomaly_detail}} — this claim is inconsistent with known information.",
+            "A skill is claimed with more years of experience than the technology has existed.",
+            "A pattern of very short tenures (under 3 months) appears across multiple roles."
+          ],
+          "interpretation": [
+            "Anomalies like this undermine credibility across the entire resume — not just the specific claim.",
+            "A recruiter who catches a factual impossibility will question everything else on the page.",
+            "Short tenure patterns without explanation signal either poor judgment or an unstable career. Both prompt concerns."
+          ],
+          "action": [
+            "Correct {{anomaly_detail}} immediately — a single credibility error can invalidate an otherwise strong resume.",
+            "Fix the years of experience claimed for this skill — the technology simply hasn't existed that long.",
+            "If you've had short tenures, add a one-line context note for each: acquisition, project-based contract, or restructuring."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 9],
+          "conditions": ["contradictory_dates", "impossible_simultaneous_roles", "claimed_degree_mismatch"],
+          "observation": [
+            "Your resume contains directly contradictory information — {{anomaly_detail}}.",
+            "Two roles on your resume overlap in a way that is logistically impossible.",
+            "A claimed qualification or credential cannot be verified as stated."
+          ],
+          "interpretation": [
+            "Direct contradictions are the fastest credibility killers on a resume. A recruiter who spots one will stop reading.",
+            "Impossible overlaps suggest fabrication — even if the error is unintentional, the impression is serious.",
+            "Credibility anomalies at this level are often automatic rejection triggers — no further review takes place."
+          ],
+          "action": [
+            "Fix {{anomaly_detail}} before submitting this resume anywhere. This is the highest priority change on this document.",
+            "Verify every date, every claimed tenure, and every qualification before this resume goes to another recruiter.",
+            "Have someone you trust review the timeline and all factual claims independently — you need a second pair of eyes on this."
+          ]
+        }
+      }
+    },
+
+    "overall_tailoring": {
+      "signal_id": "overall_tailoring",
+      "display_name": "JD tailoring and keyword alignment",
+      "weight": 7,
+      "tiers": {
+        "EXCELLENT": {
+          "score_range": [85, 100],
+          "conditions": ["high_keyword_overlap", "jd_language_in_bullets", "role_specific_framing"],
+          "observation": [
+            "Your resume closely mirrors the language and priorities of this job description.",
+            "Core JD keywords appear prominently in your summary, skills section, and experience bullets.",
+            "The framing and language of your resume is well-aligned with how this role is described."
+          ],
+          "interpretation": [
+            "High keyword alignment means strong ATS scoring and immediate visual relevance for human reviewers.",
+            "A resume that speaks the JD's language tells a recruiter: this candidate understands what we need.",
+            "Tailored resumes outperform generic ones at every stage — from ATS to final interview."
+          ],
+          "action": []
+        },
+        "GOOD": {
+          "score_range": [60, 79],
+          "conditions": ["moderate_keyword_overlap", "some_jd_language"],
+          "observation": [
+            "Your resume has reasonable keyword alignment with this JD, but some core terms are missing or underrepresented.",
+            "Several JD priorities are reflected in your resume, though not all.",
+            "Moderate alignment with the job description — stronger than average but not fully optimised."
+          ],
+          "interpretation": [
+            "Good enough to pass an ATS threshold in most cases, but specific keyword gaps could cost points.",
+            "A recruiter will see relevance — but may also notice the missing terms against the JD.",
+            "Close to tailored. A targeted review of the JD against your resume would quickly identify the gaps."
+          ],
+          "action": [
+            "Read the JD and highlight every term that appears more than once — these are the priority keywords. Check each against your resume.",
+            "Add missing JD terms where you have legitimate experience. Natural integration, not keyword stuffing.",
+            "Pay attention to exact phrasing — 'product roadmap' and 'roadmap planning' are treated differently by some ATS systems."
+          ]
+        },
+        "FAIR": {
+          "score_range": [35, 59],
+          "conditions": ["low_keyword_overlap", "generic_resume_language"],
+          "observation": [
+            "Your resume appears to be a general version rather than one tailored to this specific role.",
+            "There is low alignment between the language used in your resume and the terminology in this JD.",
+            "Core keywords from the job description are largely absent from your resume."
+          ],
+          "interpretation": [
+            "A generic resume sent to a targeted role is one of the most common reasons for early rejection.",
+            "ATS systems score keyword overlap — low alignment means a low automated score regardless of your experience.",
+            "A recruiter reading a generic resume for a specific role doesn't see fit — they see effort not invested."
+          ],
+          "action": [
+            "Spend 20 minutes tailoring this resume to this specific JD before applying. It is the highest-ROI activity in any job search.",
+            "Copy the JD's exact terminology where you legitimately have the experience. Don't paraphrase what the JD says clearly.",
+            "At minimum, update your summary and skills section to reflect this role's specific language. That alone moves the needle significantly."
+          ]
+        },
+        "CRITICAL": {
+          "score_range": [0, 34],
+          "conditions": ["very_low_keyword_overlap", "wrong_domain_framing", "mismatched_seniority_language"],
+          "observation": [
+            "This resume shows very little alignment with the target job description.",
+            "The framing and terminology of your resume is from a different domain than the one this role requires.",
+            "Critical JD keywords are almost entirely absent — this resume is not optimised for this role."
+          ],
+          "interpretation": [
+            "At this level of misalignment, the ATS score will likely be below the threshold for human review.",
+            "A recruiter seeing this resume for this role will not recognise the fit — the work is left entirely to them.",
+            "Submitting a resume with this level of misalignment is unlikely to produce results regardless of the underlying experience."
+          ],
+          "action": [
+            "Do not submit this resume to this role without significant tailoring first.",
+            "Start with the JD. Underline every required skill and responsibility. Then check every underlined item against your resume and address each gap.",
+            "Rewrite your summary entirely for this role. Use the JD's language. Then update your skills section and your top 3 bullets."
+          ]
+        }
+      }
+    }
+  },
+
+  "composite_score": {
+    "display_name": "Overall resume score",
+    "description": "Weighted average of all signal scores. Used to generate the top-level feedback statement.",
+    "tiers": {
+      "EXCELLENT": {
+        "score_range": [80, 100],
+        "headline": [
+          "This is a strong resume — well-structured, well-targeted, and ready to compete seriously for this role.",
+          "Your resume is in excellent shape for this application. The core signals are working in your favour.",
+          "Strong overall. This resume will pass most filters and give a recruiter reason to keep reading."
+        ],
+        "closing": [
+          "Focus on the few remaining items above and this resume is highly competitive.",
+          "Small refinements only — the fundamentals are solid.",
+          "This resume is working hard for you. The gaps above are polish, not reconstruction."
+        ]
+      },
+      "GOOD": {
+        "score_range": [65, 79],
+        "headline": [
+          "Your resume is solid and will get through many filters, but there are clear improvements that would make it significantly stronger.",
+          "A good foundation — but the gaps identified above are meaningful enough to address before wide distribution.",
+          "Above average, but not where it needs to be for a highly competitive role. The issues above are fixable in a few hours."
+        ],
+        "closing": [
+          "Address the priority items above and this resume moves from good to strong.",
+          "The improvements above are targeted and achievable — prioritise the high-weight signals first.",
+          "Don't let fixable issues cost you opportunities. The changes above are worth making."
+        ]
+      },
+      "FAIR": {
+        "score_range": [45, 64],
+        "headline": [
+          "Your resume has real gaps that are likely costing you interviews. The issues below are addressable but need attention.",
+          "This resume is functional but underperforming. A focused revision would significantly change outcomes.",
+          "There are several meaningful issues with this resume that a recruiter is likely to notice. They're worth fixing before applying further."
+        ],
+        "closing": [
+          "Start with the highest-weight signals above — title, skills visibility, and summary. Fix those first.",
+          "A few hours of focused revision could meaningfully change your application outcomes.",
+          "Don't distribute this resume further until the priority issues above are resolved."
+        ]
+      },
+      "POOR": {
+        "score_range": [25, 44],
+        "headline": [
+          "This resume has significant structural and content issues that will result in rejection at most filter stages.",
+          "There are fundamental problems with this resume that go beyond light editing — it needs a substantive revision.",
+          "As currently structured, this resume is unlikely to pass ATS screening or a 10-second recruiter scan for this role."
+        ],
+        "closing": [
+          "Treat this as a full revision, not a light edit. Start with the critical items and work down.",
+          "The issues above are serious enough that applying without addressing them will produce poor results.",
+          "Block out 2–3 hours and rebuild from the high-priority signals above. The effort will be worth it."
+        ]
+      },
+      "CRITICAL": {
+        "score_range": [0, 24],
+        "headline": [
+          "This resume needs a complete overhaul before it should be submitted to any role.",
+          "As it stands, this resume will not pass basic screening for this role or most others like it.",
+          "The issues with this resume are fundamental — structure, content, and targeting all need significant work."
+        ],
+        "closing": [
+          "Do not submit this resume further until the critical issues above are resolved.",
+          "Start fresh with a clean template and use the feedback above as your rebuild checklist.",
+          "This is a significant undertaking, but it's worth doing properly. A strong resume is the highest-leverage career investment you can make."
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,2916 @@
+{
+  "_meta": {
+    "version": "2.0.0",
+    "lastUpdated": "2026-04",
+    "description": "Production skill recency ontology for resume feedback. Covers frontend, backend, cloud/devops, data/ML, mobile, databases, languages, testing, security, and tooling. Status values: CURRENT | ESTABLISHED | AGING | LEGACY | DEPRECATED. Staleness 0.0 (no penalty) to 1.0 (heavy penalty).",
+    "statusDefinitions": {
+      "CURRENT": "Actively hired for; listing is a positive signal.",
+      "ESTABLISHED": "Mainstream and widely used; not a differentiator but expected.",
+      "AGING": "Still used in production but demand declining; showing without modern context is a yellow flag.",
+      "LEGACY": "Rarely hired for in new roles; signals outdated focus unless in legacy/CMS context.",
+      "DEPRECATED": "Effectively dead; listing is a red flag in nearly all contexts."
+    },
+    "scoringNotes": "flagIfClaimedOver is the year threshold after which the claim is flagged for review. maxClaimableYears is the hard ceiling (library/language age). staleness is a 0\u20131 additive penalty weight used by scoring engines.",
+    "categories": [
+      "frontend_frameworks",
+      "frontend_libraries",
+      "css_styling",
+      "bundlers_build",
+      "backend_frameworks",
+      "backend_runtimes",
+      "languages",
+      "databases_relational",
+      "databases_nosql",
+      "databases_vector",
+      "cloud_platforms",
+      "cloud_services",
+      "devops_cicd",
+      "containers_orchestration",
+      "infrastructure_as_code",
+      "data_ml_frameworks",
+      "data_ml_tools",
+      "llm_ai_tools",
+      "mobile",
+      "testing",
+      "security",
+      "api_protocols",
+      "messaging_queues",
+      "monitoring_observability",
+      "version_control",
+      "legacy_frontend",
+      "legacy_backend",
+      "legacy_languages"
+    ]
+  },
+  "skills": [
+    {
+      "key": "React",
+      "category": "frontend_frameworks",
+      "match": [
+        "React",
+        "React.js",
+        "ReactJS",
+        "react-dom"
+      ],
+      "born": 2013,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 13,
+        "flagIfClaimedOver": 11,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "React launched in 2013 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Next.js",
+      "category": "frontend_frameworks",
+      "match": [
+        "Next.js",
+        "NextJS",
+        "Next JS"
+      ],
+      "born": 2016,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 10,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Next.js launched in 2016 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Vue.js",
+      "category": "frontend_frameworks",
+      "match": [
+        "Vue",
+        "Vue.js",
+        "VueJS",
+        "Vue 3",
+        "Vue 2"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Vue.js launched in 2014 \u2014 claimed experience exceeds framework age.",
+        "statusNote": "Specify Vue 2 vs Vue 3 \u2014 the Composition API shift is significant to interviewers."
+      }
+    },
+    {
+      "key": "Nuxt.js",
+      "category": "frontend_frameworks",
+      "match": [
+        "Nuxt",
+        "Nuxt.js",
+        "NuxtJS"
+      ],
+      "born": 2016,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 10,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Nuxt.js launched in 2016 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Angular",
+      "category": "frontend_frameworks",
+      "match": [
+        "Angular",
+        "Angular 2+",
+        "Angular 17",
+        "Angular 18",
+        "Angular 19"
+      ],
+      "born": 2016,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 10,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Modern Angular (v2+) launched in 2016 \u2014 claimed experience exceeds framework age.",
+        "statusNote": "Specify the Angular version range. Angular 2+ and AngularJS (1.x) are distinct technologies."
+      }
+    },
+    {
+      "key": "AngularJS",
+      "category": "frontend_frameworks",
+      "match": [
+        "AngularJS",
+        "Angular 1",
+        "Angular.js",
+        "Angular 1.x"
+      ],
+      "born": 2010,
+      "score": {
+        "status": "DEPRECATED",
+        "maxClaimableYears": 16,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.95
+      },
+      "feedback": {
+        "overclaimMessage": "AngularJS claimed years seem very high.",
+        "statusNote": "AngularJS (1.x) reached end-of-life in December 2021. Listing it as a primary skill is a red flag. Remove or relabel as 'AngularJS (legacy migration experience)'."
+      }
+    },
+    {
+      "key": "Svelte",
+      "category": "frontend_frameworks",
+      "match": [
+        "Svelte",
+        "SvelteKit",
+        "Svelte 5"
+      ],
+      "born": 2016,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 10,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Svelte launched in 2016 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Remix",
+      "category": "frontend_frameworks",
+      "match": [
+        "Remix",
+        "Remix.run"
+      ],
+      "born": 2021,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 5,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Remix launched publicly in 2021 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Astro",
+      "category": "frontend_frameworks",
+      "match": [
+        "Astro",
+        "Astro.js",
+        "AstroJS"
+      ],
+      "born": 2021,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 5,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Astro launched in 2021 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Solid.js",
+      "category": "frontend_frameworks",
+      "match": [
+        "Solid",
+        "SolidJS",
+        "Solid.js"
+      ],
+      "born": 2021,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 5,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "SolidJS reached v1.0 in 2021 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Ember.js",
+      "category": "frontend_frameworks",
+      "match": [
+        "Ember",
+        "Ember.js",
+        "EmberJS"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "LEGACY",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.7
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Ember.js years seem high for current market.",
+        "statusNote": "Ember has a small active niche but listing it as a primary skill suggests outdated exposure. Pair with a modern framework."
+      }
+    },
+    {
+      "key": "Backbone.js",
+      "category": "frontend_frameworks",
+      "match": [
+        "Backbone",
+        "Backbone.js"
+      ],
+      "born": 2010,
+      "score": {
+        "status": "DEPRECATED",
+        "maxClaimableYears": 16,
+        "flagIfClaimedOver": 3,
+        "staleness": 0.95
+      },
+      "feedback": {
+        "overclaimMessage": "Backbone.js is effectively unmaintained.",
+        "statusNote": "Backbone.js is no longer hired for in new projects. Remove unless applying for a legacy maintenance role."
+      }
+    },
+    {
+      "key": "Redux",
+      "category": "frontend_libraries",
+      "match": [
+        "Redux",
+        "Redux Toolkit",
+        "RTK",
+        "Redux Thunk",
+        "Redux Saga"
+      ],
+      "born": 2015,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 11,
+        "flagIfClaimedOver": 9,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Redux launched in 2015 \u2014 claimed experience exceeds library age.",
+        "statusNote": "Prefer listing 'Redux Toolkit' over plain 'Redux' \u2014 interviewers expect modern patterns."
+      }
+    },
+    {
+      "key": "Zustand",
+      "category": "frontend_libraries",
+      "match": [
+        "Zustand"
+      ],
+      "born": 2019,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 7,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Zustand launched in 2019 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Jotai",
+      "category": "frontend_libraries",
+      "match": [
+        "Jotai"
+      ],
+      "born": 2020,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 6,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Jotai launched in 2020 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "TanStack Query",
+      "category": "frontend_libraries",
+      "match": [
+        "TanStack Query",
+        "React Query",
+        "react-query",
+        "TanStack"
+      ],
+      "born": 2019,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 7,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "React Query / TanStack Query launched in 2019 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "GraphQL",
+      "category": "frontend_libraries",
+      "match": [
+        "GraphQL",
+        "Apollo Client",
+        "Apollo GraphQL",
+        "urql"
+      ],
+      "born": 2015,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 11,
+        "flagIfClaimedOver": 9,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "GraphQL open-sourced in 2015 \u2014 claimed experience exceeds specification age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "jQuery",
+      "category": "frontend_libraries",
+      "match": [
+        "jQuery",
+        "jquery",
+        "jQuery UI"
+      ],
+      "born": 2006,
+      "score": {
+        "status": "LEGACY",
+        "maxClaimableYears": 20,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.65
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed jQuery experience seems high for modern frontend roles.",
+        "statusNote": "Listing jQuery as a primary skill is a red flag for modern web positions. Acceptable for CMS/WordPress roles or legacy codebases."
+      }
+    },
+    {
+      "key": "Three.js",
+      "category": "frontend_libraries",
+      "match": [
+        "Three.js",
+        "ThreeJS",
+        "Three JS",
+        "WebGL",
+        "R3F",
+        "React Three Fiber"
+      ],
+      "born": 2010,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 16,
+        "flagIfClaimedOver": 13,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Three.js launched in 2010 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "D3.js",
+      "category": "frontend_libraries",
+      "match": [
+        "D3",
+        "D3.js",
+        "d3.js"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.05
+      },
+      "feedback": {
+        "overclaimMessage": "D3.js launched in 2011 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Tailwind CSS",
+      "category": "css_styling",
+      "match": [
+        "Tailwind",
+        "Tailwind CSS",
+        "TailwindCSS"
+      ],
+      "born": 2017,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 9,
+        "flagIfClaimedOver": 7,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Tailwind CSS launched in 2017 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "CSS Modules",
+      "category": "css_styling",
+      "match": [
+        "CSS Modules",
+        "CSS-in-JS",
+        "styled-components",
+        "Emotion",
+        "Stitches"
+      ],
+      "born": 2015,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 11,
+        "flagIfClaimedOver": 9,
+        "staleness": 0.05
+      },
+      "feedback": {
+        "overclaimMessage": "CSS Modules / styled-components emerged around 2015 \u2014 claimed experience seems high.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Sass",
+      "category": "css_styling",
+      "match": [
+        "Sass",
+        "SCSS",
+        "Less",
+        "LESS"
+      ],
+      "born": 2006,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 20,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.3
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Sass/SCSS years seem excessive for a differentiator.",
+        "statusNote": "Sass/SCSS is still widely used but native CSS features (nesting, variables, layers) are increasingly replacing it. Pair with modern CSS knowledge."
+      }
+    },
+    {
+      "key": "Bootstrap",
+      "category": "css_styling",
+      "match": [
+        "Bootstrap",
+        "Bootstrap 5",
+        "Bootstrap 4",
+        "Bootstrap 3"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.4
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Bootstrap experience seems high for modern UI positions.",
+        "statusNote": "Bootstrap remains valid for rapid prototyping and admin UIs, but Tailwind has largely displaced it in modern stacks. Specify the version."
+      }
+    },
+    {
+      "key": "Vite",
+      "category": "bundlers_build",
+      "match": [
+        "Vite",
+        "Vite.js"
+      ],
+      "born": 2020,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 6,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Vite launched in 2020 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Webpack",
+      "category": "bundlers_build",
+      "match": [
+        "Webpack",
+        "webpack"
+      ],
+      "born": 2012,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 14,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.15
+      },
+      "feedback": {
+        "overclaimMessage": "Webpack launched in 2012 \u2014 claimed experience exceeds tool age.",
+        "statusNote": "Webpack is widely deployed but Vite/Turbopack/Rspack are modern preferences. Pair with newer bundler knowledge."
+      }
+    },
+    {
+      "key": "Turbopack",
+      "category": "bundlers_build",
+      "match": [
+        "Turbopack",
+        "Turbo"
+      ],
+      "born": 2022,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 4,
+        "flagIfClaimedOver": 3,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Turbopack launched in 2022 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "esbuild",
+      "category": "bundlers_build",
+      "match": [
+        "esbuild",
+        "ESBuild"
+      ],
+      "born": 2020,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 6,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "esbuild launched in 2020 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Rollup",
+      "category": "bundlers_build",
+      "match": [
+        "Rollup",
+        "Rollup.js"
+      ],
+      "born": 2015,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 11,
+        "flagIfClaimedOver": 9,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Rollup launched in 2015 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Grunt",
+      "category": "bundlers_build",
+      "match": [
+        "Grunt",
+        "GruntJS",
+        "Gulp",
+        "GulpJS"
+      ],
+      "born": 2012,
+      "score": {
+        "status": "DEPRECATED",
+        "maxClaimableYears": 14,
+        "flagIfClaimedOver": 3,
+        "staleness": 0.9
+      },
+      "feedback": {
+        "overclaimMessage": "Grunt/Gulp as primary tools is a significant red flag.",
+        "statusNote": "Grunt and Gulp have been replaced by modern bundlers. Listing them without a modern alternative signals outdated tooling knowledge."
+      }
+    },
+    {
+      "key": "Node.js",
+      "category": "backend_runtimes",
+      "match": [
+        "Node.js",
+        "NodeJS",
+        "Node JS"
+      ],
+      "born": 2009,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 17,
+        "flagIfClaimedOver": 14,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Node.js launched in 2009 \u2014 claimed experience exceeds runtime age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Express.js",
+      "category": "backend_frameworks",
+      "match": [
+        "Express",
+        "Express.js",
+        "ExpressJS"
+      ],
+      "born": 2010,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 16,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Express.js launched in 2010 \u2014 claimed experience exceeds framework age.",
+        "statusNote": "Express remains ubiquitous but is considered 'table stakes'. Pair with Fastify, Hono, or NestJS for modern signal."
+      }
+    },
+    {
+      "key": "Fastify",
+      "category": "backend_frameworks",
+      "match": [
+        "Fastify"
+      ],
+      "born": 2016,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 10,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Fastify launched in 2016 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "NestJS",
+      "category": "backend_frameworks",
+      "match": [
+        "NestJS",
+        "Nest.js",
+        "Nest JS"
+      ],
+      "born": 2017,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 9,
+        "flagIfClaimedOver": 7,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "NestJS launched in 2017 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Hono",
+      "category": "backend_frameworks",
+      "match": [
+        "Hono"
+      ],
+      "born": 2022,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 4,
+        "flagIfClaimedOver": 3,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Hono launched in 2022 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Django",
+      "category": "backend_frameworks",
+      "match": [
+        "Django",
+        "Django REST Framework",
+        "DRF"
+      ],
+      "born": 2005,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 21,
+        "flagIfClaimedOver": 15,
+        "staleness": 0.05
+      },
+      "feedback": {
+        "overclaimMessage": "Django launched in 2005 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "FastAPI",
+      "category": "backend_frameworks",
+      "match": [
+        "FastAPI",
+        "Fast API"
+      ],
+      "born": 2018,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 8,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "FastAPI launched in 2018 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Flask",
+      "category": "backend_frameworks",
+      "match": [
+        "Flask"
+      ],
+      "born": 2010,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 16,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Flask launched in 2010 \u2014 claimed experience exceeds framework age.",
+        "statusNote": "Flask is still actively used but FastAPI is increasingly preferred for new Python APIs."
+      }
+    },
+    {
+      "key": "Spring Boot",
+      "category": "backend_frameworks",
+      "match": [
+        "Spring Boot",
+        "Spring",
+        "Spring Framework",
+        "Spring MVC"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.05
+      },
+      "feedback": {
+        "overclaimMessage": "Spring Boot launched in 2014 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Ruby on Rails",
+      "category": "backend_frameworks",
+      "match": [
+        "Ruby on Rails",
+        "Rails",
+        "RoR"
+      ],
+      "born": 2004,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 22,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.3
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Rails years seem high \u2014 consider framing recent vs overall experience.",
+        "statusNote": "Rails has a loyal niche but new Rails job postings have declined significantly. Strong for startups; less valued in enterprise-scale distributed systems roles."
+      }
+    },
+    {
+      "key": "Laravel",
+      "category": "backend_frameworks",
+      "match": [
+        "Laravel"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Laravel launched in 2011 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Go (Gin/Echo/Fiber)",
+      "category": "backend_frameworks",
+      "match": [
+        "Gin",
+        "Echo",
+        "Fiber",
+        "Chi",
+        "Go-kit"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Gin/Echo/Fiber frameworks emerged around 2014\u20132016 \u2014 check claimed years.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "tRPC",
+      "category": "backend_frameworks",
+      "match": [
+        "tRPC",
+        "trpc"
+      ],
+      "born": 2021,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 5,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "tRPC launched in 2021 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "ColdFusion",
+      "category": "backend_frameworks",
+      "match": [
+        "ColdFusion",
+        "CFML",
+        "Lucee"
+      ],
+      "born": 1995,
+      "score": {
+        "status": "DEPRECATED",
+        "maxClaimableYears": 31,
+        "flagIfClaimedOver": 3,
+        "staleness": 1.0
+      },
+      "feedback": {
+        "overclaimMessage": "ColdFusion is effectively obsolete for new development.",
+        "statusNote": "ColdFusion is a significant red flag on modern resumes. Remove entirely unless the role explicitly requires ColdFusion maintenance."
+      }
+    },
+    {
+      "key": "TypeScript",
+      "category": "languages",
+      "match": [
+        "TypeScript",
+        "TS"
+      ],
+      "born": 2012,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 14,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "TypeScript launched in 2012 \u2014 claimed experience exceeds language age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "JavaScript",
+      "category": "languages",
+      "match": [
+        "JavaScript",
+        "JS",
+        "ES6",
+        "ES2015",
+        "ES2017",
+        "ES2020",
+        "ESNext",
+        "Vanilla JS"
+      ],
+      "born": 1995,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 31,
+        "flagIfClaimedOver": 20,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed JavaScript years exceed a typical career span \u2014 consider splitting into relevant frameworks.",
+        "statusNote": "JavaScript alone is expected baseline knowledge. Differentiate with TypeScript, frameworks, or runtime expertise."
+      }
+    },
+    {
+      "key": "Python",
+      "category": "languages",
+      "match": [
+        "Python",
+        "Python 3",
+        "Python3"
+      ],
+      "born": 1991,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 35,
+        "flagIfClaimedOver": 20,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Python years exceed typical career span \u2014 consider specifying domain expertise.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Go",
+      "category": "languages",
+      "match": [
+        "Go",
+        "Golang"
+      ],
+      "born": 2009,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 17,
+        "flagIfClaimedOver": 14,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Go launched publicly in 2009 \u2014 claimed experience exceeds language age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Rust",
+      "category": "languages",
+      "match": [
+        "Rust",
+        "Rust-lang"
+      ],
+      "born": 2015,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 11,
+        "flagIfClaimedOver": 9,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Rust 1.0 launched in 2015 \u2014 claimed experience exceeds language age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Java",
+      "category": "languages",
+      "match": [
+        "Java",
+        "Java 8",
+        "Java 11",
+        "Java 17",
+        "Java 21"
+      ],
+      "born": 1995,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 31,
+        "flagIfClaimedOver": 20,
+        "staleness": 0.05
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Java years exceed typical career span \u2014 specify version and domain.",
+        "statusNote": "Specify Java version \u2014 Java 8 vs 17 vs 21 signals are very different to hiring teams."
+      }
+    },
+    {
+      "key": "Kotlin",
+      "category": "languages",
+      "match": [
+        "Kotlin"
+      ],
+      "born": 2016,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 10,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Kotlin 1.0 launched in 2016 \u2014 claimed experience exceeds language age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Swift",
+      "category": "languages",
+      "match": [
+        "Swift",
+        "Swift 5",
+        "Swift 6"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Swift launched in 2014 \u2014 claimed experience exceeds language age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "C#",
+      "category": "languages",
+      "match": [
+        "C#",
+        "CSharp",
+        "C# .NET",
+        ".NET"
+      ],
+      "born": 2000,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 26,
+        "flagIfClaimedOver": 18,
+        "staleness": 0.05
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed C# years seem very high \u2014 specify .NET version for context.",
+        "statusNote": "Specify .NET version (Core vs 5/6/7/8/9) \u2014 it signals whether you're working in modern cross-platform .NET."
+      }
+    },
+    {
+      "key": "PHP",
+      "category": "languages",
+      "match": [
+        "PHP",
+        "PHP 8",
+        "PHP 7"
+      ],
+      "born": 1994,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 32,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.25
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed PHP years seem high for a modern differentiator.",
+        "statusNote": "PHP remains strong in CMS and e-commerce (WordPress, Magento, Laravel). Specify PHP 8.x to signal modern usage. Plain PHP without a framework is a yellow flag."
+      }
+    },
+    {
+      "key": "Ruby",
+      "category": "languages",
+      "match": [
+        "Ruby"
+      ],
+      "born": 1995,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 31,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.3
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Ruby years seem high.",
+        "statusNote": "Ruby demand has declined sharply outside Rails shops. Acceptable in startup contexts; less valued at scale."
+      }
+    },
+    {
+      "key": "Scala",
+      "category": "languages",
+      "match": [
+        "Scala",
+        "Scala 3",
+        "Akka"
+      ],
+      "born": 2004,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 22,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.3
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Scala years seem high for current demand.",
+        "statusNote": "Scala is strong in data engineering (Spark) but declining in backend web. Pair with Spark/Flink context."
+      }
+    },
+    {
+      "key": "Elixir",
+      "category": "languages",
+      "match": [
+        "Elixir",
+        "Phoenix",
+        "Phoenix Framework"
+      ],
+      "born": 2012,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 14,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.05
+      },
+      "feedback": {
+        "overclaimMessage": "Elixir launched in 2012 \u2014 claimed experience exceeds language age.",
+        "statusNote": "Elixir is a niche differentiator \u2014 strong signal for concurrency-heavy roles."
+      }
+    },
+    {
+      "key": "Perl",
+      "category": "legacy_languages",
+      "match": [
+        "Perl"
+      ],
+      "born": 1987,
+      "score": {
+        "status": "DEPRECATED",
+        "maxClaimableYears": 39,
+        "flagIfClaimedOver": 3,
+        "staleness": 1.0
+      },
+      "feedback": {
+        "overclaimMessage": "Perl is effectively obsolete for new development.",
+        "statusNote": "Perl is a red flag on modern resumes. Remove unless applying for a specific legacy sysadmin or bioinformatics role."
+      }
+    },
+    {
+      "key": "COBOL",
+      "category": "legacy_languages",
+      "match": [
+        "COBOL"
+      ],
+      "born": 1959,
+      "score": {
+        "status": "LEGACY",
+        "maxClaimableYears": 67,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.5
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed COBOL years are plausible given its longevity.",
+        "statusNote": "COBOL is a genuine niche \u2014 high demand in financial/government modernization projects. Position it as a specialization, not general development experience."
+      }
+    },
+    {
+      "key": "Objective-C",
+      "category": "legacy_languages",
+      "match": [
+        "Objective-C",
+        "ObjC",
+        "Obj-C"
+      ],
+      "born": 1984,
+      "score": {
+        "status": "LEGACY",
+        "maxClaimableYears": 42,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.7
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Objective-C experience seems high for modern iOS roles.",
+        "statusNote": "Objective-C is a yellow flag for iOS roles \u2014 pair with Swift to signal modern capability."
+      }
+    },
+    {
+      "key": "PostgreSQL",
+      "category": "databases_relational",
+      "match": [
+        "PostgreSQL",
+        "Postgres",
+        "psql",
+        "pg"
+      ],
+      "born": 1996,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 30,
+        "flagIfClaimedOver": 20,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed PostgreSQL years seem very high \u2014 consider framing recent vs total.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "MySQL",
+      "category": "databases_relational",
+      "match": [
+        "MySQL",
+        "MariaDB"
+      ],
+      "born": 1995,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 31,
+        "flagIfClaimedOver": 18,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed MySQL years seem very high.",
+        "statusNote": "MySQL is widely deployed but PostgreSQL is increasingly preferred for new projects. Acceptable; not a differentiator."
+      }
+    },
+    {
+      "key": "SQLite",
+      "category": "databases_relational",
+      "match": [
+        "SQLite"
+      ],
+      "born": 2000,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 26,
+        "flagIfClaimedOver": 16,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed SQLite years seem high.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Microsoft SQL Server",
+      "category": "databases_relational",
+      "match": [
+        "SQL Server",
+        "MSSQL",
+        "Microsoft SQL Server",
+        "T-SQL"
+      ],
+      "born": 1989,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 37,
+        "flagIfClaimedOver": 18,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed SQL Server years seem very high.",
+        "statusNote": "SQL Server is strong in enterprise/Microsoft stacks. Acceptable context; specify Azure SQL if applicable."
+      }
+    },
+    {
+      "key": "Oracle DB",
+      "category": "databases_relational",
+      "match": [
+        "Oracle",
+        "Oracle DB",
+        "Oracle Database",
+        "PL/SQL"
+      ],
+      "born": 1979,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 47,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.35
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Oracle DB years are plausible given its age.",
+        "statusNote": "Oracle is a red flag for modern cloud-native roles. Acceptable in enterprise/financial where Oracle licensing is entrenched."
+      }
+    },
+    {
+      "key": "MongoDB",
+      "category": "databases_nosql",
+      "match": [
+        "MongoDB",
+        "Mongo",
+        "Mongoose"
+      ],
+      "born": 2009,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 17,
+        "flagIfClaimedOver": 14,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "MongoDB launched in 2009 \u2014 claimed experience exceeds database age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Redis",
+      "category": "databases_nosql",
+      "match": [
+        "Redis",
+        "Redis Cache",
+        "Valkey"
+      ],
+      "born": 2009,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 17,
+        "flagIfClaimedOver": 14,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Redis launched in 2009 \u2014 claimed experience exceeds database age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "DynamoDB",
+      "category": "databases_nosql",
+      "match": [
+        "DynamoDB",
+        "Amazon DynamoDB",
+        "AWS DynamoDB"
+      ],
+      "born": 2012,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 14,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "DynamoDB launched in 2012 \u2014 claimed experience exceeds service age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Cassandra",
+      "category": "databases_nosql",
+      "match": [
+        "Cassandra",
+        "Apache Cassandra",
+        "ScyllaDB"
+      ],
+      "born": 2008,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 18,
+        "flagIfClaimedOver": 14,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Cassandra launched in 2008 \u2014 claimed experience exceeds database age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Elasticsearch",
+      "category": "databases_nosql",
+      "match": [
+        "Elasticsearch",
+        "OpenSearch",
+        "ELK",
+        "Elastic"
+      ],
+      "born": 2010,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 16,
+        "flagIfClaimedOver": 13,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Elasticsearch launched in 2010 \u2014 claimed experience exceeds service age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Firestore",
+      "category": "databases_nosql",
+      "match": [
+        "Firestore",
+        "Firebase",
+        "Firebase Realtime Database"
+      ],
+      "born": 2017,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 9,
+        "flagIfClaimedOver": 7,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Firestore launched in 2017 \u2014 claimed experience exceeds service age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "CouchDB",
+      "category": "databases_nosql",
+      "match": [
+        "CouchDB",
+        "PouchDB"
+      ],
+      "born": 2005,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 21,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.5
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed CouchDB years seem high for modern roles.",
+        "statusNote": "CouchDB has declined significantly in new project adoption. Listing it without other databases is a yellow flag."
+      }
+    },
+    {
+      "key": "Pinecone",
+      "category": "databases_vector",
+      "match": [
+        "Pinecone"
+      ],
+      "born": 2021,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 5,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Pinecone launched in 2021 \u2014 claimed experience exceeds service age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Weaviate",
+      "category": "databases_vector",
+      "match": [
+        "Weaviate"
+      ],
+      "born": 2018,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 8,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Weaviate launched in 2018 \u2014 claimed experience exceeds service age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "pgvector",
+      "category": "databases_vector",
+      "match": [
+        "pgvector",
+        "pg_vector"
+      ],
+      "born": 2021,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 5,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "pgvector launched in 2021 \u2014 claimed experience exceeds extension age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Qdrant",
+      "category": "databases_vector",
+      "match": [
+        "Qdrant"
+      ],
+      "born": 2021,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 5,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Qdrant launched in 2021 \u2014 claimed experience exceeds service age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Chroma",
+      "category": "databases_vector",
+      "match": [
+        "Chroma",
+        "ChromaDB"
+      ],
+      "born": 2022,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 4,
+        "flagIfClaimedOver": 3,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Chroma launched in 2022 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "AWS",
+      "category": "cloud_platforms",
+      "match": [
+        "AWS",
+        "Amazon Web Services",
+        "Amazon AWS"
+      ],
+      "born": 2006,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 20,
+        "flagIfClaimedOver": 18,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "AWS launched in 2006 \u2014 claimed experience exceeds platform age.",
+        "statusNote": "Specify key AWS services (Lambda, EKS, RDS, etc.) \u2014 'AWS' alone is too broad to be meaningful."
+      }
+    },
+    {
+      "key": "Google Cloud",
+      "category": "cloud_platforms",
+      "match": [
+        "GCP",
+        "Google Cloud",
+        "Google Cloud Platform"
+      ],
+      "born": 2008,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 18,
+        "flagIfClaimedOver": 15,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "GCP launched in 2008 \u2014 claimed experience exceeds platform age.",
+        "statusNote": "Specify key GCP services (BigQuery, GKE, Cloud Run, Vertex AI, etc.)."
+      }
+    },
+    {
+      "key": "Microsoft Azure",
+      "category": "cloud_platforms",
+      "match": [
+        "Azure",
+        "Microsoft Azure",
+        "Azure Cloud"
+      ],
+      "born": 2010,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 16,
+        "flagIfClaimedOver": 14,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Azure launched in 2010 \u2014 claimed experience exceeds platform age.",
+        "statusNote": "Specify key Azure services (AKS, Azure Functions, Cosmos DB, etc.)."
+      }
+    },
+    {
+      "key": "Cloudflare Workers",
+      "category": "cloud_services",
+      "match": [
+        "Cloudflare Workers",
+        "Cloudflare",
+        "Workers KV",
+        "Durable Objects"
+      ],
+      "born": 2017,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 9,
+        "flagIfClaimedOver": 7,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Cloudflare Workers launched in 2017 \u2014 claimed experience exceeds service age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Vercel",
+      "category": "cloud_services",
+      "match": [
+        "Vercel"
+      ],
+      "born": 2015,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 11,
+        "flagIfClaimedOver": 9,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Vercel (as a platform) launched around 2015\u20132016 \u2014 claimed experience exceeds platform age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "AWS Lambda",
+      "category": "cloud_services",
+      "match": [
+        "Lambda",
+        "AWS Lambda",
+        "Serverless Functions",
+        "Function-as-a-Service",
+        "FaaS"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "AWS Lambda launched in 2014 \u2014 claimed experience exceeds service age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "GitHub Actions",
+      "category": "devops_cicd",
+      "match": [
+        "GitHub Actions",
+        "GH Actions"
+      ],
+      "born": 2018,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 8,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "GitHub Actions launched in 2018 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Jenkins",
+      "category": "devops_cicd",
+      "match": [
+        "Jenkins",
+        "Jenkins CI",
+        "Jenkins pipeline"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 7,
+        "staleness": 0.35
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Jenkins years seem high for modern DevOps roles.",
+        "statusNote": "Jenkins is still widely deployed but signals a traditional/on-prem environment. Pair with a cloud-native CI tool to show range."
+      }
+    },
+    {
+      "key": "GitLab CI",
+      "category": "devops_cicd",
+      "match": [
+        "GitLab CI",
+        "GitLab CI/CD",
+        "GitLab Pipelines"
+      ],
+      "born": 2012,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 14,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "GitLab CI launched in 2012 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "CircleCI",
+      "category": "devops_cicd",
+      "match": [
+        "CircleCI"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "CircleCI launched in 2011 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "ArgoCD",
+      "category": "devops_cicd",
+      "match": [
+        "ArgoCD",
+        "Argo CD",
+        "Argo Workflows"
+      ],
+      "born": 2018,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 8,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "ArgoCD launched in 2018 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Docker",
+      "category": "containers_orchestration",
+      "match": [
+        "Docker",
+        "Docker Compose",
+        "Dockerfile",
+        "Docker Swarm"
+      ],
+      "born": 2013,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 13,
+        "flagIfClaimedOver": 11,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Docker launched in 2013 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Kubernetes",
+      "category": "containers_orchestration",
+      "match": [
+        "Kubernetes",
+        "K8s",
+        "kubectl",
+        "Helm",
+        "Kustomize"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Kubernetes launched in 2014 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "OpenShift",
+      "category": "containers_orchestration",
+      "match": [
+        "OpenShift",
+        "Red Hat OpenShift"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.15
+      },
+      "feedback": {
+        "overclaimMessage": "OpenShift launched in 2011 \u2014 claimed experience exceeds platform age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Terraform",
+      "category": "infrastructure_as_code",
+      "match": [
+        "Terraform",
+        "OpenTofu",
+        "Terragrunt"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Terraform launched in 2014 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Pulumi",
+      "category": "infrastructure_as_code",
+      "match": [
+        "Pulumi"
+      ],
+      "born": 2017,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 9,
+        "flagIfClaimedOver": 7,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Pulumi launched in 2017 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Ansible",
+      "category": "infrastructure_as_code",
+      "match": [
+        "Ansible",
+        "Ansible Playbook"
+      ],
+      "born": 2012,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 14,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Ansible launched in 2012 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Chef",
+      "category": "infrastructure_as_code",
+      "match": [
+        "Chef",
+        "Puppet",
+        "SaltStack"
+      ],
+      "born": 2009,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 17,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.5
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Chef/Puppet years seem high for modern IaC roles.",
+        "statusNote": "Chef, Puppet, and SaltStack have been largely replaced by Terraform and Ansible in new stacks. Listing without a modern IaC tool is a yellow flag."
+      }
+    },
+    {
+      "key": "PyTorch",
+      "category": "data_ml_frameworks",
+      "match": [
+        "PyTorch",
+        "torch"
+      ],
+      "born": 2016,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 10,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "PyTorch launched in 2016 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "TensorFlow",
+      "category": "data_ml_frameworks",
+      "match": [
+        "TensorFlow",
+        "TF",
+        "TF2",
+        "TensorFlow 2",
+        "Keras"
+      ],
+      "born": 2015,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 11,
+        "flagIfClaimedOver": 9,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "TensorFlow launched in 2015 \u2014 claimed experience exceeds framework age.",
+        "statusNote": "PyTorch has become the dominant research framework. TensorFlow remains valid for production deployment. Specify TF1 vs TF2 as they differ significantly."
+      }
+    },
+    {
+      "key": "scikit-learn",
+      "category": "data_ml_frameworks",
+      "match": [
+        "scikit-learn",
+        "sklearn",
+        "scikit learn"
+      ],
+      "born": 2007,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 19,
+        "flagIfClaimedOver": 16,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "scikit-learn launched in 2007 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Hugging Face",
+      "category": "data_ml_frameworks",
+      "match": [
+        "Hugging Face",
+        "Transformers",
+        "HuggingFace",
+        "diffusers",
+        "PEFT",
+        "datasets"
+      ],
+      "born": 2018,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 8,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Hugging Face Transformers launched in 2018 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "LangChain",
+      "category": "data_ml_frameworks",
+      "match": [
+        "LangChain",
+        "LangGraph",
+        "LangSmith"
+      ],
+      "born": 2022,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 4,
+        "flagIfClaimedOver": 3,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "LangChain launched in 2022 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "LlamaIndex",
+      "category": "data_ml_frameworks",
+      "match": [
+        "LlamaIndex",
+        "llama-index",
+        "GPT Index"
+      ],
+      "born": 2022,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 4,
+        "flagIfClaimedOver": 3,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "LlamaIndex launched in 2022 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Apache Spark",
+      "category": "data_ml_frameworks",
+      "match": [
+        "Apache Spark",
+        "PySpark",
+        "Spark SQL",
+        "Spark Streaming"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Apache Spark launched in 2014 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "dbt",
+      "category": "data_ml_tools",
+      "match": [
+        "dbt",
+        "dbt Core",
+        "dbt Cloud",
+        "data build tool"
+      ],
+      "born": 2016,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 10,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "dbt launched in 2016 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Airflow",
+      "category": "data_ml_tools",
+      "match": [
+        "Airflow",
+        "Apache Airflow"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Apache Airflow launched in 2014 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Pandas",
+      "category": "data_ml_tools",
+      "match": [
+        "Pandas",
+        "pandas"
+      ],
+      "born": 2008,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 18,
+        "flagIfClaimedOver": 16,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Pandas launched in 2008 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "NumPy",
+      "category": "data_ml_tools",
+      "match": [
+        "NumPy",
+        "numpy"
+      ],
+      "born": 2005,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 21,
+        "flagIfClaimedOver": 18,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "NumPy launched in 2005 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Polars",
+      "category": "data_ml_tools",
+      "match": [
+        "Polars"
+      ],
+      "born": 2021,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 5,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Polars launched in 2021 \u2014 claimed experience exceeds library age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "OpenAI API",
+      "category": "llm_ai_tools",
+      "match": [
+        "OpenAI API",
+        "OpenAI",
+        "GPT-4",
+        "GPT-3",
+        "ChatGPT API"
+      ],
+      "born": 2020,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 6,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "OpenAI API launched publicly in 2020 \u2014 claimed experience exceeds API age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Anthropic Claude API",
+      "category": "llm_ai_tools",
+      "match": [
+        "Anthropic API",
+        "Claude API",
+        "Claude"
+      ],
+      "born": 2023,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 3,
+        "flagIfClaimedOver": 2,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Claude API launched in 2023 \u2014 claimed experience exceeds API age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Prompt Engineering",
+      "category": "llm_ai_tools",
+      "match": [
+        "Prompt Engineering",
+        "Prompt Design",
+        "Few-Shot Prompting",
+        "Chain-of-Thought"
+      ],
+      "born": 2020,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 6,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Prompt engineering as a discipline emerged around 2020 \u2014 claimed experience seems high.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "RAG",
+      "category": "llm_ai_tools",
+      "match": [
+        "RAG",
+        "Retrieval-Augmented Generation",
+        "Retrieval Augmented Generation"
+      ],
+      "born": 2020,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 6,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "RAG as a practical pattern emerged around 2020 \u2014 claimed experience seems high.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Fine-tuning",
+      "category": "llm_ai_tools",
+      "match": [
+        "Fine-tuning",
+        "RLHF",
+        "LoRA",
+        "QLoRA",
+        "PEFT"
+      ],
+      "born": 2018,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 8,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Fine-tuning at scale became practical around 2018\u20132020 \u2014 claimed experience seems high.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "React Native",
+      "category": "mobile",
+      "match": [
+        "React Native",
+        "RN",
+        "Expo"
+      ],
+      "born": 2015,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 11,
+        "flagIfClaimedOver": 9,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "React Native launched in 2015 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Flutter",
+      "category": "mobile",
+      "match": [
+        "Flutter",
+        "Dart"
+      ],
+      "born": 2018,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 8,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Flutter launched in 2018 \u2014 claimed experience exceeds framework age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "iOS Development",
+      "category": "mobile",
+      "match": [
+        "iOS",
+        "UIKit",
+        "SwiftUI",
+        "Xcode",
+        "Core Data"
+      ],
+      "born": 2008,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 18,
+        "flagIfClaimedOver": 15,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "iOS SDK launched in 2008 \u2014 claimed experience exceeds platform age.",
+        "statusNote": "Distinguish UIKit vs SwiftUI \u2014 interviewers treat these as distinct skill sets."
+      }
+    },
+    {
+      "key": "Android Development",
+      "category": "mobile",
+      "match": [
+        "Android",
+        "Android SDK",
+        "Jetpack Compose",
+        "Android Studio"
+      ],
+      "born": 2008,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 18,
+        "flagIfClaimedOver": 15,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Android SDK launched in 2008 \u2014 claimed experience exceeds platform age.",
+        "statusNote": "Distinguish XML layouts vs Jetpack Compose \u2014 modern roles prefer Compose experience."
+      }
+    },
+    {
+      "key": "Cordova",
+      "category": "mobile",
+      "match": [
+        "Cordova",
+        "Apache Cordova",
+        "PhoneGap",
+        "Ionic"
+      ],
+      "born": 2009,
+      "score": {
+        "status": "LEGACY",
+        "maxClaimableYears": 17,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.65
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Cordova/PhoneGap years seem high for modern mobile roles.",
+        "statusNote": "Cordova/PhoneGap are effectively superseded by React Native, Flutter, and Capacitor. Listing as a primary mobile skill is a red flag."
+      }
+    },
+    {
+      "key": "Xamarin",
+      "category": "mobile",
+      "match": [
+        "Xamarin",
+        ".NET MAUI"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.5
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Xamarin years seem high for modern mobile development.",
+        "statusNote": "Xamarin was deprecated in May 2024 (replaced by .NET MAUI). Update references to .NET MAUI if still in Microsoft mobile ecosystem."
+      }
+    },
+    {
+      "key": "Jest",
+      "category": "testing",
+      "match": [
+        "Jest",
+        "jest.js"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Jest launched in 2014 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Vitest",
+      "category": "testing",
+      "match": [
+        "Vitest"
+      ],
+      "born": 2021,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 5,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Vitest launched in 2021 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Playwright",
+      "category": "testing",
+      "match": [
+        "Playwright"
+      ],
+      "born": 2020,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 6,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Playwright launched in 2020 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Cypress",
+      "category": "testing",
+      "match": [
+        "Cypress",
+        "Cypress.io"
+      ],
+      "born": 2014,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 12,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "Cypress launched in 2014 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Selenium",
+      "category": "testing",
+      "match": [
+        "Selenium",
+        "Selenium WebDriver",
+        "Selenium Grid"
+      ],
+      "born": 2004,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 22,
+        "flagIfClaimedOver": 7,
+        "staleness": 0.35
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed Selenium years seem high as a primary testing differentiator.",
+        "statusNote": "Selenium is still widely used for cross-browser automation, but Playwright is the modern preference. Pair with Playwright or Cypress for current signal."
+      }
+    },
+    {
+      "key": "Pytest",
+      "category": "testing",
+      "match": [
+        "pytest",
+        "Pytest"
+      ],
+      "born": 2004,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 22,
+        "flagIfClaimedOver": 18,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "pytest launched in 2004 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "OAuth 2.0",
+      "category": "security",
+      "match": [
+        "OAuth",
+        "OAuth 2.0",
+        "OAuth2",
+        "OIDC",
+        "OpenID Connect"
+      ],
+      "born": 2012,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 14,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "OAuth 2.0 RFC published in 2012 \u2014 claimed experience exceeds specification age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "JWT",
+      "category": "security",
+      "match": [
+        "JWT",
+        "JSON Web Token",
+        "JWTs"
+      ],
+      "born": 2015,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 11,
+        "flagIfClaimedOver": 9,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "JWT RFC published in 2015 \u2014 claimed experience exceeds specification age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Zero Trust",
+      "category": "security",
+      "match": [
+        "Zero Trust",
+        "ZTA",
+        "Zero Trust Architecture"
+      ],
+      "born": 2018,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 8,
+        "flagIfClaimedOver": 6,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Zero Trust as an enterprise practice emerged around 2018-2019 \u2014 claimed experience seems high.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "REST API",
+      "category": "api_protocols",
+      "match": [
+        "REST",
+        "REST API",
+        "RESTful",
+        "RESTful API"
+      ],
+      "born": 2000,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 26,
+        "flagIfClaimedOver": 20,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "REST dissertation published in 2000 \u2014 claimed experience seems very high.",
+        "statusNote": "REST is table-stakes knowledge. Pair with specific API design patterns, versioning strategies, or OpenAPI for differentiation."
+      }
+    },
+    {
+      "key": "gRPC",
+      "category": "api_protocols",
+      "match": [
+        "gRPC",
+        "Protocol Buffers",
+        "Protobuf"
+      ],
+      "born": 2016,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 10,
+        "flagIfClaimedOver": 8,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "gRPC launched in 2016 \u2014 claimed experience exceeds protocol age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "WebSockets",
+      "category": "api_protocols",
+      "match": [
+        "WebSockets",
+        "WebSocket",
+        "Socket.io",
+        "ws"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "WebSockets standardized in 2011 \u2014 claimed experience exceeds specification age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Apache Kafka",
+      "category": "messaging_queues",
+      "match": [
+        "Kafka",
+        "Apache Kafka"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Apache Kafka launched in 2011 \u2014 claimed experience exceeds platform age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "RabbitMQ",
+      "category": "messaging_queues",
+      "match": [
+        "RabbitMQ",
+        "AMQP"
+      ],
+      "born": 2007,
+      "score": {
+        "status": "ESTABLISHED",
+        "maxClaimableYears": 19,
+        "flagIfClaimedOver": 14,
+        "staleness": 0.1
+      },
+      "feedback": {
+        "overclaimMessage": "RabbitMQ launched in 2007 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "AWS SQS",
+      "category": "messaging_queues",
+      "match": [
+        "SQS",
+        "AWS SQS",
+        "Amazon SQS"
+      ],
+      "born": 2004,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 22,
+        "flagIfClaimedOver": 18,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "AWS SQS launched in 2004 \u2014 claimed experience exceeds service age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "NATS",
+      "category": "messaging_queues",
+      "match": [
+        "NATS",
+        "NATS.io",
+        "JetStream"
+      ],
+      "born": 2011,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 15,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "NATS launched in 2011 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Prometheus",
+      "category": "monitoring_observability",
+      "match": [
+        "Prometheus",
+        "Grafana",
+        "Prometheus/Grafana"
+      ],
+      "born": 2012,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 14,
+        "flagIfClaimedOver": 12,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Prometheus launched in 2012 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "Datadog",
+      "category": "monitoring_observability",
+      "match": [
+        "Datadog",
+        "DD"
+      ],
+      "born": 2010,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 16,
+        "flagIfClaimedOver": 13,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Datadog launched in 2010 \u2014 claimed experience exceeds tool age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "OpenTelemetry",
+      "category": "monitoring_observability",
+      "match": [
+        "OpenTelemetry",
+        "OTel",
+        "otel"
+      ],
+      "born": 2019,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 7,
+        "flagIfClaimedOver": 5,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "OpenTelemetry merged and launched in 2019 \u2014 claimed experience exceeds project age.",
+        "statusNote": null
+      }
+    },
+    {
+      "key": "New Relic",
+      "category": "monitoring_observability",
+      "match": [
+        "New Relic",
+        "NewRelic"
+      ],
+      "born": 2008,
+      "score": {
+        "status": "AGING",
+        "maxClaimableYears": 18,
+        "flagIfClaimedOver": 10,
+        "staleness": 0.25
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed New Relic years seem high as a differentiator.",
+        "statusNote": "New Relic is still used but has lost mindshare to Datadog and OpenTelemetry in modern stacks."
+      }
+    },
+    {
+      "key": "Git",
+      "category": "version_control",
+      "match": [
+        "Git",
+        "GitHub",
+        "GitLab",
+        "Bitbucket"
+      ],
+      "born": 2005,
+      "score": {
+        "status": "CURRENT",
+        "maxClaimableYears": 21,
+        "flagIfClaimedOver": 18,
+        "staleness": 0.0
+      },
+      "feedback": {
+        "overclaimMessage": "Git launched in 2005 \u2014 claimed experience exceeds tool age.",
+        "statusNote": "Git is baseline expectation. Specifying GitHub/GitLab experience is more meaningful."
+      }
+    },
+    {
+      "key": "SVN",
+      "category": "version_control",
+      "match": [
+        "SVN",
+        "Subversion",
+        "Apache Subversion"
+      ],
+      "born": 2000,
+      "score": {
+        "status": "LEGACY",
+        "maxClaimableYears": 26,
+        "flagIfClaimedOver": 3,
+        "staleness": 0.7
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed SVN years seem very high.",
+        "statusNote": "SVN is a red flag on modern engineering resumes. Mention only if framing as a migration (SVN \u2192 Git) experience."
+      }
+    },
+    {
+      "key": "Flash / ActionScript",
+      "category": "legacy_frontend",
+      "match": [
+        "Flash",
+        "ActionScript",
+        "Adobe Flash",
+        "Flex"
+      ],
+      "born": 1996,
+      "score": {
+        "status": "DEPRECATED",
+        "maxClaimableYears": 30,
+        "flagIfClaimedOver": 2,
+        "staleness": 1.0
+      },
+      "feedback": {
+        "overclaimMessage": "Adobe Flash reached end-of-life in December 2020.",
+        "statusNote": "Flash/ActionScript is a significant red flag. Remove entirely from modern resumes."
+      }
+    },
+    {
+      "key": "Knockout.js",
+      "category": "legacy_frontend",
+      "match": [
+        "Knockout",
+        "Knockout.js",
+        "KnockoutJS"
+      ],
+      "born": 2010,
+      "score": {
+        "status": "DEPRECATED",
+        "maxClaimableYears": 16,
+        "flagIfClaimedOver": 3,
+        "staleness": 0.95
+      },
+      "feedback": {
+        "overclaimMessage": "Knockout.js is effectively unmaintained since ~2017.",
+        "statusNote": "Remove Knockout.js from modern resumes. It signals exposure only to legacy codebases."
+      }
+    },
+    {
+      "key": "SOAP",
+      "category": "legacy_backend",
+      "match": [
+        "SOAP",
+        "WSDL",
+        "XML-RPC",
+        "SOAP API"
+      ],
+      "born": 1998,
+      "score": {
+        "status": "LEGACY",
+        "maxClaimableYears": 28,
+        "flagIfClaimedOver": 4,
+        "staleness": 0.75
+      },
+      "feedback": {
+        "overclaimMessage": "Claimed SOAP experience seems high for modern API roles.",
+        "statusNote": "SOAP is a yellow flag for API roles unless explicitly working with enterprise/financial SOAP integrations. Pair with REST/gRPC."
+      }
+    },
+    {
+      "key": "Struts",
+      "category": "legacy_backend",
+      "match": [
+        "Struts",
+        "Apache Struts"
+      ],
+      "born": 2001,
+      "score": {
+        "status": "DEPRECATED",
+        "maxClaimableYears": 25,
+        "flagIfClaimedOver": 3,
+        "staleness": 1.0
+      },
+      "feedback": {
+        "overclaimMessage": "Apache Struts is effectively obsolete for new development.",
+        "statusNote": "Remove Struts from modern resumes \u2014 it signals significantly dated Java web experience."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1446 @@
+{
+  "_meta": {
+    "version": "2.0.0",
+    "lastUpdated": "2026-04",
+    "description": "Comprehensive education prestige ontology for resume feedback scoring. Scores are additive boosts (0.0–1.0 scale) applied on top of base candidate evaluation. Tier labels: ELITE (top ~20 global), PRESTIGE (top 100 global), STRONG (top 300 global), GOOD (top 500 / nationally respected), REGIONAL (nationally known, regionally respected), ACCREDITED (legitimate, lesser-known), UNRANKED (no verifiable ranking), NON_TRADITIONAL (bootcamps, MOOCs, self-study).",
+    "scoringNotes": "baseBoost is added to a candidate's raw score before normalisation. degreeOverrides replace baseBoost when a specific degree at that institution is exceptionally strong or weak. All scores assume honest, verifiable credentials.",
+    "sources": ["QS World University Rankings 2026", "THE World University Rankings 2025", "THE World Reputation Rankings 2025", "US News Best Global Universities 2025-2026", "Course Report 2025", "CIRR 2025"]
+  },
+
+  "tiers": {
+    "ELITE": {
+      "label": "Elite / World Top 20",
+      "scoreRange": [0.90, 1.00],
+      "recruitingSignal": "Immediate credibility signal to senior engineers and FAANG-tier recruiters. Filters rarely apply.",
+      "examples": ["MIT", "Stanford", "Oxford", "Cambridge", "Harvard", "Caltech", "ETH Zurich", "Imperial College London"]
+    },
+    "PRESTIGE": {
+      "label": "Prestigious / World Top 100",
+      "scoreRange": [0.78, 0.89],
+      "recruitingSignal": "Strong positive signal. No filtering concerns at any company tier.",
+      "examples": ["UCL", "Edinburgh", "Trinity College Dublin", "NUS", "Toronto", "Melbourne", "Carnegie Mellon", "Cornell", "Columbia"]
+    },
+    "STRONG": {
+      "label": "Strong / World Top 300",
+      "scoreRange": [0.65, 0.77],
+      "recruitingSignal": "Well regarded. Degree quality and GPA become important differentiators.",
+      "examples": ["UCD", "UCC", "University of Galway", "UBC", "Birmingham", "Glasgow", "Warwick", "RMIT"]
+    },
+    "GOOD": {
+      "label": "Good / World Top 500 or nationally respected",
+      "scoreRange": [0.50, 0.64],
+      "recruitingSignal": "Solid foundation. Projects, skills, and work experience carry more weight at this tier.",
+      "examples": ["UL", "DCU", "Maynooth", "TU Dublin", "Northeastern", "DePaul", "Arizona State"]
+    },
+    "REGIONAL": {
+      "label": "Regional / nationally known",
+      "scoreRange": [0.35, 0.49],
+      "recruitingSignal": "Accredited, respectable. Degree level and field of study are key.",
+      "examples": ["IADT", "LYIT / ATU", "Griffith College Dublin", "many UK post-92 universities"]
+    },
+    "ACCREDITED": {
+      "label": "Accredited / lesser-known",
+      "scoreRange": [0.20, 0.34],
+      "recruitingSignal": "Legitimate. Candidate must rely on skills and experience to differentiate.",
+      "examples": ["smaller private colleges", "distance learning institutions with full accreditation"]
+    },
+    "UNRANKED": {
+      "label": "Unranked / unverifiable",
+      "scoreRange": [0.05, 0.19],
+      "recruitingSignal": "Treat with caution. Flag for verification before advancing candidate.",
+      "examples": ["diploma mills", "unaccredited online institutions"]
+    },
+    "NON_TRADITIONAL": {
+      "label": "Non-traditional / alternative pathway",
+      "scoreRange": [0.15, 0.40],
+      "recruitingSignal": "Context-dependent. Portfolio and demonstrable skills are the primary signal.",
+      "examples": ["bootcamps", "MOOCs", "self-study", "open-source contributions only"]
+    }
+  },
+
+  "institutions": [
+
+    {
+      "key": "MIT",
+      "match": ["MIT", "Massachusetts Institute of Technology"],
+      "country": "US",
+      "score": {
+        "tier": "ELITE",
+        "baseBoost": 1.00,
+        "qs2026Rank": 1,
+        "theRank2025": 2,
+        "degreeOverrides": {
+          "PhD Computer Science": 1.00,
+          "MEng Computer Science": 0.98,
+          "BS Computer Science": 0.97
+        }
+      },
+      "feedback": {
+        "note": "World #1 in QS 2025. Exceptional signal for any technical role. No caveats.",
+        "strengthAreas": ["AI/ML", "systems", "theory", "robotics", "EE"]
+      }
+    },
+
+    {
+      "key": "Stanford University",
+      "match": ["Stanford", "Stanford University"],
+      "country": "US",
+      "score": {
+        "tier": "ELITE",
+        "baseBoost": 0.99,
+        "qs2026Rank": 5,
+        "theRank2025": 6,
+        "degreeOverrides": {
+          "PhD Computer Science": 1.00,
+          "MS Computer Science": 0.98,
+          "BS Computer Science": 0.96
+        }
+      },
+      "feedback": {
+        "note": "Silicon Valley's home institution. Exceptional signal, particularly for AI/ML and startup roles.",
+        "strengthAreas": ["AI/ML", "HCI", "bioinformatics", "entrepreneurship"]
+      }
+    },
+
+    {
+      "key": "Harvard University",
+      "match": ["Harvard", "Harvard University"],
+      "country": "US",
+      "score": {
+        "tier": "ELITE",
+        "baseBoost": 0.97,
+        "qs2026Rank": 4,
+        "theRank2025": 4,
+        "degreeOverrides": {
+          "PhD Computer Science": 0.99,
+          "AB Computer Science": 0.95,
+          "MBA": 0.98
+        }
+      },
+      "feedback": {
+        "note": "#1 in THE Reputation Rankings 2025 for 14 consecutive years. Strong for business, law, sciences; CS programme also world-class.",
+        "strengthAreas": ["AI/ML", "data science", "business analytics", "finance tech"]
+      }
+    },
+
+    {
+      "key": "University of Oxford",
+      "match": ["Oxford", "University of Oxford"],
+      "country": "UK",
+      "score": {
+        "tier": "ELITE",
+        "baseBoost": 0.98,
+        "qs2026Rank": 3,
+        "theRank2025": 1,
+        "degreeOverrides": {
+          "DPhil Computer Science": 1.00,
+          "MSc Computer Science": 0.96,
+          "BA Computer Science": 0.95
+        }
+      },
+      "feedback": {
+        "note": "#1 THE World Rankings 2025 for 9th consecutive year. Universally recognised. Strong for ML research (DeepMind ties).",
+        "strengthAreas": ["ML research", "NLP", "logic", "theoretical CS"]
+      }
+    },
+
+    {
+      "key": "University of Cambridge",
+      "match": ["Cambridge", "University of Cambridge"],
+      "country": "UK",
+      "score": {
+        "tier": "ELITE",
+        "baseBoost": 0.97,
+        "qs2026Rank": 5,
+        "theRank2025": 5,
+        "degreeOverrides": {
+          "PhD Computer Science": 0.99,
+          "MEng Computer Science": 0.97,
+          "BA Computer Science": 0.96
+        }
+      },
+      "feedback": {
+        "note": "Consistent top 5 globally. Computer Laboratory has produced foundational CS research. Strong for backend, compilers, systems.",
+        "strengthAreas": ["systems", "compilers", "security", "ML"]
+      }
+    },
+
+    {
+      "key": "Imperial College London",
+      "match": ["Imperial College", "Imperial College London", "ICL"],
+      "country": "UK",
+      "score": {
+        "tier": "ELITE",
+        "baseBoost": 0.93,
+        "qs2026Rank": 2,
+        "theRank2025": 8,
+        "degreeOverrides": {
+          "MEng Computing": 0.95,
+          "MSc Computing": 0.94,
+          "MSc Artificial Intelligence": 0.95
+        }
+      },
+      "feedback": {
+        "note": "QS World #2 in 2026. Strong STEM focus, excellent employer reputation especially in finance and deep tech.",
+        "strengthAreas": ["AI", "biomedical engineering", "data science", "fintech"]
+      }
+    },
+
+    {
+      "key": "ETH Zurich",
+      "match": ["ETH Zurich", "ETH Zürich", "Swiss Federal Institute of Technology"],
+      "country": "CH",
+      "score": {
+        "tier": "ELITE",
+        "baseBoost": 0.95,
+        "qs2026Rank": 7,
+        "theRank2025": 11,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.97,
+          "PhD Computer Science": 0.98
+        }
+      },
+      "feedback": {
+        "note": "Europe's top technical university. Excellent signal for robotics, systems, and ML research roles in Europe.",
+        "strengthAreas": ["robotics", "computer vision", "distributed systems", "ML"]
+      }
+    },
+
+    {
+      "key": "Carnegie Mellon University",
+      "match": ["Carnegie Mellon", "CMU", "Carnegie Mellon University"],
+      "country": "US",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.92,
+        "qs2026Rank": 52,
+        "theRank2025": 28,
+        "degreeOverrides": {
+          "MS Computer Science": 0.97,
+          "PhD Computer Science": 0.98,
+          "MS Machine Learning": 0.97,
+          "MS Software Engineering": 0.96,
+          "MS Computational Data Science": 0.95
+        }
+      },
+      "feedback": {
+        "note": "Top-tier CS-specific reputation, often ranked #1 US CS programme. School of Computer Science is a major signal for FAANG and ML roles.",
+        "strengthAreas": ["AI/ML", "software engineering", "HCI", "language tech", "robotics"]
+      }
+    },
+
+    {
+      "key": "Cornell University",
+      "match": ["Cornell", "Cornell University"],
+      "country": "US",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.89,
+        "qs2026Rank": 13,
+        "theRank2025": 14,
+        "degreeOverrides": {
+          "MEng Computer Science": 0.93,
+          "PhD Computer Science": 0.95,
+          "MPS Information Science": 0.88
+        }
+      },
+      "feedback": {
+        "note": "Ivy League with top-10 CS programme. Strong signal for US market. Cornell Tech campus has growing NYC tech presence.",
+        "strengthAreas": ["algorithms", "networks", "security", "information science"]
+      }
+    },
+
+    {
+      "key": "Columbia University",
+      "match": ["Columbia", "Columbia University"],
+      "country": "US",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.88,
+        "qs2026Rank": 33,
+        "theRank2025": 9,
+        "degreeOverrides": {
+          "MS Computer Science": 0.91,
+          "MS Data Science": 0.90,
+          "PhD Computer Science": 0.94
+        }
+      },
+      "feedback": {
+        "note": "Ivy League. Strong NYC industry connections, especially for finance, media, and AI. Growing CS department reputation.",
+        "strengthAreas": ["AI", "data science", "fintech", "NLP"]
+      }
+    },
+
+    {
+      "key": "University College London",
+      "match": ["UCL", "University College London"],
+      "country": "UK",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.86,
+        "qs2026Rank": 9,
+        "theRank2025": 22,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.88,
+          "MSc Machine Learning": 0.90,
+          "MSc Data Science": 0.89
+        }
+      },
+      "feedback": {
+        "note": "QS top 10. Home of DeepMind research links. Strong signal in European market for ML and AI roles.",
+        "strengthAreas": ["ML", "neuroscience/AI intersection", "data science", "security"]
+      }
+    },
+
+    {
+      "key": "University of Edinburgh",
+      "match": ["Edinburgh", "University of Edinburgh"],
+      "country": "UK",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.84,
+        "qs2026Rank": 27,
+        "theRank2025": 33,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.87,
+          "MSc Artificial Intelligence": 0.89,
+          "PhD Informatics": 0.91
+        }
+      },
+      "feedback": {
+        "note": "World-leading informatics school. One of Europe's top AI research centres. Strong for NLP and ML roles.",
+        "strengthAreas": ["NLP", "ML", "robotics", "computer vision"]
+      }
+    },
+
+    {
+      "key": "University of Toronto",
+      "match": ["University of Toronto", "UofT", "U of T"],
+      "country": "CA",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.87,
+        "qs2026Rank": 25,
+        "theRank2025": 21,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.90,
+          "PhD Computer Science": 0.92,
+          "MScAC Applied Computing": 0.89
+        }
+      },
+      "feedback": {
+        "note": "Birthplace of deep learning (Hinton). Exceptional AI pedigree. Very strong signal for ML/AI roles globally.",
+        "strengthAreas": ["deep learning", "AI", "computer vision", "NLP"]
+      }
+    },
+
+    {
+      "key": "National University of Singapore",
+      "match": ["NUS", "National University of Singapore"],
+      "country": "SG",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.88,
+        "qs2026Rank": 8,
+        "theRank2025": 24,
+        "degreeOverrides": {
+          "MEng Computer Science": 0.91,
+          "MSc Computer Science": 0.90
+        }
+      },
+      "feedback": {
+        "note": "Asia's top university by QS. Strong signal for APAC roles. Excellent for systems, networks, and AI.",
+        "strengthAreas": ["systems", "AI", "software engineering", "security"]
+      }
+    },
+
+    {
+      "key": "Trinity College Dublin",
+      "match": ["Trinity College Dublin", "TCD", "Trinity College", "University of Dublin"],
+      "country": "IE",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.82,
+        "qs2026Rank": 75,
+        "theRank2025Range": "201-250",
+        "degreeOverrides": {
+          "PhD Computer Science": 0.88,
+          "MSc Computer Science": 0.86,
+          "MSc Intelligent Systems": 0.87,
+          "MSc Data Science": 0.85,
+          "BA Computer Science": 0.83
+        }
+      },
+      "feedback": {
+        "note": "Ireland's highest-ranked university (QS #75, 2026). Only Irish member of League of European Research Universities. Strong signal across EU and for multinational tech companies with Irish hubs (Google, Meta, Apple).",
+        "strengthAreas": ["computer science", "law", "humanities", "biomedical"]
+      }
+    },
+
+    {
+      "key": "University College Dublin",
+      "match": ["UCD", "University College Dublin", "National University of Ireland Dublin"],
+      "country": "IE",
+      "score": {
+        "tier": "STRONG",
+        "baseBoost": 0.77,
+        "qs2026Rank": 118,
+        "theRank2025Range": "301-350",
+        "degreeOverrides": {
+          "MSc Computer Science": 0.80,
+          "MSc Data Analytics": 0.79,
+          "PhD Computer Science": 0.83,
+          "MSc Artificial Intelligence": 0.82,
+          "MBA Smurfit": 0.85
+        }
+      },
+      "feedback": {
+        "note": "Ireland's largest university, QS #118 (up 8 places in 2026). Michael Smurfit Graduate Business School is world-renowned. Strong employer reputation in Ireland, UK, and EU.",
+        "strengthAreas": ["business analytics", "software engineering", "biomedical", "agri-tech"]
+      }
+    },
+
+    {
+      "key": "University College Cork",
+      "match": ["UCC", "University College Cork"],
+      "country": "IE",
+      "score": {
+        "tier": "STRONG",
+        "baseBoost": 0.73,
+        "qs2026Rank": 246,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.76,
+          "MSc Data Science": 0.75,
+          "MSc Cybersecurity": 0.77,
+          "MSc Artificial Intelligence": 0.76
+        }
+      },
+      "feedback": {
+        "note": "QS #246, up 27 places in 2026. Top-50 European university by THE. Strong for pharma-tech, sustainability, and food science adjacent tech roles in Ireland.",
+        "strengthAreas": ["computer science", "cybersecurity", "data science", "environmental tech"]
+      }
+    },
+
+    {
+      "key": "University of Galway",
+      "match": ["University of Galway", "NUI Galway", "NUIG", "National University of Ireland Galway", "Ollscoil na Gaillimhe"],
+      "country": "IE",
+      "score": {
+        "tier": "STRONG",
+        "baseBoost": 0.70,
+        "qs2026Rank": 284,
+        "theRank2025Range": "401-500",
+        "degreeOverrides": {
+          "MSc Computer Science": 0.75,
+          "MSc Artificial Intelligence": 0.78,
+          "MSc Data Analytics": 0.76,
+          "MSc Biomedical Engineering": 0.80,
+          "MSc Marine Science": 0.79,
+          "PhD Computer Science": 0.80,
+          "BSc Computer Science": 0.72
+        }
+      },
+      "feedback": {
+        "note": "QS #284. Member of Coimbra Group (with TCD). Named Sunday Times University of the Year 2022. Top 100 in Europe. Well-recognised by Irish/EU multinational tech employers. Strong AI and biomedical research programmes.",
+        "strengthAreas": ["AI", "biomedical engineering", "computer science", "marine science", "law", "performing arts"]
+      }
+    },
+
+    {
+      "key": "University of Limerick",
+      "match": ["UL", "University of Limerick"],
+      "country": "IE",
+      "score": {
+        "tier": "GOOD",
+        "baseBoost": 0.62,
+        "qs2026Rank": 401,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.65,
+          "MSc Cybersecurity": 0.67,
+          "MSc Artificial Intelligence": 0.66,
+          "BSc Computer Science": 0.63
+        }
+      },
+      "feedback": {
+        "note": "QS #401, up 20 places in 2026. Pioneered cooperative education (co-op) in Ireland. 15% higher than national average graduate employment rate. Strong industry links especially in mid-west tech cluster.",
+        "strengthAreas": ["software engineering", "cybersecurity", "engineering", "sports science"]
+      }
+    },
+
+    {
+      "key": "Dublin City University",
+      "match": ["DCU", "Dublin City University"],
+      "country": "IE",
+      "score": {
+        "tier": "GOOD",
+        "baseBoost": 0.61,
+        "qs2026Rank": 410,
+        "degreeOverrides": {
+          "MSc Computing": 0.64,
+          "MSc Data Analytics": 0.65,
+          "MSc Cybersecurity": 0.66,
+          "MSc AI": 0.65
+        }
+      },
+      "feedback": {
+        "note": "QS #410, up 11 places in 2026. Ireland's first university to integrate workplace internships into undergrad degrees. Strong industry-facing STEM focus.",
+        "strengthAreas": ["computing", "data analytics", "communications", "education tech"]
+      }
+    },
+
+    {
+      "key": "Maynooth University",
+      "match": ["Maynooth University", "NUIM", "NUI Maynooth", "National University of Ireland Maynooth"],
+      "country": "IE",
+      "score": {
+        "tier": "GOOD",
+        "baseBoost": 0.55,
+        "qs2026Rank": 775,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.58,
+          "MSc Artificial Intelligence": 0.60,
+          "BSc Computer Science": 0.56
+        }
+      },
+      "feedback": {
+        "note": "QS 771-780, now in global top 800. Respected for arts, social sciences, and niche CS research. Smaller tech profile vs TCD/UCD but solid.",
+        "strengthAreas": ["social sciences", "mathematics", "CS theory"]
+      }
+    },
+
+    {
+      "key": "Technological University Dublin",
+      "match": ["TU Dublin", "Technological University Dublin", "DIT", "Dublin Institute of Technology"],
+      "country": "IE",
+      "score": {
+        "tier": "GOOD",
+        "baseBoost": 0.52,
+        "qs2026Rank": 785,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.55,
+          "BSc Software Development": 0.53
+        }
+      },
+      "feedback": {
+        "note": "QS 781-790. Ireland's largest university by enrolment. Strong STEM and applied tech focus. Good for entry-level and mid-level tech roles in Ireland.",
+        "strengthAreas": ["software development", "networking", "applied computing"]
+      }
+    },
+
+    {
+      "key": "Atlantic Technological University",
+      "match": ["ATU", "Atlantic Technological University", "GMIT", "Galway Mayo Institute of Technology", "LYIT", "Letterkenny Institute of Technology", "IT Sligo", "IT Carlow"],
+      "country": "IE",
+      "score": {
+        "tier": "REGIONAL",
+        "baseBoost": 0.42,
+        "degreeOverrides": {
+          "BSc Computer Science": 0.44,
+          "MSc Computer Science": 0.46
+        }
+      },
+      "feedback": {
+        "note": "Formed from merger of several Irish IoTs in 2022. Respectable regional institutions with strong applied focus. Well regarded locally; less recognised internationally.",
+        "strengthAreas": ["software development", "networking", "applied engineering"]
+      }
+    },
+
+    {
+      "key": "Munster Technological University",
+      "match": ["MTU", "Munster Technological University", "Cork IT", "CIT", "IT Tralee"],
+      "country": "IE",
+      "score": {
+        "tier": "REGIONAL",
+        "baseBoost": 0.41,
+        "degreeOverrides": {
+          "BSc Computer Science": 0.43,
+          "MSc Data Science": 0.45
+        }
+      },
+      "feedback": {
+        "note": "Formed from CIT and IT Tralee merger. Strong applied and industry-linked programmes in the Munster region.",
+        "strengthAreas": ["computing", "engineering", "maritime"]
+      }
+    },
+
+    {
+      "key": "SETU Waterford",
+      "match": ["SETU", "SETU Waterford", "WIT", "Waterford IT", "Waterford Institute of Technology", "South East Technological University"],
+      "country": "IE",
+      "score": {
+        "tier": "REGIONAL",
+        "baseBoost": 0.40,
+        "degreeOverrides": {
+          "BSc Computer Science": 0.42
+        }
+      },
+      "feedback": {
+        "note": "Regional Irish TU covering the south-east. Solid applied computing programmes.",
+        "strengthAreas": ["computing", "engineering", "design"]
+      }
+    },
+
+    {
+      "key": "University of Warwick",
+      "match": ["Warwick", "University of Warwick"],
+      "country": "UK",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.83,
+        "qs2026Rank": 69,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.86,
+          "MSc Data Science": 0.85
+        }
+      },
+      "feedback": {
+        "note": "QS top 70. Russell Group. Strong UK employer recognition. Good for fintech and tech consulting.",
+        "strengthAreas": ["algorithms", "theoretical CS", "mathematics", "economics"]
+      }
+    },
+
+    {
+      "key": "University of Manchester",
+      "match": ["Manchester", "University of Manchester"],
+      "country": "UK",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.81,
+        "qs2026Rank": 34,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.84,
+          "MSc Advanced Computer Science": 0.85,
+          "MSc Data Science": 0.83
+        }
+      },
+      "feedback": {
+        "note": "QS #34, Russell Group. One of the UK's strongest CS departments. Joined THE top 50 reputation rankings 2025.",
+        "strengthAreas": ["data science", "AI", "computer graphics", "bioinformatics"]
+      }
+    },
+
+    {
+      "key": "King's College London",
+      "match": ["KCL", "King's College London", "Kings College London"],
+      "country": "UK",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.82,
+        "qs2026Rank": 40,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.84,
+          "MSc Artificial Intelligence": 0.85
+        }
+      },
+      "feedback": {
+        "note": "QS top 40. Russell Group with strong London employer network. Notable for AI ethics, security.",
+        "strengthAreas": ["AI", "cybersecurity", "health informatics", "digital humanities"]
+      }
+    },
+
+    {
+      "key": "University of Bristol",
+      "match": ["Bristol", "University of Bristol"],
+      "country": "UK",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.80,
+        "qs2026Rank": 54,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.83,
+          "MSc Machine Learning": 0.84
+        }
+      },
+      "feedback": {
+        "note": "Russell Group, QS top 60. Strong robotics and computer vision research. Good UK employer signal.",
+        "strengthAreas": ["robotics", "ML", "human-computer interaction"]
+      }
+    },
+
+    {
+      "key": "University of Glasgow",
+      "match": ["Glasgow", "University of Glasgow"],
+      "country": "UK",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.79,
+        "qs2026Rank": 77,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.82,
+          "MSc Data Science": 0.81
+        }
+      },
+      "feedback": {
+        "note": "Russell Group, QS top 80. Long CS history. Strong Scottish tech sector pipeline.",
+        "strengthAreas": ["HCI", "information retrieval", "data science"]
+      }
+    },
+
+    {
+      "key": "TU Berlin",
+      "match": ["TU Berlin", "Technische Universität Berlin"],
+      "country": "DE",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.82,
+        "qs2026Rank": 154,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.85,
+          "MSc Data Engineering": 0.84
+        }
+      },
+      "feedback": {
+        "note": "Premier German technical university in Europe's AI hub (Berlin). Strong for backend, distributed systems, AI.",
+        "strengthAreas": ["distributed systems", "ML", "software engineering", "robotics"]
+      }
+    },
+
+    {
+      "key": "KU Leuven",
+      "match": ["KU Leuven", "Katholieke Universiteit Leuven"],
+      "country": "BE",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.83,
+        "qs2026Rank": 74,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.86,
+          "MSc AI": 0.87
+        }
+      },
+      "feedback": {
+        "note": "QS top 80. Joined THE top 50 reputation 2025. One of Europe's strongest research universities. Strong AI and security labs.",
+        "strengthAreas": ["AI", "security", "formal methods", "ML"]
+      }
+    },
+
+    {
+      "key": "EPFL",
+      "match": ["EPFL", "École Polytechnique Fédérale de Lausanne"],
+      "country": "CH",
+      "score": {
+        "tier": "ELITE",
+        "baseBoost": 0.94,
+        "qs2026Rank": 17,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.96,
+          "PhD Computer Science": 0.97
+        }
+      },
+      "feedback": {
+        "note": "Europe's #2 technical university after ETH Zurich. Excellent global research reputation. Strong AI, systems, and distributed systems.",
+        "strengthAreas": ["distributed systems", "ML", "networking", "data management"]
+      }
+    },
+
+    {
+      "key": "McGill University",
+      "match": ["McGill", "McGill University"],
+      "country": "CA",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.84,
+        "qs2026Rank": 30,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.87,
+          "PhD Computer Science": 0.89
+        }
+      },
+      "feedback": {
+        "note": "QS top 30. Canada's most internationally recognised brand. Strong AI heritage (MILA adjacent).",
+        "strengthAreas": ["AI", "NLP", "health informatics", "robotics"]
+      }
+    },
+
+    {
+      "key": "University of British Columbia",
+      "match": ["UBC", "University of British Columbia"],
+      "country": "CA",
+      "score": {
+        "tier": "STRONG",
+        "baseBoost": 0.76,
+        "qs2026Rank": 38,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.80,
+          "PhD Computer Science": 0.82
+        }
+      },
+      "feedback": {
+        "note": "QS top 40. Vancouver tech hub. Strong for software engineering and AI. Excellent employability in APAC and North American markets.",
+        "strengthAreas": ["software engineering", "AI", "HCI", "bioinformatics"]
+      }
+    },
+
+    {
+      "key": "Sorbonne University",
+      "match": ["Sorbonne", "Sorbonne University", "Université de la Sorbonne"],
+      "country": "FR",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.81,
+        "qs2026Rank": 73,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.83,
+          "MSc Data Science": 0.82
+        }
+      },
+      "feedback": {
+        "note": "Joined THE top 50 reputation 2025. France's most recognised brand. Strong for theoretical CS and mathematics.",
+        "strengthAreas": ["theoretical CS", "mathematics", "NLP", "AI"]
+      }
+    },
+
+    {
+      "key": "Tsinghua University",
+      "match": ["Tsinghua", "Tsinghua University"],
+      "country": "CN",
+      "score": {
+        "tier": "ELITE",
+        "baseBoost": 0.94,
+        "qs2026Rank": 20,
+        "theRank2025": 12,
+        "degreeOverrides": {
+          "MEng Computer Science": 0.95,
+          "PhD Computer Science": 0.96
+        }
+      },
+      "feedback": {
+        "note": "#8 in THE Reputation Rankings 2025. China's top technical university. Strong global signal especially for APAC-facing roles and AI research.",
+        "strengthAreas": ["AI", "systems", "networking", "computer vision"]
+      }
+    },
+
+    {
+      "key": "IIT Bombay",
+      "match": ["IIT Bombay", "IIT-B", "Indian Institute of Technology Bombay"],
+      "country": "IN",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.85,
+        "qs2026Rank": 119,
+        "degreeOverrides": {
+          "BTech Computer Science": 0.89,
+          "MTech Computer Science": 0.88,
+          "PhD Computer Science": 0.90
+        }
+      },
+      "feedback": {
+        "note": "India's most globally recognised technical brand. BTech CS from any IIT is a very strong signal for US and EU technical roles.",
+        "strengthAreas": ["algorithms", "systems", "ML", "software engineering"]
+      }
+    },
+
+    {
+      "key": "IIT Delhi",
+      "match": ["IIT Delhi", "IIT-D", "Indian Institute of Technology Delhi"],
+      "country": "IN",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.84,
+        "qs2026Rank": 150,
+        "degreeOverrides": {
+          "BTech Computer Science": 0.88,
+          "MTech Computer Science": 0.87
+        }
+      },
+      "feedback": {
+        "note": "Top-tier IIT. Strong employer recognition across US, UK, and Ireland tech multinationals.",
+        "strengthAreas": ["algorithms", "AI", "software engineering"]
+      }
+    },
+
+    {
+      "key": "University of Melbourne",
+      "match": ["University of Melbourne", "Melbourne University"],
+      "country": "AU",
+      "score": {
+        "tier": "PRESTIGE",
+        "baseBoost": 0.83,
+        "qs2026Rank": 14,
+        "degreeOverrides": {
+          "MSc Computer Science": 0.86,
+          "MSc Data Science": 0.85
+        }
+      },
+      "feedback": {
+        "note": "Australia's highest QS-ranked university. THE top 50 reputation 2025. Strong for APAC and European roles.",
+        "strengthAreas": ["data science", "AI", "software engineering", "bioinformatics"]
+      }
+    }
+
+  ],
+
+  "degrees": [
+
+    {
+      "key": "PhD Computer Science",
+      "match": ["PhD Computer Science", "DPhil Computer Science", "Doctorate Computer Science", "PhD CS", "Doctor of Philosophy in Computer Science"],
+      "score": {
+        "level": "DOCTORAL",
+        "relevanceToTech": 1.0,
+        "baseBoost": 0.95,
+        "researchSignal": "VERY_HIGH"
+      },
+      "feedback": {
+        "note": "Exceptional signal for research roles, staff engineer, principal engineer, and FAANG L6+ tracks. May be neutral-to-negative for product-focused or startup roles if not paired with engineering experience.",
+        "caveats": "Verify publication record and supervisor reputation for research roles. A PhD without strong practical experience is not a substitute for 5+ years of industry SWE."
+      }
+    },
+
+    {
+      "key": "PhD Artificial Intelligence",
+      "match": ["PhD Artificial Intelligence", "PhD AI", "PhD Machine Learning", "PhD Deep Learning"],
+      "score": {
+        "level": "DOCTORAL",
+        "relevanceToTech": 1.0,
+        "baseBoost": 0.97,
+        "researchSignal": "VERY_HIGH"
+      },
+      "feedback": {
+        "note": "Among the most valuable credentials in the current job market. Extremely strong signal for ML engineer, research scientist, and AI leadership roles.",
+        "caveats": "Confirm publication quality (NeurIPS, ICML, ICLR, CVPR tier preferred)."
+      }
+    },
+
+    {
+      "key": "MSc Computer Science",
+      "match": ["MSc Computer Science", "MS CS", "M.Sc. Computer Science", "Master of Science in Computer Science", "MSc in Computer Science", "Master's in CS"],
+      "score": {
+        "level": "POSTGRADUATE",
+        "relevanceToTech": 1.0,
+        "baseBoost": 0.80
+      },
+      "feedback": {
+        "note": "Strong foundation signal. Combined with strong institution or internship experience, opens mid-level+ roles. Research-based MSc carries higher signal than coursework-only.",
+        "caveats": "Distinguish between thesis-based (research signal) and coursework-only (skills signal)."
+      }
+    },
+
+    {
+      "key": "MSc Artificial Intelligence",
+      "match": ["MSc Artificial Intelligence", "MSc AI", "MSc Machine Learning", "MSc ML", "MSc in AI", "Master of Science in Artificial Intelligence"],
+      "score": {
+        "level": "POSTGRADUATE",
+        "relevanceToTech": 1.0,
+        "baseBoost": 0.83
+      },
+      "feedback": {
+        "note": "High-demand credential. Strong signal for ML/AI roles. Verify curriculum depth: look for coverage of deep learning, probabilistic models, and research methods.",
+        "caveats": "Market saturation increasing. Differentiate with projects, publications, or internships."
+      }
+    },
+
+    {
+      "key": "MSc Data Science",
+      "match": ["MSc Data Science", "MSc in Data Science", "Master of Science in Data Science", "MS Data Science"],
+      "score": {
+        "level": "POSTGRADUATE",
+        "relevanceToTech": 0.95,
+        "baseBoost": 0.78
+      },
+      "feedback": {
+        "note": "Strong for data engineering, analytics engineering, and ML roles. Less so for pure SWE or backend roles. Portfolio work is critical.",
+        "caveats": "Verify whether curriculum is statistics-heavy or engineering-heavy — affects role fit."
+      }
+    },
+
+    {
+      "key": "MSc Software Engineering",
+      "match": ["MSc Software Engineering", "MSc in Software Engineering", "Master of Software Engineering", "MS Software Engineering"],
+      "score": {
+        "level": "POSTGRADUATE",
+        "relevanceToTech": 1.0,
+        "baseBoost": 0.79
+      },
+      "feedback": {
+        "note": "Solid practical credential. Strong for SWE, DevOps, and platform roles. Signal is strong at ELITE/PRESTIGE institutions (e.g. CMU MSE), moderate elsewhere.",
+        "caveats": null
+      }
+    },
+
+    {
+      "key": "MSc Cybersecurity",
+      "match": ["MSc Cybersecurity", "MSc Cyber Security", "MSc Information Security", "MSc in Cybersecurity", "Master of Science in Cybersecurity"],
+      "score": {
+        "level": "POSTGRADUATE",
+        "relevanceToTech": 0.95,
+        "baseBoost": 0.80
+      },
+      "feedback": {
+        "note": "Very strong in current market given talent shortage. Excellent for AppSec, cloud security, SOC, and GRC roles.",
+        "caveats": "Certifications (CISSP, CEH, OSCP) alongside degree significantly boost signal."
+      }
+    },
+
+    {
+      "key": "MSc Data Analytics",
+      "match": ["MSc Data Analytics", "MSc in Data Analytics", "Master of Science in Data Analytics"],
+      "score": {
+        "level": "POSTGRADUATE",
+        "relevanceToTech": 0.88,
+        "baseBoost": 0.73
+      },
+      "feedback": {
+        "note": "Good for analytics, BI, and junior data science. Less strong than MSc Data Science or MSc CS for pure engineering roles.",
+        "caveats": "Portfolio of real data work is essential to convert this into interview invites."
+      }
+    },
+
+    {
+      "key": "MEng Computer Science",
+      "match": ["MEng Computer Science", "MEng Computing", "Master of Engineering Computer Science", "M.Eng. CS"],
+      "score": {
+        "level": "POSTGRADUATE_INTEGRATED",
+        "relevanceToTech": 1.0,
+        "baseBoost": 0.82
+      },
+      "feedback": {
+        "note": "Integrated master's common in UK. Strong signal, especially from Russell Group / top Irish universities. Often more rigorous than standalone MSc.",
+        "caveats": null
+      }
+    },
+
+    {
+      "key": "BSc Computer Science",
+      "match": ["BSc Computer Science", "BS Computer Science", "BA Computer Science", "BEng Computer Science", "Bachelor of Science in Computer Science", "Bachelor of Computer Science"],
+      "score": {
+        "level": "UNDERGRADUATE",
+        "relevanceToTech": 1.0,
+        "baseBoost": 0.70
+      },
+      "feedback": {
+        "note": "Foundational credential for SWE roles. Combined with strong institution, internships, and projects, fully competitive for junior/mid-level roles at top companies.",
+        "caveats": "At senior levels (5+ YOE), degree fades in importance relative to track record."
+      }
+    },
+
+    {
+      "key": "BSc Software Development",
+      "match": ["BSc Software Development", "BSc in Software Development", "Bachelor of Science in Software Development"],
+      "score": {
+        "level": "UNDERGRADUATE",
+        "relevanceToTech": 0.95,
+        "baseBoost": 0.65
+      },
+      "feedback": {
+        "note": "More applied than BSc CS. Good for SWE roles at product companies and SMEs. Strong portfolio work is important.",
+        "caveats": null
+      }
+    },
+
+    {
+      "key": "BSc Information Technology",
+      "match": ["BSc IT", "BSc Information Technology", "Bachelor of Information Technology", "BTech IT"],
+      "score": {
+        "level": "UNDERGRADUATE",
+        "relevanceToTech": 0.85,
+        "baseBoost": 0.60
+      },
+      "feedback": {
+        "note": "Solid for sysadmin, IT operations, and junior dev roles. Perceived as less rigorous than BSc CS by selective tech employers.",
+        "caveats": "Supplement with technical certifications (AWS, GCP, CKAD) for cloud/infra roles."
+      }
+    },
+
+    {
+      "key": "BSc Mathematics",
+      "match": ["BSc Mathematics", "BA Mathematics", "BSc Maths", "Bachelor of Mathematics", "BA Maths"],
+      "score": {
+        "level": "UNDERGRADUATE",
+        "relevanceToTech": 0.80,
+        "baseBoost": 0.68
+      },
+      "feedback": {
+        "note": "Strong signal for quantitative roles: ML engineer, data scientist, quant, algorithmic trading. Highly regarded at top institutions for CS roles if paired with self-taught engineering.",
+        "caveats": "Must pair with practical coding portfolio to be competitive for SWE roles."
+      }
+    },
+
+    {
+      "key": "BSc Statistics",
+      "match": ["BSc Statistics", "BA Statistics", "Bachelor of Statistics", "BSc Mathematical Statistics"],
+      "score": {
+        "level": "UNDERGRADUATE",
+        "relevanceToTech": 0.78,
+        "baseBoost": 0.65
+      },
+      "feedback": {
+        "note": "Good for data science, analytics, and actuarial-adjacent tech roles. Strong at PRESTIGE institutions.",
+        "caveats": "Programming portfolio required for ML/data engineering roles."
+      }
+    },
+
+    {
+      "key": "BSc Electrical Engineering",
+      "match": ["BSc Electrical Engineering", "BEng Electrical Engineering", "Bachelor of Electrical Engineering"],
+      "score": {
+        "level": "UNDERGRADUATE",
+        "relevanceToTech": 0.75,
+        "baseBoost": 0.64
+      },
+      "feedback": {
+        "note": "Strong for embedded systems, hardware, IoT, and robotics SWE roles. Less relevant for pure web dev or product SWE.",
+        "caveats": null
+      }
+    },
+
+    {
+      "key": "MBA",
+      "match": ["MBA", "Master of Business Administration"],
+      "score": {
+        "level": "POSTGRADUATE",
+        "relevanceToTech": 0.55,
+        "baseBoost": 0.65
+      },
+      "feedback": {
+        "note": "Strong signal for product management, engineering management, and technical sales. Neutral-to-negative for individual contributor engineering roles. ELITE MBA (Wharton, HBS, LBS, INSEAD, Smurfit) adds significant prestige.",
+        "caveats": "Boost is highly institution-dependent. Smurfit (UCD) carries strong Irish/EU employer signal."
+      }
+    },
+
+    {
+      "key": "MSc Human-Computer Interaction",
+      "match": ["MSc HCI", "MSc Human-Computer Interaction", "MSc Interaction Design", "MSc UX"],
+      "score": {
+        "level": "POSTGRADUATE",
+        "relevanceToTech": 0.80,
+        "baseBoost": 0.72
+      },
+      "feedback": {
+        "note": "Strong for UX engineering, design systems, and product design roles. Carnegie Mellon HCII MSc is world-leading in this field.",
+        "caveats": null
+      }
+    },
+
+    {
+      "key": "MSc Biomedical Engineering",
+      "match": ["MSc Biomedical Engineering", "MSc Biomedical Science and Engineering", "Master of Science in Biomedical Engineering"],
+      "score": {
+        "level": "POSTGRADUATE",
+        "relevanceToTech": 0.75,
+        "baseBoost": 0.74
+      },
+      "feedback": {
+        "note": "Strong in Ireland's medical device sector (Galway is a world-leading med-device cluster). High relevance for ML in healthcare, medical imaging, and embedded health systems.",
+        "caveats": null
+      }
+    },
+
+    {
+      "key": "Higher Diploma Computer Science",
+      "match": ["Higher Diploma Computer Science", "HDip Computer Science", "HDip CS", "Higher Diploma in Science (Computer Science)", "Conversion MSc CS"],
+      "score": {
+        "level": "CONVERSION",
+        "relevanceToTech": 0.85,
+        "baseBoost": 0.60
+      },
+      "feedback": {
+        "note": "Common in Ireland as an accelerated conversion pathway (typically 1 year). Reputable Irish universities (TCD, UCD, UCC, UoG, DCU) deliver these well. Strong signal when backed by internship or project work.",
+        "caveats": "Employers will probe whether it was a genuine conversion (sufficient CS depth) vs a credential. GitHub portfolio matters greatly here."
+      }
+    },
+
+    {
+      "key": "Associate Degree Computer Science",
+      "match": ["Associate Degree Computer Science", "AAS Computer Science", "Associate of Science Computer Science"],
+      "score": {
+        "level": "SUB_UNDERGRADUATE",
+        "relevanceToTech": 0.65,
+        "baseBoost": 0.35
+      },
+      "feedback": {
+        "note": "Common in US community college system. Valid entry point but most competitive roles expect a bachelor's. Flag for roles above junior level.",
+        "caveats": null
+      }
+    }
+
+  ],
+
+  "certifications": [
+    {
+      "key": "AWS Certified Solutions Architect",
+      "match": ["AWS Solutions Architect", "AWS Certified Solutions Architect", "AWS CSA", "AWS SA"],
+      "score": { "boostAdditive": 0.06 },
+      "feedback": { "note": "Strong cloud signal. Associate-level is a baseline; Professional-level adds meaningfully more." }
+    },
+    {
+      "key": "Google Cloud Professional Data Engineer",
+      "match": ["Google Cloud Professional Data Engineer", "GCP Data Engineer", "GCP Professional Data Engineer"],
+      "score": { "boostAdditive": 0.07 },
+      "feedback": { "note": "High value for data engineering and MLOps roles." }
+    },
+    {
+      "key": "CKA Certified Kubernetes Administrator",
+      "match": ["CKA", "Certified Kubernetes Administrator"],
+      "score": { "boostAdditive": 0.07 },
+      "feedback": { "note": "Strong DevOps/platform signal. Highly sought after by cloud-native employers." }
+    },
+    {
+      "key": "CISSP",
+      "match": ["CISSP", "Certified Information Systems Security Professional"],
+      "score": { "boostAdditive": 0.09 },
+      "feedback": { "note": "Strongest general InfoSec credential. Significant boost for security roles. Requires 5 YOE to maintain credibility." }
+    },
+    {
+      "key": "OSCP",
+      "match": ["OSCP", "Offensive Security Certified Professional"],
+      "score": { "boostAdditive": 0.10 },
+      "feedback": { "note": "Elite penetration testing credential. Very strong signal for offensive security, red team, and AppSec roles." }
+    },
+    {
+      "key": "TensorFlow Developer Certificate",
+      "match": ["TensorFlow Developer Certificate", "TF Developer Cert"],
+      "score": { "boostAdditive": 0.03 },
+      "feedback": { "note": "Modest signal. Less important than a strong ML portfolio or publication." }
+    },
+    {
+      "key": "PMP",
+      "match": ["PMP", "Project Management Professional"],
+      "score": { "boostAdditive": 0.04 },
+      "feedback": { "note": "Valued for technical project/programme management roles. Negligible for IC SWE roles." }
+    }
+  ],
+
+  "nonTraditionalPaths": [
+
+    {
+      "key": "bootcamp_elite",
+      "match": ["Hack Reactor", "App Academy", "Flatiron School", "General Assembly", "Lambda School", "Bloom Institute of Technology", "Coding Dojo", "Fullstack Academy", "Springboard", "Thinkful", "Le Wagon"],
+      "score": {
+        "tier": "NON_TRADITIONAL",
+        "baseBoost": 0.40
+      },
+      "feedback": {
+        "note": "Named top-tier bootcamps with CIRR-verified or industry-recognised outcomes. Acceptable for junior roles at most tech employers. Employer acceptance has risen significantly: ~90% of employers report open to hiring bootcamp grads (2025). Flag for senior roles (L5+/Staff+) unless candidate has strong portfolio and YOE.",
+        "juniorRoleSignal": "POSITIVE",
+        "seniorRoleSignal": "NEUTRAL_TO_NEGATIVE",
+        "mitigation": "Strong GitHub portfolio, open-source contributions, or a capstone project with measurable impact substantially offset bootcamp concerns."
+      }
+    },
+
+    {
+      "key": "bootcamp_generic",
+      "match": ["bootcamp", "coding bootcamp", "intensive program", "software development bootcamp", "web development bootcamp", "coding intensive"],
+      "score": {
+        "tier": "NON_TRADITIONAL",
+        "baseBoost": 0.30
+      },
+      "feedback": {
+        "note": "Generic bootcamp without named institution. Cannot assess programme quality. Treat as unverified until name confirmed. For junior roles, focus evaluation on portfolio, GitHub activity, and interview performance. Not disqualifying — nearly 70% of employers still consider bootcamp grads qualified for tech roles.",
+        "juniorRoleSignal": "NEUTRAL",
+        "seniorRoleSignal": "NEGATIVE",
+        "mitigation": "Verify programme name, length (prefer 12+ weeks full-time), and any CIRR or outcome data. Ask candidate for project demos."
+      }
+    },
+
+    {
+      "key": "mooc_certificate",
+      "match": ["Coursera", "edX", "Udemy", "Udacity", "Nanodegree", "MOOC certificate", "online certificate", "LinkedIn Learning certificate", "deeplearning.ai"],
+      "score": {
+        "tier": "NON_TRADITIONAL",
+        "baseBoost": 0.20
+      },
+      "feedback": {
+        "note": "MOOCs show initiative and continuous learning. Not equivalent to formal education but valued as supplementary. deeplearning.ai and fast.ai carry higher ML-specific signal. Best placed in a 'Continuous Learning' resume section rather than Education.",
+        "juniorRoleSignal": "SUPPLEMENTARY",
+        "seniorRoleSignal": "SUPPLEMENTARY",
+        "mitigation": "Portfolio, GitHub, and applied projects are far stronger signals than MOOC completion alone."
+      }
+    },
+
+    {
+      "key": "self_taught",
+      "match": ["self-taught", "self taught", "autodidact", "self-directed", "no formal education"],
+      "score": {
+        "tier": "NON_TRADITIONAL",
+        "baseBoost": 0.15
+      },
+      "feedback": {
+        "note": "Self-taught engineers can and do succeed at top companies. Signal strength is entirely dependent on portfolio quality, open-source contributions, and demonstrable past work.",
+        "juniorRoleSignal": "WEAK_WITHOUT_PORTFOLIO",
+        "seniorRoleSignal": "NEUTRAL_WITH_STRONG_PORTFOLIO",
+        "mitigation": "GitHub profile, open-source contributions, live production projects, or prior tech employment are essential to advance this candidate."
+      }
+    },
+
+    {
+      "key": "apprenticeship",
+      "match": ["apprenticeship", "tech apprenticeship", "software apprenticeship", "degree apprenticeship"],
+      "score": {
+        "tier": "NON_TRADITIONAL",
+        "baseBoost": 0.45
+      },
+      "feedback": {
+        "note": "Increasingly respected pathway especially in UK and Ireland. Degree apprenticeships (combining employer-based training with university credit) are particularly strong. Strong signal for operational and junior engineering roles.",
+        "juniorRoleSignal": "POSITIVE",
+        "seniorRoleSignal": "NEUTRAL",
+        "mitigation": null
+      }
+    },
+
+    {
+      "key": "open_source_only",
+      "match": ["open source contributor", "open-source", "GitHub portfolio", "OSS contributor"],
+      "score": {
+        "tier": "NON_TRADITIONAL",
+        "baseBoost": 0.35
+      },
+      "feedback": {
+        "note": "Significant open-source contributions (merged PRs in major projects, maintainer roles) are highly regarded by engineering hiring managers. This can compensate for weak formal education at many top-tier companies.",
+        "juniorRoleSignal": "POSITIVE",
+        "seniorRoleSignal": "POSITIVE_WITH_IMPACT",
+        "mitigation": null
+      }
+    }
+
+  ],
+
+  "fieldRelevanceMultipliers": {
+    "description": "Multipliers applied to baseBoost based on how relevant the degree field is to the target role. These are multiplicative.",
+    "targetRoles": {
+      "software_engineer": {
+        "Computer Science": 1.00,
+        "Software Engineering": 1.00,
+        "Computer Engineering": 0.97,
+        "Electrical Engineering": 0.85,
+        "Mathematics": 0.88,
+        "Physics": 0.83,
+        "Statistics": 0.78,
+        "Information Technology": 0.82,
+        "Information Systems": 0.78,
+        "Business": 0.55,
+        "Bootcamp": 0.80,
+        "Other STEM": 0.70,
+        "Non-STEM": 0.45
+      },
+      "ml_engineer": {
+        "Computer Science": 0.98,
+        "Artificial Intelligence": 1.00,
+        "Machine Learning": 1.00,
+        "Statistics": 0.95,
+        "Mathematics": 0.93,
+        "Physics": 0.88,
+        "Electrical Engineering": 0.83,
+        "Data Science": 0.96,
+        "Computational Neuroscience": 0.90,
+        "Bootcamp": 0.55,
+        "Other STEM": 0.65,
+        "Non-STEM": 0.30
+      },
+      "data_engineer": {
+        "Computer Science": 0.97,
+        "Software Engineering": 0.93,
+        "Data Science": 1.00,
+        "Statistics": 0.90,
+        "Mathematics": 0.85,
+        "Information Systems": 0.83,
+        "Business Analytics": 0.80,
+        "Bootcamp": 0.72,
+        "Non-STEM": 0.35
+      },
+      "product_manager": {
+        "Computer Science": 0.88,
+        "Business": 0.90,
+        "MBA": 1.00,
+        "Engineering": 0.85,
+        "Psychology": 0.78,
+        "Cognitive Science": 0.82,
+        "Bootcamp": 0.55,
+        "Other": 0.65
+      },
+      "cybersecurity": {
+        "Cybersecurity": 1.00,
+        "Information Security": 1.00,
+        "Computer Science": 0.93,
+        "Networks": 0.88,
+        "Computer Engineering": 0.85,
+        "Mathematics": 0.78,
+        "Bootcamp": 0.68,
+        "Non-STEM": 0.30
+      }
+    }
+  },
+
+  "educationLevelWeights": {
+    "description": "Base weight applied before institution and degree-specific boosts. Reflects industry-standard expectations for experience-level transitions.",
+    "DOCTORAL": { "weight": 1.0, "notes": "Research signal. Exceptional for L6+ IC and research roles." },
+    "POSTGRADUATE": { "weight": 0.85, "notes": "Standard for senior IC, strong for all mid-level roles." },
+    "POSTGRADUATE_INTEGRATED": { "weight": 0.88, "notes": "MEng/integrated MSc typically viewed as stronger than coursework MSc." },
+    "CONVERSION": { "weight": 0.70, "notes": "HDip / PGDip conversions are valid but signal depth needs verification." },
+    "UNDERGRADUATE": { "weight": 0.75, "notes": "Foundational. Sufficient for most junior and many mid-level roles." },
+    "SUB_UNDERGRADUATE": { "weight": 0.45, "notes": "Associate / HNC-level. Flag for roles above junior." },
+    "NON_TRADITIONAL": { "weight": 0.50, "notes": "Portfolio-dependent. Interview performance and projects carry more weight." }
+  },
+
+  "redFlags": [
+    {
+      "key": "unaccredited_institution",
+      "match": ["University of the People unverified", "diploma mill"],
+      "severity": "HIGH",
+      "feedback": "Institution not verifiable in any major accreditation database. Pause candidate and verify before proceeding."
+    },
+    {
+      "key": "degree_mismatch",
+      "match": [],
+      "severity": "MEDIUM",
+      "feedback": "Degree field has low relevance to applied role. Increase emphasis on practical skills evaluation and portfolio review."
+    },
+    {
+      "key": "incomplete_degree",
+      "match": ["incomplete", "did not complete", "some college", "attended"],
+      "severity": "LOW",
+      "feedback": "Incomplete formal education. Evaluate based on years of industry experience and portfolio. Not disqualifying for experienced candidates."
+    },
+    {
+      "key": "very_short_bootcamp",
+      "match": ["4-week", "6-week", "4 week", "6 week"],
+      "severity": "MEDIUM",
+      "feedback": "Very short bootcamp duration (<8 weeks). Insufficient time to develop engineering fundamentals. Weight portfolio and live coding performance more heavily."
+    }
+  ],
+
+  "greenFlags": [
+    {
+      "key": "publications",
+      "match": ["published", "NeurIPS", "ICML", "ICLR", "CVPR", "AAAI", "ACL", "EMNLP", "SIGKDD", "peer-reviewed"],
+      "scoreAdditive": 0.10,
+      "feedback": "Peer-reviewed publication at a top venue is a significant positive signal, especially for ML/AI roles."
+    },
+    {
+      "key": "research_experience",
+      "match": ["research assistant", "research intern", "lab", "research lab", "research group"],
+      "scoreAdditive": 0.05,
+      "feedback": "Research experience strengthens academic credentials and signals analytical depth."
+    },
+    {
+      "key": "distinction_honours",
+      "match": ["first class honours", "1st class", "distinction", "summa cum laude", "magna cum laude", "with distinction"],
+      "scoreAdditive": 0.06,
+      "feedback": "High academic performance is a positive differentiator, especially at top institutions."
+    },
+    {
+      "key": "scholarship",
+      "match": ["scholarship", "bursary", "merit award", "full scholarship", "funded PhD"],
+      "scoreAdditive": 0.05,
+      "feedback": "Competitive scholarship signals peer selection and is a green flag."
+    },
+    {
+      "key": "faang_internship",
+      "match": ["Google intern", "Meta intern", "Apple intern", "Amazon intern", "Microsoft intern", "internship at Google", "internship at Meta"],
+      "scoreAdditive": 0.10,
+      "feedback": "Top-tier tech internship is a strong signal that partially compensates for a weaker institution."
+    }
+  ],
+
+  "scoringFormula": {
+    "description": "Final education score computation. All components capped at 1.0.",
+    "formula": "educationScore = min(1.0, institutionBaseBoost * fieldRelevanceMultiplier + educationLevelWeight + greenFlagAdditives - redFlagPenalties)",
+    "normalisationNote": "educationScore feeds into compositeResumeScore alongside workExperienceScore, skillsScore, and projectsScore, typically weighted at 15-25% of total depending on seniority level.",
+    "seniorityWeights": {
+      "junior_0_2_yoe": { "educationWeight": 0.30, "experienceWeight": 0.35, "skillsWeight": 0.20, "projectsWeight": 0.15 },
+      "mid_3_5_yoe": { "educationWeight": 0.20, "experienceWeight": 0.45, "skillsWeight": 0.20, "projectsWeight": 0.15 },
+      "senior_6_10_yoe": { "educationWeight": 0.12, "experienceWeight": 0.55, "skillsWeight": 0.18, "projectsWeight": 0.15 },
+      "staff_10_plus_yoe": { "educationWeight": 0.08, "experienceWeight": 0.62, "skillsWeight": 0.18, "projectsWeight": 0.12 }
+    }
+  }
+}

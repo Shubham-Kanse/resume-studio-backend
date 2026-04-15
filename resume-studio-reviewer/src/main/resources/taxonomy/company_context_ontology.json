@@ -1,0 +1,1522 @@
+{
+  "_meta": {
+    "version": "2.0.0",
+    "lastUpdated": "2026-04",
+    "description": "Company context ontology for resume feedback scoring. Used to calibrate credibility weights, domain boosts, and contextual signals when evaluating candidate experience.",
+    "schema": {
+      "tier": "TIER_0 (quant/elite) > TIER_1 (FAANG+) > TIER_2 (strong brand) > TIER_3 (solid mid) > TIER_4 (early/unknown)",
+      "baseCredibility": "0.0\u20131.0 scalar applied to all role claims from this employer",
+      "domainBoost": "Per-domain multiplier on top of baseCredibility; 'default' is fallback",
+      "recentSignals": "Observable signals from Q4-2025 / Q1-2026 affecting interpretation",
+      "scoringNotes": "Human-readable guidance for resume reviewer logic"
+    }
+  },
+  "companies": [
+    {
+      "key": "Jane Street",
+      "match": [
+        "Jane Street",
+        "Jane Street Capital",
+        "jane street group"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_0",
+        "baseCredibility": 1.0,
+        "domainBoost": {
+          "Finance": 1.0,
+          "Trading": 1.0,
+          "Backend": 1.0,
+          "ML": 1.0,
+          "default": 0.95
+        }
+      },
+      "feedback": {
+        "note": "Pinnacle quant firm. Any role here is an exceptional signal \u2014 bar for both technical and intellectual ability is extraordinarily high.",
+        "recentSignals": [
+          "stableGrowth",
+          "highCompensation"
+        ]
+      }
+    },
+    {
+      "key": "Citadel",
+      "match": [
+        "Citadel",
+        "Citadel LLC",
+        "Citadel Securities"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_0",
+        "baseCredibility": 1.0,
+        "domainBoost": {
+          "Finance": 1.0,
+          "Trading": 1.0,
+          "Backend": 1.0,
+          "ML": 1.0,
+          "default": 0.95
+        }
+      },
+      "feedback": {
+        "note": "Top-tier quant hedge fund and market maker. Engineering and research roles carry enormous weight. Citadel Securities is separate but equally prestigious.",
+        "recentSignals": [
+          "stableGrowth",
+          "highCompensation"
+        ]
+      }
+    },
+    {
+      "key": "Renaissance Technologies",
+      "match": [
+        "Renaissance Technologies",
+        "RenTech",
+        "Renaissance Tech"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_0",
+        "baseCredibility": 1.0,
+        "domainBoost": {
+          "Finance": 1.0,
+          "ML": 1.0,
+          "Research": 1.0,
+          "default": 0.95
+        }
+      },
+      "feedback": {
+        "note": "Legendary quant fund \u2014 arguably the most selective employer in the world. Hiring is near-invisible but carrying this name is an elite signal.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "DE Shaw",
+      "match": [
+        "D.E. Shaw",
+        "DE Shaw",
+        "D. E. Shaw",
+        "DESCO"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_0",
+        "baseCredibility": 0.98,
+        "domainBoost": {
+          "Finance": 1.0,
+          "Trading": 1.0,
+          "Backend": 1.0,
+          "ML": 1.0,
+          "default": 0.9
+        }
+      },
+      "feedback": {
+        "note": "Elite quant / tech hybrid. Highly selective across both finance and engineering tracks.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Hudson River Trading",
+      "match": [
+        "Hudson River Trading",
+        "HRT",
+        "Hudson River"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_0",
+        "baseCredibility": 0.98,
+        "domainBoost": {
+          "Finance": 1.0,
+          "Trading": 1.0,
+          "Backend": 1.0,
+          "default": 0.9
+        }
+      },
+      "feedback": {
+        "note": "Top HFT/market-making firm. Engineering bar rivals quant funds. Strong signal for systems-level and backend roles.",
+        "recentSignals": [
+          "stableGrowth",
+          "highCompensation"
+        ]
+      }
+    },
+    {
+      "key": "Two Sigma",
+      "match": [
+        "Two Sigma",
+        "Two Sigma Investments"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_0",
+        "baseCredibility": 0.97,
+        "domainBoost": {
+          "Finance": 1.0,
+          "ML": 1.0,
+          "Backend": 1.0,
+          "DataScience": 1.0,
+          "default": 0.88
+        }
+      },
+      "feedback": {
+        "note": "Quant fund with strong engineering culture. ML and data science roles here are particularly prestigious.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Google",
+      "match": [
+        "Google",
+        "Google LLC",
+        "Alphabet",
+        "Google DeepMind",
+        "DeepMind",
+        "Google Brain",
+        "Waymo"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.96,
+        "domainBoost": {
+          "ML": 1.0,
+          "AI": 1.0,
+          "Backend": 1.0,
+          "Infrastructure": 1.0,
+          "Search": 1.0,
+          "Cloud": 0.9,
+          "default": 0.8
+        }
+      },
+      "feedback": {
+        "note": "FAANG core. Extremely strong signal across nearly all engineering disciplines. Google DeepMind / Brain experience is elite-tier for AI/ML roles.",
+        "recentSignals": [
+          "layoffs2025",
+          "aggressiveAIInvestment",
+          "geminiCompetition"
+        ]
+      }
+    },
+    {
+      "key": "Meta",
+      "match": [
+        "Meta",
+        "Meta Platforms",
+        "Facebook",
+        "Instagram",
+        "WhatsApp",
+        "Meta AI",
+        "FAIR"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.95,
+        "domainBoost": {
+          "ML": 1.0,
+          "AI": 1.0,
+          "Backend": 1.0,
+          "Infrastructure": 1.0,
+          "SocialPlatform": 1.0,
+          "AR/VR": 0.75,
+          "default": 0.8
+        }
+      },
+      "feedback": {
+        "note": "FAANG core with one of the strongest AI research labs (FAIR). High comp, intense culture. Reality Labs (VR) experience carries less weight than core infra/AI.",
+        "recentSignals": [
+          "layoffs2026RealityLabs",
+          "massiveAICapex",
+          "aggressiveHiring"
+        ]
+      }
+    },
+    {
+      "key": "Microsoft",
+      "match": [
+        "Microsoft",
+        "Microsoft Corporation",
+        "Azure",
+        "GitHub",
+        "LinkedIn",
+        "Xbox"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.94,
+        "domainBoost": {
+          "Cloud": 1.0,
+          "AI": 1.0,
+          "Enterprise": 1.0,
+          "Backend": 0.95,
+          "DevTools": 0.95,
+          "Gaming": 0.7,
+          "default": 0.8
+        }
+      },
+      "feedback": {
+        "note": "FAANG core. Azure and AI/Copilot experience are especially strong signals. GitHub and LinkedIn are strong subsidiaries. Known for better WLB than Meta/Amazon.",
+        "recentSignals": [
+          "layoffs6000_2026",
+          "deepOpenAIPartnership",
+          "aggressiveAIProductRollout"
+        ]
+      }
+    },
+    {
+      "key": "Apple",
+      "match": [
+        "Apple",
+        "Apple Inc.",
+        "Apple Inc"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.95,
+        "domainBoost": {
+          "Mobile": 1.0,
+          "iOS": 1.0,
+          "macOS": 1.0,
+          "Hardware": 1.0,
+          "Silicon": 1.0,
+          "ML": 0.9,
+          "Backend": 0.85,
+          "default": 0.8
+        }
+      },
+      "feedback": {
+        "note": "FAANG core. Extremely strong for hardware, silicon, and mobile. Secretive culture \u2014 experience here signals high security clearance on impactful products.",
+        "recentSignals": [
+          "stableHeadcount",
+          "appleIntelligenceRollout"
+        ]
+      }
+    },
+    {
+      "key": "Amazon",
+      "match": [
+        "Amazon",
+        "Amazon.com",
+        "AWS",
+        "Amazon Web Services"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.9,
+        "domainBoost": {
+          "Cloud": 1.0,
+          "Infrastructure": 1.0,
+          "Backend": 0.95,
+          "eCommerce": 0.85,
+          "ML": 0.85,
+          "Logistics": 0.75,
+          "default": 0.75
+        }
+      },
+      "feedback": {
+        "note": "FAANG \u2014 AWS experience is particularly strong. Core Amazon e-commerce carries good but slightly lower signal than AWS/infrastructure. Known for intense culture and high attrition.",
+        "recentSignals": [
+          "layoffs14k_2025",
+          "layoffs16k_2026",
+          "aggressiveAIInfraInvestment"
+        ]
+      }
+    },
+    {
+      "key": "Anthropic",
+      "match": [
+        "Anthropic",
+        "Anthropic PBC",
+        "Anthropic AI"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.97,
+        "domainBoost": {
+          "AI": 1.0,
+          "ML": 1.0,
+          "Safety": 1.0,
+          "Research": 1.0,
+          "Backend": 1.0,
+          "default": 0.85
+        }
+      },
+      "feedback": {
+        "note": "AI-native Tier-1. Extremely selective and at the frontier of AI safety and capability research. Hiring aggressively in 2026 while legacy tech sheds headcount. Any role here is elite signal.",
+        "recentSignals": [
+          "aggressiveHiring",
+          "claudeCodeSuccess",
+          "enterpriseMomentum",
+          "regulatoryFocus"
+        ]
+      }
+    },
+    {
+      "key": "OpenAI",
+      "match": [
+        "OpenAI",
+        "Open AI"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.96,
+        "domainBoost": {
+          "AI": 1.0,
+          "ML": 1.0,
+          "Research": 1.0,
+          "Backend": 0.95,
+          "default": 0.82
+        }
+      },
+      "feedback": {
+        "note": "AI-native Tier-1. ChatGPT pioneer. Undergoing significant internal pressure from Anthropic and Google competition, but still an elite brand. Headcount doubling per 2026 reports.",
+        "recentSignals": [
+          "codeRedPressure",
+          "doublingHeadcount",
+          "anthropicCompetitionRising"
+        ]
+      }
+    },
+    {
+      "key": "Nvidia",
+      "match": [
+        "Nvidia",
+        "NVIDIA",
+        "NVIDIA Corporation"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.97,
+        "domainBoost": {
+          "AI": 1.0,
+          "ML": 1.0,
+          "GPU": 1.0,
+          "Infrastructure": 1.0,
+          "Hardware": 1.0,
+          "Backend": 0.95,
+          "default": 0.85
+        }
+      },
+      "feedback": {
+        "note": "First company to hit $5T valuation \u2014 the defining infrastructure company of the AI era. Experience here is a very strong signal across GPU, systems, and AI infrastructure.",
+        "recentSignals": [
+          "extremeGrowth",
+          "AIBoomBeneficiary",
+          "highlyRatedCulture"
+        ]
+      }
+    },
+    {
+      "key": "Stripe",
+      "match": [
+        "Stripe",
+        "stripe inc",
+        "stripe, inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.95,
+        "domainBoost": {
+          "FinTech": 1.0,
+          "Backend": 1.0,
+          "Payments": 1.0,
+          "DevTools": 0.9,
+          "DevOps": 0.75,
+          "default": 0.78
+        }
+      },
+      "feedback": {
+        "note": "High engineering bar \u2014 highly regarded for backend, payments, and developer tooling. One of the largest active hirers in 2026 (506 open roles per tracker data).",
+        "recentSignals": [
+          "activelyHiring",
+          "highGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Netflix",
+      "match": [
+        "Netflix",
+        "Netflix Inc.",
+        "Netflix, Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_1",
+        "baseCredibility": 0.93,
+        "domainBoost": {
+          "Backend": 1.0,
+          "Streaming": 1.0,
+          "ML": 0.9,
+          "DataScience": 0.9,
+          "DevOps": 0.85,
+          "default": 0.78
+        }
+      },
+      "feedback": {
+        "note": "Known for freedom-and-responsibility culture and top-of-market compensation. High performance bar. Engineering work at Netflix is highly regarded.",
+        "recentSignals": [
+          "stableHeadcount",
+          "highCompensation"
+        ]
+      }
+    },
+    {
+      "key": "Databricks",
+      "match": [
+        "Databricks"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.9,
+        "domainBoost": {
+          "DataEngineering": 1.0,
+          "ML": 1.0,
+          "Analytics": 1.0,
+          "Cloud": 0.9,
+          "Backend": 0.85,
+          "default": 0.75
+        }
+      },
+      "feedback": {
+        "note": "Category leader in data + AI. Largest active open-role footprint in 2026 (841 roles). Strong signal for data engineering, MLOps, and Lakehouse-era skills.",
+        "recentSignals": [
+          "aggressiveHiring",
+          "highGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Cloudflare",
+      "match": [
+        "Cloudflare",
+        "Cloudflare Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.88,
+        "domainBoost": {
+          "NetworkSecurity": 1.0,
+          "CDN": 1.0,
+          "Backend": 0.9,
+          "Infrastructure": 0.9,
+          "Cybersecurity": 0.9,
+          "default": 0.75
+        }
+      },
+      "feedback": {
+        "note": "Network/security category leader. Strong signal for distributed systems and edge computing. Actively hiring in 2026.",
+        "recentSignals": [
+          "activelyHiring",
+          "steadyGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Datadog",
+      "match": [
+        "Datadog",
+        "Datadog Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.88,
+        "domainBoost": {
+          "DevOps": 1.0,
+          "Observability": 1.0,
+          "Backend": 0.9,
+          "Cloud": 0.88,
+          "default": 0.72
+        }
+      },
+      "feedback": {
+        "note": "Dominant observability platform. Strong signal for DevOps, SRE, and cloud infrastructure roles.",
+        "recentSignals": [
+          "steadyGrowth",
+          "activelyHiring"
+        ]
+      }
+    },
+    {
+      "key": "Snowflake",
+      "match": [
+        "Snowflake",
+        "Snowflake Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.87,
+        "domainBoost": {
+          "DataWarehouse": 1.0,
+          "DataEngineering": 1.0,
+          "Cloud": 0.88,
+          "Backend": 0.82,
+          "default": 0.72
+        }
+      },
+      "feedback": {
+        "note": "Cloud data warehouse leader. Strong signal for data engineering and analytics engineering roles.",
+        "recentSignals": [
+          "steadyGrowth",
+          "aiFeatureExpansion"
+        ]
+      }
+    },
+    {
+      "key": "Salesforce",
+      "match": [
+        "Salesforce",
+        "Salesforce.com",
+        "Slack",
+        "Tableau",
+        "MuleSoft"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.85,
+        "domainBoost": {
+          "CRM": 1.0,
+          "Enterprise": 0.95,
+          "Cloud": 0.88,
+          "Backend": 0.8,
+          "default": 0.72
+        }
+      },
+      "feedback": {
+        "note": "Dominant CRM and enterprise cloud brand. Good signal for enterprise software roles. Layoffs in 2025 but remains a respected employer.",
+        "recentSignals": [
+          "layoffs2025",
+          "aiProductFocus"
+        ]
+      }
+    },
+    {
+      "key": "Palantir",
+      "match": [
+        "Palantir",
+        "Palantir Technologies"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.88,
+        "domainBoost": {
+          "DataAnalytics": 1.0,
+          "ML": 0.92,
+          "Backend": 0.88,
+          "Defense": 0.95,
+          "Government": 0.92,
+          "default": 0.73
+        }
+      },
+      "feedback": {
+        "note": "Cult-like culture with strong signal for data platform and defense-adjacent roles. High Blind ratings. Experience here polarizes interviewers \u2014 context matters.",
+        "recentSignals": [
+          "highGrowth",
+          "defenseSectorWins"
+        ]
+      }
+    },
+    {
+      "key": "Uber",
+      "match": [
+        "Uber",
+        "Uber Technologies"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.85,
+        "domainBoost": {
+          "Backend": 0.92,
+          "ML": 0.9,
+          "DataEngineering": 0.9,
+          "Mobile": 0.85,
+          "Maps": 0.88,
+          "default": 0.72
+        }
+      },
+      "feedback": {
+        "note": "Strong engineering signal especially for distributed systems, ML platform, and mapping. Good brand recognition globally.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Airbnb",
+      "match": [
+        "Airbnb",
+        "Airbnb Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.85,
+        "domainBoost": {
+          "Backend": 0.9,
+          "Frontend": 0.92,
+          "ML": 0.85,
+          "Mobile": 0.85,
+          "DataScience": 0.87,
+          "default": 0.72
+        }
+      },
+      "feedback": {
+        "note": "Strong engineering culture, well-regarded for product engineering and data science. Well-known consumer brand.",
+        "recentSignals": [
+          "stableHeadcount"
+        ]
+      }
+    },
+    {
+      "key": "LinkedIn",
+      "match": [
+        "LinkedIn",
+        "LinkedIn Corporation"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.84,
+        "domainBoost": {
+          "Backend": 0.88,
+          "ML": 0.88,
+          "DataEngineering": 0.87,
+          "Enterprise": 0.82,
+          "default": 0.7
+        }
+      },
+      "feedback": {
+        "note": "Microsoft subsidiary. Good signal, especially for ML and data engineering. Benefits from Microsoft parentage on resume.",
+        "recentSignals": [
+          "stableHeadcount"
+        ]
+      }
+    },
+    {
+      "key": "Twilio",
+      "match": [
+        "Twilio",
+        "Twilio Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.82,
+        "domainBoost": {
+          "Backend": 0.9,
+          "Messaging": 0.92,
+          "API": 0.92,
+          "Telecom": 0.88,
+          "default": 0.7
+        }
+      },
+      "feedback": {
+        "note": "Developer-first communications platform. Strong signal for API/platform and backend roles.",
+        "recentSignals": [
+          "layoffs2024",
+          "steadyRecovery"
+        ]
+      }
+    },
+    {
+      "key": "Shopify",
+      "match": [
+        "Shopify",
+        "Shopify Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.85,
+        "domainBoost": {
+          "eCommerce": 1.0,
+          "Backend": 0.88,
+          "Frontend": 0.88,
+          "Payments": 0.85,
+          "default": 0.72
+        }
+      },
+      "feedback": {
+        "note": "Category leader for e-commerce infrastructure. Strong product engineering culture. Remote-first company.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Adobe",
+      "match": [
+        "Adobe",
+        "Adobe Inc.",
+        "Adobe Systems"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.84,
+        "domainBoost": {
+          "CreativeSoftware": 1.0,
+          "ML": 0.85,
+          "Backend": 0.8,
+          "Frontend": 0.82,
+          "Enterprise": 0.82,
+          "default": 0.72
+        }
+      },
+      "feedback": {
+        "note": "Strong employer brand with high Blind ratings. Known for employee wellbeing. Good signal for creative tools, ML (Firefly), and enterprise software.",
+        "recentSignals": [
+          "stableGrowth",
+          "aiExpansion"
+        ]
+      }
+    },
+    {
+      "key": "Atlassian",
+      "match": [
+        "Atlassian",
+        "Atlassian Corporation"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.83,
+        "domainBoost": {
+          "DevTools": 1.0,
+          "Backend": 0.85,
+          "Enterprise": 0.82,
+          "Frontend": 0.8,
+          "default": 0.7
+        }
+      },
+      "feedback": {
+        "note": "Dev tooling leader (Jira, Confluence, Bitbucket). Remote-first culture. Cut 10% workforce in 2026 but hired 800 AI-focused replacements.",
+        "recentSignals": [
+          "layoffs10pct_2026",
+          "aiRolePivot"
+        ]
+      }
+    },
+    {
+      "key": "CoreWeave",
+      "match": [
+        "CoreWeave"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.87,
+        "domainBoost": {
+          "Infrastructure": 1.0,
+          "Cloud": 1.0,
+          "GPU": 1.0,
+          "AI": 0.95,
+          "Backend": 0.88,
+          "default": 0.75
+        }
+      },
+      "feedback": {
+        "note": "Fastest growing GPU cloud company. Key AI infrastructure player. Hiring aggressively in 2026. Very strong signal for infra and cloud engineering.",
+        "recentSignals": [
+          "hypergrowth",
+          "activelyHiring",
+          "IPO2024"
+        ]
+      }
+    },
+    {
+      "key": "Adyen",
+      "match": [
+        "Adyen",
+        "Adyen N.V."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.87,
+        "domainBoost": {
+          "Payments": 1.0,
+          "FinTech": 1.0,
+          "Backend": 0.9,
+          "default": 0.72
+        }
+      },
+      "feedback": {
+        "note": "Global payments infrastructure leader \u2014 the Stripe of enterprise. Strong signal for payments and backend engineering. Actively hiring in 2026.",
+        "recentSignals": [
+          "activelyHiring",
+          "steadyGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Coinbase",
+      "match": [
+        "Coinbase",
+        "Coinbase Global"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.82,
+        "domainBoost": {
+          "Crypto": 1.0,
+          "Web3": 1.0,
+          "FinTech": 0.9,
+          "Backend": 0.85,
+          "Security": 0.85,
+          "default": 0.68
+        }
+      },
+      "feedback": {
+        "note": "Leading crypto exchange. Strong signal for Web3 and crypto-adjacent roles. Some volatility tied to crypto market cycles.",
+        "recentSignals": [
+          "marketRecovery",
+          "steadyGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Robinhood",
+      "match": [
+        "Robinhood",
+        "Robinhood Markets"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_2",
+        "baseCredibility": 0.8,
+        "domainBoost": {
+          "FinTech": 0.92,
+          "Mobile": 0.88,
+          "Backend": 0.83,
+          "default": 0.68
+        }
+      },
+      "feedback": {
+        "note": "Consumer fintech with strong mobile and backend engineering. Brand is well-known but reputation is mixed outside engineering circles.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Oracle",
+      "match": [
+        "Oracle",
+        "Oracle Corporation",
+        "Oracle Cloud"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.75,
+        "domainBoost": {
+          "Database": 0.9,
+          "Enterprise": 0.85,
+          "Cloud": 0.75,
+          "Backend": 0.72,
+          "default": 0.65
+        }
+      },
+      "feedback": {
+        "note": "Legacy enterprise vendor undergoing aggressive AI transformation. Major layoffs in 2026 (30k). Experience here is solid but carries less prestige than hyperscalers.",
+        "recentSignals": [
+          "massiveLayoffs30k_2026",
+          "aiPivot"
+        ]
+      }
+    },
+    {
+      "key": "Dell",
+      "match": [
+        "Dell",
+        "Dell Technologies",
+        "Dell EMC"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.72,
+        "domainBoost": {
+          "Hardware": 0.85,
+          "Infrastructure": 0.82,
+          "Enterprise": 0.8,
+          "default": 0.62
+        }
+      },
+      "feedback": {
+        "note": "Legacy hardware/enterprise brand. Shedding traditional roles in 2026 to fund AI infrastructure. Signal is decent for hardware and enterprise infra.",
+        "recentSignals": [
+          "layoffs2026",
+          "aiPivot"
+        ]
+      }
+    },
+    {
+      "key": "Intel",
+      "match": [
+        "Intel",
+        "Intel Corporation"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.75,
+        "domainBoost": {
+          "Hardware": 0.92,
+          "Silicon": 0.92,
+          "Compiler": 0.9,
+          "EmbeddedSystems": 0.88,
+          "default": 0.65
+        }
+      },
+      "feedback": {
+        "note": "Legacy chip maker in aggressive turnaround mode. Deep technical signal for chip design and compiler work. $1B cost reduction target in 2026, significant layoffs.",
+        "recentSignals": [
+          "layoffs2025",
+          "restructuring",
+          "turnaroundEffort"
+        ]
+      }
+    },
+    {
+      "key": "IBM",
+      "match": [
+        "IBM",
+        "International Business Machines",
+        "Red Hat"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.72,
+        "domainBoost": {
+          "Enterprise": 0.85,
+          "Cloud": 0.75,
+          "Consulting": 0.75,
+          "Backend": 0.72,
+          "default": 0.62
+        }
+      },
+      "feedback": {
+        "note": "Legacy tech giant. Solid signal for enterprise and consulting roles. Red Hat subsidiary carries stronger signal than IBM brand alone.",
+        "recentSignals": [
+          "stableRestructuring"
+        ]
+      }
+    },
+    {
+      "key": "Workday",
+      "match": [
+        "Workday",
+        "Workday Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.78,
+        "domainBoost": {
+          "Enterprise": 0.88,
+          "HRTech": 0.9,
+          "Cloud": 0.8,
+          "Backend": 0.75,
+          "default": 0.65
+        }
+      },
+      "feedback": {
+        "note": "Enterprise HR/Finance SaaS leader. Laid off 8.5% of workforce in 2025 to reallocate to AI. Good signal for enterprise software roles.",
+        "recentSignals": [
+          "layoffs1750_2025",
+          "aiRealignment"
+        ]
+      }
+    },
+    {
+      "key": "ServiceNow",
+      "match": [
+        "ServiceNow",
+        "ServiceNow Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.8,
+        "domainBoost": {
+          "Enterprise": 0.9,
+          "ITSM": 0.92,
+          "Cloud": 0.8,
+          "Backend": 0.75,
+          "default": 0.65
+        }
+      },
+      "feedback": {
+        "note": "Leading ITSM/enterprise workflow platform. Growing AI feature set. Good signal for enterprise software engineering.",
+        "recentSignals": [
+          "steadyGrowth",
+          "aiExpansion"
+        ]
+      }
+    },
+    {
+      "key": "Snap",
+      "match": [
+        "Snap",
+        "Snap Inc.",
+        "Snapchat"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.76,
+        "domainBoost": {
+          "Mobile": 0.9,
+          "AR": 0.9,
+          "Backend": 0.8,
+          "ML": 0.8,
+          "default": 0.65
+        }
+      },
+      "feedback": {
+        "note": "Consumer social brand. Good signal for mobile, AR, and ML. Company has gone through multiple rounds of layoffs which slightly dampens the signal.",
+        "recentSignals": [
+          "layoffs2024",
+          "arFocus"
+        ]
+      }
+    },
+    {
+      "key": "Spotify",
+      "match": [
+        "Spotify",
+        "Spotify Technology"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.8,
+        "domainBoost": {
+          "Backend": 0.88,
+          "ML": 0.88,
+          "DataEngineering": 0.88,
+          "Audio": 0.85,
+          "Mobile": 0.82,
+          "default": 0.68
+        }
+      },
+      "feedback": {
+        "note": "Strong engineering culture, especially for ML recommendations and data engineering. Good brand recognition globally.",
+        "recentSignals": [
+          "layoffs2024",
+          "steadyRecovery"
+        ]
+      }
+    },
+    {
+      "key": "Twitter/X",
+      "match": [
+        "Twitter",
+        "X Corp",
+        "X.com",
+        "X Corp.",
+        "xAI"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.72,
+        "domainBoost": {
+          "Backend": 0.8,
+          "AI": 0.75,
+          "Infrastructure": 0.82,
+          "default": 0.6
+        }
+      },
+      "feedback": {
+        "note": "Post-acquisition volatility has significantly changed the signal. Pre-2022 Twitter experience carries stronger weight than post-Musk. xAI is a separate entity with higher signal.",
+        "recentSignals": [
+          "massMassiveLayoffs2022",
+          "unstableReputation",
+          "xAISeparate"
+        ]
+      }
+    },
+    {
+      "key": "McKinsey",
+      "match": [
+        "McKinsey",
+        "McKinsey & Company",
+        "McKinsey and Company"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.88,
+        "domainBoost": {
+          "Consulting": 1.0,
+          "Strategy": 1.0,
+          "DataScience": 0.8,
+          "ML": 0.72,
+          "default": 0.75
+        }
+      },
+      "feedback": {
+        "note": "MBB prestige \u2014 top management consulting firm. Strong signal for strategy, PM, and consulting roles. Less signal for pure engineering unless data/analytics division.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "BCG",
+      "match": [
+        "BCG",
+        "Boston Consulting Group"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.87,
+        "domainBoost": {
+          "Consulting": 1.0,
+          "Strategy": 1.0,
+          "DataScience": 0.8,
+          "default": 0.75
+        }
+      },
+      "feedback": {
+        "note": "MBB prestige. Similar to McKinsey \u2014 strong for strategy and PM, moderate for technical roles.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Bain",
+      "match": [
+        "Bain",
+        "Bain & Company"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.86,
+        "domainBoost": {
+          "Consulting": 1.0,
+          "Strategy": 1.0,
+          "default": 0.73
+        }
+      },
+      "feedback": {
+        "note": "MBB prestige. Slightly smaller footprint than McKinsey/BCG but equivalent prestige within consulting.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Accenture",
+      "match": [
+        "Accenture",
+        "Accenture PLC"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.72,
+        "domainBoost": {
+          "Consulting": 0.82,
+          "Enterprise": 0.78,
+          "Backend": 0.68,
+          "default": 0.62
+        }
+      },
+      "feedback": {
+        "note": "Large consulting/services firm. Signal varies greatly by division and project. Less prestigious than MBB but a known brand.",
+        "recentSignals": [
+          "stableGrowth",
+          "aiConsultingPush"
+        ]
+      }
+    },
+    {
+      "key": "Deloitte",
+      "match": [
+        "Deloitte",
+        "Deloitte Consulting",
+        "Deloitte Digital"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.72,
+        "domainBoost": {
+          "Consulting": 0.8,
+          "Audit": 0.85,
+          "Enterprise": 0.75,
+          "default": 0.62
+        }
+      },
+      "feedback": {
+        "note": "Big Four consulting/audit. Moderate signal \u2014 strong for audit/finance, weaker for pure engineering.",
+        "recentSignals": [
+          "stableGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Block",
+      "match": [
+        "Block",
+        "Block Inc.",
+        "Square",
+        "Cash App"
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.78,
+        "domainBoost": {
+          "FinTech": 0.9,
+          "Payments": 0.9,
+          "Crypto": 0.82,
+          "Backend": 0.8,
+          "Mobile": 0.78,
+          "default": 0.65
+        }
+      },
+      "feedback": {
+        "note": "FinTech company (Square + Cash App). Significant 4,000-person layoffs in early 2026, primarily customer support cut by AI. Technical roles less affected.",
+        "recentSignals": [
+          "layoffs4000_2026",
+          "aiCustomerServiceReplacement"
+        ]
+      }
+    },
+    {
+      "key": "Plaid",
+      "match": [
+        "Plaid",
+        "Plaid Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.82,
+        "domainBoost": {
+          "FinTech": 0.95,
+          "Backend": 0.88,
+          "API": 0.9,
+          "Banking": 0.85,
+          "default": 0.68
+        }
+      },
+      "feedback": {
+        "note": "Financial data infrastructure \u2014 often called the 'plumbing of fintech'. Strong signal for backend and API-focused engineering.",
+        "recentSignals": [
+          "steadyGrowth"
+        ]
+      }
+    },
+    {
+      "key": "Figma",
+      "match": [
+        "Figma",
+        "Figma Inc."
+      ],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_3",
+        "baseCredibility": 0.84,
+        "domainBoost": {
+          "Frontend": 1.0,
+          "Design": 1.0,
+          "Backend": 0.82,
+          "DevTools": 0.88,
+          "default": 0.7
+        }
+      },
+      "feedback": {
+        "note": "Category-defining design tool. Strong signal for frontend, product design, and developer tooling roles.",
+        "recentSignals": [
+          "steadyGrowth",
+          "aiFeatureExpansion"
+        ]
+      }
+    },
+    {
+      "key": "__UNKNOWN__",
+      "match": [],
+      "lastVerified": "2026-04",
+      "score": {
+        "tier": "TIER_4",
+        "baseCredibility": 0.6,
+        "domainBoost": {
+          "default": 0.6
+        }
+      },
+      "feedback": {
+        "note": "Company not found in ontology. Apply conservative baseline credibility. Request reviewer to look up company size, funding, and reputation independently.",
+        "recentSignals": [
+          "unverified"
+        ]
+      }
+    }
+  ],
+  "recentSignalGlossary": {
+    "aggressiveHiring": "Growing headcount significantly amid market-wide freeze.",
+    "hypergrowth": "Headcount or revenue growing >50% YoY; may be high risk / high reward.",
+    "activelyHiring": "Company has significant open-role footprint and is not in freeze mode.",
+    "stableGrowth": "Steady, moderate growth \u2014 no major layoffs or red flags.",
+    "stableHeadcount": "No major layoffs or expansions; holding pattern.",
+    "highCompensation": "Known for top-of-market total compensation packages.",
+    "highGrowth": "Meaningful revenue or valuation growth in the past 12 months.",
+    "layoffs": "Has conducted meaningful layoffs in 2024-2026 (generic).",
+    "layoffs2025": "Significant layoffs occurred in 2025.",
+    "layoffs2026": "Significant layoffs occurred in 2026.",
+    "massiveLayoffs30k_2026": "Oracle laid off ~30,000 employees in early 2026.",
+    "layoffs16k_2026": "Amazon laid off ~16,000 in early 2026.",
+    "layoffs14k_2025": "Amazon laid off ~14,000 in Oct 2025.",
+    "layoffs6000_2026": "Microsoft laid off ~6,000 in 2026.",
+    "layoffs4000_2026": "Block laid off ~4,000 in early 2026.",
+    "layoffs1750_2025": "Workday laid off ~1,750 in 2025.",
+    "layoffs10pct_2026": "Atlassian cut 10% workforce in 2026.",
+    "layoffs2026RealityLabs": "Meta laid off ~1,500 from Reality Labs in early 2026.",
+    "aiPivot": "Company is cutting legacy roles to reinvest in AI infrastructure.",
+    "aiRolePivot": "Company cut general headcount but opened AI-specific replacement roles.",
+    "aiRealignment": "Budget reallocated toward AI; some roles cut, new AI roles added.",
+    "aiExpansion": "Actively building AI features or products; relevant for AI/ML candidates.",
+    "aggressiveAIInvestment": "Committing very large capex to AI (models, infra, chips).",
+    "aggressiveAICapex": "Meta committing $115\u2013135B capex in 2026.",
+    "aggressiveAIProductRollout": "Shipping AI products rapidly to market (Copilot, etc.).",
+    "AIBoomBeneficiary": "Company's core product directly benefits from the AI infrastructure buildout.",
+    "aiCustomerServiceReplacement": "Headcount cut because AI agents are replacing customer service functions.",
+    "aiFeatureExpansion": "Actively adding AI features to existing product surface.",
+    "claudeCodeSuccess": "Anthropic's Claude Code has achieved strong enterprise adoption in 2026.",
+    "enterpriseMomentum": "Growing enterprise customer base and revenue.",
+    "regulatoryFocus": "Company under increasing regulatory scrutiny or proactively engaging regulators.",
+    "codeRedPressure": "OpenAI's leadership declared code-red on product competitiveness.",
+    "doublingHeadcount": "OpenAI reportedly planning to double headcount in 2026.",
+    "anthropicCompetitionRising": "Anthropic gaining significant market share vs OpenAI.",
+    "geminiCompetition": "Google Gemini competing intensely with Claude and GPT.",
+    "deepOpenAIPartnership": "Microsoft and OpenAI deeply co-invested.",
+    "IPO2024": "Company went public in 2024.",
+    "marketRecovery": "Company recovering from crypto/sector downturn.",
+    "restructuring": "Undergoing significant org restructuring.",
+    "turnaroundEffort": "Company in multi-year turnaround (e.g., Intel under new CEO).",
+    "massMassiveLayoffs2022": "Twitter/X underwent ~75% headcount reduction in 2022.",
+    "unstableReputation": "Employer brand is volatile or polarizing among candidates.",
+    "xAISeparate": "xAI is Elon Musk's separate AI company, distinct from X Corp.",
+    "defenseSectorWins": "Strong government/defense contract wins.",
+    "arFocus": "Heavy investment in augmented reality.",
+    "highlyRatedCulture": "Consistently high employee satisfaction ratings (e.g., Glassdoor, Blind).",
+    "unverified": "Company not in ontology \u2014 score is conservative baseline only.",
+    "steadyGrowth": "Company growing at a healthy, sustainable pace.",
+    "steadyRecovery": "Recovering from previous headcount cuts.",
+    "appleIntelligenceRollout": "Apple Intelligence (AI features) being rolled out across devices.",
+    "stableRestructuring": "Ongoing slow restructuring but no dramatic events."
+  },
+  "tierDefinitions": {
+    "TIER_0": {
+      "label": "Quant / Pinnacle Elite",
+      "examples": [
+        "Jane Street",
+        "Citadel",
+        "Renaissance Technologies",
+        "D.E. Shaw",
+        "HRT"
+      ],
+      "guidance": "Unconditionally strong signal. Rigorous intellectual and technical bar. Apply maximum credibility multiplier.",
+      "baseCredibilityRange": [
+        0.97,
+        1.0
+      ]
+    },
+    "TIER_1": {
+      "label": "FAANG+ / AI-Native Tier-1",
+      "examples": [
+        "Google",
+        "Meta",
+        "Microsoft",
+        "Apple",
+        "Amazon",
+        "Anthropic",
+        "OpenAI",
+        "Nvidia",
+        "Stripe",
+        "Netflix"
+      ],
+      "guidance": "Strong brand, high engineering bar. Apply high credibility multiplier. Note domain-specific boosts carefully.",
+      "baseCredibilityRange": [
+        0.9,
+        0.97
+      ]
+    },
+    "TIER_2": {
+      "label": "Strong Brand / Scale-up / Category Leader",
+      "examples": [
+        "Databricks",
+        "Cloudflare",
+        "Datadog",
+        "Snowflake",
+        "Palantir",
+        "Airbnb",
+        "Uber"
+      ],
+      "guidance": "Solid signal. Company is well-known, product is proven. Engineering bar is high but not FAANG-level.",
+      "baseCredibilityRange": [
+        0.8,
+        0.9
+      ]
+    },
+    "TIER_3": {
+      "label": "Solid Mid-Tier / Legacy Enterprise / Consultancy",
+      "examples": [
+        "Oracle",
+        "IBM",
+        "Dell",
+        "Salesforce",
+        "McKinsey",
+        "BCG",
+        "Deloitte",
+        "Spotify"
+      ],
+      "guidance": "Moderate signal. Brand is recognizable. Weight domain-specific experience carefully. Watch for layoff signals.",
+      "baseCredibilityRange": [
+        0.7,
+        0.85
+      ]
+    },
+    "TIER_4": {
+      "label": "Early Stage / Unknown / Unverified",
+      "examples": [
+        "Any company not in ontology"
+      ],
+      "guidance": "Apply conservative baseline. Request reviewer to verify independently. May be great (early-stage startup) or weak.",
+      "baseCredibilityRange": [
+        0.5,
+        0.7
+      ]
+    }
+  }
+}

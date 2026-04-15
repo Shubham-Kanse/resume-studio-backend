@@ -67,14 +67,8 @@ coverage/
 *.coverage
 
 # ── Binary model / resource files (large, not version-controlled) ─────────
-# ESCO taxonomy index and skill embeddings (~400 MB)
-resume-studio-reviewer/src/main/resources/taxonomy/
-
-# OpenNLP pre-trained models (POS tagger, tokenizer, NER, sentence detector)
-resume-studio-reviewer/src/main/resources/nlp/
-
-# Generic binary model guard — catches any .bin file added under resources
-resume-studio-reviewer/src/main/resources/**/*.bin
+# Generic binary model guard — catches any .bin file added under resources that isn't already tracked
+# (nlp/ and taxonomy/ are intentionally committed — they are small enough)
 
 # ── Secrets / local config ────────────────────────────────────────────────
 # Raw .env files — never commit

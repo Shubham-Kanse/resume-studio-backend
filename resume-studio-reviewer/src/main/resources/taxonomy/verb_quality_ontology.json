@@ -1,0 +1,1901 @@
+{
+  "_meta": {
+    "version": "2.0.0",
+    "lastUpdated": "2026-04",
+    "totalVerbs": 180,
+    "qualityLevels": ["ELITE", "STRONG", "GOOD", "MODERATE", "WEAK", "TOXIC"],
+    "impactDirections": ["IMPROVEMENT", "CREATION", "LEADERSHIP", "ANALYSIS", "COMMUNICATION", "AMBIGUOUS"],
+    "seniorityLevels": ["Intern", "Junior", "Mid", "Senior", "Staff", "Principal", "Director", "VP", "C-Suite"],
+    "notes": "penaltyIfNoMetric and penaltyIfPassive are multiplicative factors applied to baseWeight. A value of 0.45 means the effective score becomes baseWeight * 0.45 when the condition is met."
+  },
+  "verbs": [
+
+    {
+      "key": "architected",
+      "match": ["architect", "architected", "architecting", "architects"],
+      "score": {
+        "baseWeight": 1.0,
+        "quality": "ELITE",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.75,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "Elite verb — ground it with scope (e.g. 'architected a system serving 10M users')",
+        "suggestion": "Pair with scale, adoption, or performance outcome",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director"]
+      }
+    },
+    {
+      "key": "spearheaded",
+      "match": ["spearhead", "spearheaded", "spearheading", "spearheads"],
+      "score": {
+        "baseWeight": 1.0,
+        "quality": "ELITE",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.70,
+        "penaltyIfPassive": 0.50
+      },
+      "feedback": {
+        "missingMetricMessage": "Powerful ownership verb — add a result to complete the story",
+        "suggestion": "Quantify the initiative's outcome or team size led",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director", "VP"]
+      }
+    },
+    {
+      "key": "pioneered",
+      "match": ["pioneer", "pioneered", "pioneering", "pioneers"],
+      "score": {
+        "baseWeight": 1.0,
+        "quality": "ELITE",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.50
+      },
+      "feedback": {
+        "missingMetricMessage": "Strong differentiator — add first-mover impact (e.g. 'first in org to...')",
+        "suggestion": "Highlight novelty and downstream adoption",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director", "VP", "C-Suite"]
+      }
+    },
+    {
+      "key": "transformed",
+      "match": ["transform", "transformed", "transforming", "transforms"],
+      "score": {
+        "baseWeight": 0.98,
+        "quality": "ELITE",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.50
+      },
+      "feedback": {
+        "missingMetricMessage": "Ambitious verb — a before/after metric makes it concrete",
+        "suggestion": "Quantify the before-state and the result",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director", "VP", "C-Suite"]
+      }
+    },
+    {
+      "key": "orchestrated",
+      "match": ["orchestrate", "orchestrated", "orchestrating", "orchestrates"],
+      "score": {
+        "baseWeight": 0.97,
+        "quality": "ELITE",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "Great leadership verb — add team size or project scale",
+        "suggestion": "Specify what was coordinated and the outcome",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director", "VP"]
+      }
+    },
+    {
+      "key": "revolutionized",
+      "match": ["revolutionize", "revolutionized", "revolutionizing", "revolutionizes"],
+      "score": {
+        "baseWeight": 0.96,
+        "quality": "ELITE",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.45,
+        "penaltyIfPassive": 0.45
+      },
+      "feedback": {
+        "missingMetricMessage": "Bold claim — only credible with a hard metric backing it up",
+        "suggestion": "Without a number, this reads as hyperbole; add a % or $ outcome",
+        "impliesSeniority": ["Staff", "Principal", "Director", "VP", "C-Suite"],
+        "warningIfNoMetric": true
+      }
+    },
+
+    {
+      "key": "built",
+      "match": ["build", "built", "building", "builds"],
+      "score": {
+        "baseWeight": 0.95,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Strong verb — add scale or outcome (e.g. 'built API handling 5M req/day')",
+        "suggestion": "Specify what was built and its impact",
+        "impliesSeniority": ["Junior", "Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "reduce",
+      "match": ["reduce", "reduced", "reducing", "reduces"],
+      "score": {
+        "baseWeight": 0.95,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.45,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Strong verb — add a number to complete the impact (e.g. 'reduced latency by 40%')",
+        "suggestion": "Pair with a measurable outcome for maximum effect",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "launched",
+      "match": ["launch", "launched", "launching", "launches"],
+      "score": {
+        "baseWeight": 0.94,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Strong action verb — add adoption, revenue, or user metrics post-launch",
+        "suggestion": "Quantify what happened after launch",
+        "impliesSeniority": ["Mid", "Senior", "Staff", "Principal"]
+      }
+    },
+    {
+      "key": "scaled",
+      "match": ["scale", "scaled", "scaling", "scales"],
+      "score": {
+        "baseWeight": 0.94,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.40,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "'Scaled' without numbers is unverifiable — add from/to figures",
+        "suggestion": "E.g. 'scaled from 1k to 1M users' or 'scaled team from 3 to 14 engineers'",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director"]
+      }
+    },
+    {
+      "key": "drove",
+      "match": ["drive", "drove", "driving", "drives"],
+      "score": {
+        "baseWeight": 0.93,
+        "quality": "STRONG",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Ownership-signalling verb — add the result driven (e.g. '$2M ARR')",
+        "suggestion": "Pair with a business or technical outcome",
+        "impliesSeniority": ["Mid", "Senior", "Staff", "Director"]
+      }
+    },
+    {
+      "key": "delivered",
+      "match": ["deliver", "delivered", "delivering", "delivers"],
+      "score": {
+        "baseWeight": 0.93,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Solid verb — add timeline, budget, or outcome to strengthen",
+        "suggestion": "E.g. 'delivered on-time and 15% under budget'",
+        "impliesSeniority": ["Junior", "Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "designed",
+      "match": ["design", "designed", "designing", "designs"],
+      "score": {
+        "baseWeight": 0.92,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Good verb — add the problem it solved or the scale of use",
+        "suggestion": "Quantify adoption, improvement, or complexity handled",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "optimized",
+      "match": ["optimize", "optimized", "optimizing", "optimizes"],
+      "score": {
+        "baseWeight": 0.92,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.40,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "'Optimized' without a metric is nearly meaningless — always quantify",
+        "suggestion": "E.g. 'optimized query runtime by 60%' or 'reduced CPU usage by 35%'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "led",
+      "match": ["lead", "led", "leading", "leads"],
+      "score": {
+        "baseWeight": 0.92,
+        "quality": "STRONG",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add team size or project scope — 'led a team of 8 engineers'",
+        "suggestion": "Specify what was led and the outcome achieved",
+        "impliesSeniority": ["Mid", "Senior", "Staff", "Principal", "Director"]
+      }
+    },
+    {
+      "key": "accelerated",
+      "match": ["accelerate", "accelerated", "accelerating", "accelerates"],
+      "score": {
+        "baseWeight": 0.91,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.45,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Requires a number — how much faster? By what %?",
+        "suggestion": "E.g. 'accelerated release cycle from bi-monthly to weekly'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "automated",
+      "match": ["automate", "automated", "automating", "automates"],
+      "score": {
+        "baseWeight": 0.91,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add time saved or error rate reduced — automation impact is highly quantifiable",
+        "suggestion": "E.g. 'automated reporting, saving 12 hours/week'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "generated",
+      "match": ["generate", "generated", "generating", "generates"],
+      "score": {
+        "baseWeight": 0.91,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.40,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "Quantify what was generated — revenue, leads, or savings",
+        "suggestion": "E.g. 'generated $1.2M in new pipeline'",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP"]
+      }
+    },
+    {
+      "key": "deployed",
+      "match": ["deploy", "deployed", "deploying", "deploys"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add scope: frequency, scale, or reliability improvement",
+        "suggestion": "E.g. 'deployed 50+ microservices with 99.9% uptime'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "engineered",
+      "match": ["engineer", "engineered", "engineering", "engineers"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Strong technical verb — add scale or performance metric",
+        "suggestion": "Specify the system complexity or user impact",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "established",
+      "match": ["establish", "established", "establishing", "establishes"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add adoption or downstream impact of what was established",
+        "suggestion": "E.g. 'established coding standards adopted by 40-person team'",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director"]
+      }
+    },
+    {
+      "key": "implemented",
+      "match": ["implement", "implemented", "implementing", "implements"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Solid but common — add outcome to stand out",
+        "suggestion": "Quantify the result of the implementation",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "secured",
+      "match": ["secure", "secured", "securing", "secures"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Great verb for business outcomes — add the dollar amount or deal size",
+        "suggestion": "E.g. 'secured $4M Series A' or 'secured 3 enterprise contracts'",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP", "C-Suite"]
+      }
+    },
+    {
+      "key": "mentored",
+      "match": ["mentor", "mentored", "mentoring", "mentors"],
+      "score": {
+        "baseWeight": 0.89,
+        "quality": "STRONG",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add number of mentees or career outcome (e.g. 'promoted within 6 months')",
+        "suggestion": "Quantify reach and impact of mentorship",
+        "impliesSeniority": ["Mid", "Senior", "Staff", "Principal"]
+      }
+    },
+    {
+      "key": "negotiated",
+      "match": ["negotiate", "negotiated", "negotiating", "negotiates"],
+      "score": {
+        "baseWeight": 0.91,
+        "quality": "STRONG",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.45,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "High-impact verb — add contract value or cost savings",
+        "suggestion": "E.g. 'negotiated vendor contracts saving $300K annually'",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP", "C-Suite"]
+      }
+    },
+
+    {
+      "key": "developed",
+      "match": ["develop", "developed", "developing", "develops"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Common verb — differentiate with a specific outcome or scale",
+        "suggestion": "Consider 'built', 'engineered', or 'architected' if you had full ownership",
+        "impliesSeniority": ["Intern", "Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "created",
+      "match": ["create", "created", "creating", "creates"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Decent verb — pair with adoption or impact metrics",
+        "suggestion": "Upgrade to 'designed', 'built', or 'launched' for stronger ownership signal",
+        "impliesSeniority": ["Intern", "Junior", "Mid"]
+      }
+    },
+    {
+      "key": "improved",
+      "match": ["improve", "improved", "improving", "improves"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.40,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "'Improved' without a metric is vague — always add the % or absolute delta",
+        "suggestion": "E.g. 'improved test coverage from 42% to 91%'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "increased",
+      "match": ["increase", "increased", "increasing", "increases"],
+      "score": {
+        "baseWeight": 0.83,
+        "quality": "GOOD",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.35,
+        "penaltyIfPassive": 0.50
+      },
+      "feedback": {
+        "missingMetricMessage": "'Increased' is meaningless without a number — this is the most important metric to add",
+        "suggestion": "E.g. 'increased conversion rate by 22%'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "managed",
+      "match": ["manage", "managed", "managing", "manages"],
+      "score": {
+        "baseWeight": 0.78,
+        "quality": "GOOD",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add team size, budget, or output — 'managed a $5M budget' is concrete",
+        "suggestion": "Consider 'led', 'directed', or 'oversaw' if you had strategic ownership",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP"]
+      }
+    },
+    {
+      "key": "analyzed",
+      "match": ["analyze", "analyzed", "analyzing", "analyses", "analyse", "analysed"],
+      "score": {
+        "baseWeight": 0.80,
+        "quality": "GOOD",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Analysis only counts if it changed a decision — add the insight or outcome",
+        "suggestion": "E.g. 'analyzed churn data, identifying 3 leading indicators that informed product roadmap'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "collaborated",
+      "match": ["collaborate", "collaborated", "collaborating", "collaborates"],
+      "score": {
+        "baseWeight": 0.72,
+        "quality": "GOOD",
+        "impactDirection": "COMMUNICATION",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Collaboration is table stakes — add what the collaboration produced",
+        "suggestion": "Replace with the outcome verb: 'co-built', 'delivered', or 'shipped'",
+        "impliesSeniority": ["Intern", "Junior", "Mid"]
+      }
+    },
+    {
+      "key": "researched",
+      "match": ["research", "researched", "researching", "researches"],
+      "score": {
+        "baseWeight": 0.72,
+        "quality": "GOOD",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Research only matters if it drove action — add the decision or outcome it enabled",
+        "suggestion": "E.g. 'researched 12 vendor options, reducing procurement cost by 30%'",
+        "impliesSeniority": ["Intern", "Junior", "Mid"]
+      }
+    },
+    {
+      "key": "resolved",
+      "match": ["resolve", "resolved", "resolving", "resolves"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the severity or downstream impact — 'resolved P0 incident restoring $200K/hr revenue'",
+        "suggestion": "Quantify the business impact of the resolution",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "streamlined",
+      "match": ["streamline", "streamlined", "streamlining", "streamlines"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.45,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Always quantify — 'streamlined' without a % or time-saved reads as filler",
+        "suggestion": "E.g. 'streamlined onboarding, cutting time-to-productivity by 3 weeks'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "trained",
+      "match": ["train", "trained", "training", "trains"],
+      "score": {
+        "baseWeight": 0.78,
+        "quality": "GOOD",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add number of people trained or skill outcome achieved",
+        "suggestion": "E.g. 'trained 30 engineers on Kubernetes, reducing ops incidents by 40%'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "presented",
+      "match": ["present", "presented", "presenting", "presents"],
+      "score": {
+        "baseWeight": 0.75,
+        "quality": "GOOD",
+        "impactDirection": "COMMUNICATION",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Add audience size and decision that resulted — 'presented to C-suite, securing $500K budget'",
+        "suggestion": "The impact of the presentation matters more than the act of presenting",
+        "impliesSeniority": ["Mid", "Senior", "Staff", "Director"]
+      }
+    },
+    {
+      "key": "oversaw",
+      "match": ["oversee", "oversaw", "overseeing", "oversees"],
+      "score": {
+        "baseWeight": 0.80,
+        "quality": "GOOD",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what was overseen and the measurable outcome",
+        "suggestion": "Consider 'led' or 'directed' if you had decision-making authority",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP"]
+      }
+    },
+    {
+      "key": "initiated",
+      "match": ["initiate", "initiated", "initiating", "initiates"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Starting something only counts if you can show what it achieved",
+        "suggestion": "E.g. 'initiated CI/CD pipeline that reduced deployment failures by 70%'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "partnered",
+      "match": ["partner", "partnered", "partnering", "partners"],
+      "score": {
+        "baseWeight": 0.74,
+        "quality": "GOOD",
+        "impactDirection": "COMMUNICATION",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what the partnership produced — a shared metric or outcome",
+        "suggestion": "Focus on the deliverable, not the relationship",
+        "impliesSeniority": ["Mid", "Senior", "Director"]
+      }
+    },
+
+    {
+      "key": "supported",
+      "match": ["support", "supported", "supporting", "supports"],
+      "score": {
+        "baseWeight": 0.45,
+        "quality": "MODERATE",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0.20,
+        "penaltyIfPassive": 0.0
+      },
+      "feedback": {
+        "missingMetricMessage": "Vague — what exactly did you do? Replace with a specific action verb",
+        "suggestion": "Replace with 'built', 'debugged', 'resolved', or the actual task performed",
+        "impliesSeniority": ["Intern", "Junior"]
+      }
+    },
+    {
+      "key": "contributed",
+      "match": ["contribute", "contributed", "contributing", "contributes"],
+      "score": {
+        "baseWeight": 0.42,
+        "quality": "MODERATE",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0.20,
+        "penaltyIfPassive": 0.0
+      },
+      "feedback": {
+        "missingMetricMessage": "Very vague — every employee contributes; say what you actually did",
+        "suggestion": "Replace with a specific ownership verb like 'built', 'owned', or 'led'",
+        "impliesSeniority": ["Intern", "Junior"]
+      }
+    },
+    {
+      "key": "participated",
+      "match": ["participate", "participated", "participating", "participates"],
+      "score": {
+        "baseWeight": 0.30,
+        "quality": "MODERATE",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0.0,
+        "penaltyIfPassive": 0.0
+      },
+      "feedback": {
+        "missingMetricMessage": "This signals low ownership — replace with the actual action taken",
+        "suggestion": "Remove entirely or replace with what you specifically did",
+        "impliesSeniority": ["Intern"]
+      }
+    },
+    {
+      "key": "utilized",
+      "match": ["utilize", "utilized", "utilizing", "utilizes", "utilised"],
+      "score": {
+        "baseWeight": 0.38,
+        "quality": "MODERATE",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0.0,
+        "penaltyIfPassive": 0.0
+      },
+      "feedback": {
+        "missingMetricMessage": "Overly formal and meaningless — just say 'used' or replace with what you built",
+        "suggestion": "Replace with the outcome verb; listing tools belongs in a Skills section",
+        "impliesSeniority": ["Intern", "Junior"],
+        "styleWarning": "Jargon filler — avoid"
+      }
+    },
+    {
+      "key": "worked",
+      "match": ["work", "worked", "working", "works"],
+      "score": {
+        "baseWeight": 0.35,
+        "quality": "MODERATE",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0.0,
+        "penaltyIfPassive": 0.0
+      },
+      "feedback": {
+        "missingMetricMessage": "Very generic — replace with what you actually did",
+        "suggestion": "Use 'built', 'implemented', 'designed', or any specific action verb",
+        "impliesSeniority": ["Intern", "Junior"]
+      }
+    },
+    {
+      "key": "involved",
+      "match": ["involve", "involved", "involving", "involves"],
+      "score": {
+        "baseWeight": 0.28,
+        "quality": "MODERATE",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0.0,
+        "penaltyIfPassive": 0.0
+      },
+      "feedback": {
+        "missingMetricMessage": "Passive framing — rewrite entirely with an active ownership verb",
+        "suggestion": "E.g. 'My role involved...' → 'Built...' or 'Led...'",
+        "impliesSeniority": ["Intern"]
+      }
+    },
+    {
+      "key": "dealt",
+      "match": ["deal", "dealt", "dealing", "deals"],
+      "score": {
+        "baseWeight": 0.28,
+        "quality": "MODERATE",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0.0,
+        "penaltyIfPassive": 0.0
+      },
+      "feedback": {
+        "missingMetricMessage": "Informal and vague — replace with a precise technical or business verb",
+        "suggestion": "E.g. 'Dealt with bugs' → 'Debugged and resolved 200+ production issues'",
+        "impliesSeniority": ["Intern", "Junior"]
+      }
+    },
+    {
+      "key": "handled",
+      "match": ["handle", "handled", "handling", "handles"],
+      "score": {
+        "baseWeight": 0.38,
+        "quality": "MODERATE",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0.20,
+        "penaltyIfPassive": 0.0
+      },
+      "feedback": {
+        "missingMetricMessage": "Vague — specify the action and outcome",
+        "suggestion": "Replace with the specific technical or business verb that describes what you did",
+        "impliesSeniority": ["Intern", "Junior"]
+      }
+    },
+
+    {
+      "key": "help",
+      "match": ["help", "helped", "helping", "helps"],
+      "score": {
+        "baseWeight": 0.20,
+        "quality": "WEAK",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "Replace with a verb that shows ownership — 'built', 'delivered', 'owned'",
+        "impliesSeniority": ["Intern", "Junior"]
+      }
+    },
+    {
+      "key": "assisted",
+      "match": ["assist", "assisted", "assisting", "assists"],
+      "score": {
+        "baseWeight": 0.18,
+        "quality": "WEAK",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "Shows support role, not ownership — use 'built', 'developed', or 'led' instead",
+        "impliesSeniority": ["Intern"]
+      }
+    },
+    {
+      "key": "tried",
+      "match": ["try", "tried", "trying", "tries"],
+      "score": {
+        "baseWeight": 0.10,
+        "quality": "WEAK",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "Remove — only include accomplishments, not attempts. If you tried, did you succeed? Use that verb instead.",
+        "impliesSeniority": ["Intern"],
+        "warningAlways": true
+      }
+    },
+    {
+      "key": "attempted",
+      "match": ["attempt", "attempted", "attempting", "attempts"],
+      "score": {
+        "baseWeight": 0.08,
+        "quality": "WEAK",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "Remove — resumes showcase results, not attempts",
+        "impliesSeniority": ["Intern"],
+        "warningAlways": true
+      }
+    },
+    {
+      "key": "exposed",
+      "match": ["expose", "exposed", "exposing", "exposes"],
+      "score": {
+        "baseWeight": 0.22,
+        "quality": "WEAK",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "'Exposed to' signals you watched, not did — replace with what you built or shipped",
+        "impliesSeniority": ["Intern"],
+        "contextWarning": "Common Intern anti-pattern: 'was exposed to X technology'"
+      }
+    },
+    {
+      "key": "learned",
+      "match": ["learn", "learned", "learning", "learns"],
+      "score": {
+        "baseWeight": 0.15,
+        "quality": "WEAK",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "Learning is implicit — focus on what you built or shipped using that skill",
+        "impliesSeniority": ["Intern"]
+      }
+    },
+    {
+      "key": "used",
+      "match": ["use", "used", "using", "uses"],
+      "score": {
+        "baseWeight": 0.18,
+        "quality": "WEAK",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "List tools in a Skills section, not bullet points — replace with what you accomplished using that tool",
+        "impliesSeniority": ["Intern", "Junior"]
+      }
+    },
+
+    {
+      "key": "responsible",
+      "match": ["responsible for", "responsible"],
+      "score": {
+        "baseWeight": 0.05,
+        "quality": "TOXIC",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "Classic filler phrase — replace the entire phrase with an action verb. 'Responsible for managing...' → 'Managed...'",
+        "impliesSeniority": [],
+        "warningAlways": true,
+        "toxicReason": "Job description language, not accomplishment language"
+      }
+    },
+    {
+      "key": "tasked",
+      "match": ["tasked with", "tasked"],
+      "score": {
+        "baseWeight": 0.05,
+        "quality": "TOXIC",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "Passive and weak — remove entirely, start with the action verb",
+        "impliesSeniority": [],
+        "warningAlways": true,
+        "toxicReason": "Describes assignment, not accomplishment"
+      }
+    },
+    {
+      "key": "served",
+      "match": ["serve", "served", "serving", "serves"],
+      "score": {
+        "baseWeight": 0.12,
+        "quality": "WEAK",
+        "impactDirection": "AMBIGUOUS",
+        "penaltyIfNoMetric": 0,
+        "penaltyIfPassive": 0
+      },
+      "feedback": {
+        "suggestion": "'Served as' is better replaced with the actual function — 'served as liaison' → 'coordinated between X and Y, resulting in...'",
+        "impliesSeniority": ["Intern", "Junior"]
+      }
+    },
+
+    {
+      "key": "diagnosed",
+      "match": ["diagnose", "diagnosed", "diagnosing", "diagnoses"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the impact of the diagnosis — downtime prevented, cost avoided",
+        "suggestion": "E.g. 'diagnosed root cause of memory leak preventing 4-hour outage'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "debugged",
+      "match": ["debug", "debugged", "debugging", "debugs"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what the bug was costing — downtime, revenue, or user impact",
+        "suggestion": "E.g. 'debugged race condition causing 2% data corruption in prod'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "refactored",
+      "match": ["refactor", "refactored", "refactoring", "refactors"],
+      "score": {
+        "baseWeight": 0.86,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Quantify the improvement — test coverage gained, latency reduced, complexity reduced",
+        "suggestion": "E.g. 'refactored legacy monolith, reducing build time by 55%'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "migrated",
+      "match": ["migrate", "migrated", "migrating", "migrates"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add data volume, downtime, or cost savings from the migration",
+        "suggestion": "E.g. 'migrated 10TB database with zero downtime'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "integrated",
+      "match": ["integrate", "integrated", "integrating", "integrates"],
+      "score": {
+        "baseWeight": 0.84,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the number of systems or the performance improvement",
+        "suggestion": "E.g. 'integrated 5 third-party APIs, reducing data sync latency by 80%'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "shipped",
+      "match": ["ship", "shipped", "shipping", "ships"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add user impact or adoption after shipping",
+        "suggestion": "E.g. 'shipped v2.0 feature to 500K users, improving NPS by 12 points'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "tested",
+      "match": ["test", "tested", "testing", "tests"],
+      "score": {
+        "baseWeight": 0.68,
+        "quality": "GOOD",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add coverage % or defects caught — 'tested' alone is expected, not impressive",
+        "suggestion": "E.g. 'wrote 800+ unit tests raising coverage from 12% to 87%'",
+        "impliesSeniority": ["Intern", "Junior", "Mid"]
+      }
+    },
+    {
+      "key": "containerized",
+      "match": ["containerize", "containerized", "containerizing", "containerizes"],
+      "score": {
+        "baseWeight": 0.86,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the scale or performance benefit",
+        "suggestion": "E.g. 'containerized 15 services, cutting environment setup from 2 hours to 5 minutes'",
+        "impliesSeniority": ["Mid", "Senior"]
+      }
+    },
+
+    {
+      "key": "forecasted",
+      "match": ["forecast", "forecasted", "forecasting", "forecasts"],
+      "score": {
+        "baseWeight": 0.86,
+        "quality": "STRONG",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add accuracy rate or decision it informed",
+        "suggestion": "E.g. 'forecasted Q3 pipeline with 94% accuracy, enabling $2M resource reallocation'",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP"]
+      }
+    },
+    {
+      "key": "modeled",
+      "match": ["model", "modeled", "modelling", "modelled", "models"],
+      "score": {
+        "baseWeight": 0.84,
+        "quality": "GOOD",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add model accuracy, business impact, or scale of adoption",
+        "suggestion": "E.g. 'built predictive churn model achieving 88% AUC, retaining $1.4M ARR'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "synthesized",
+      "match": ["synthesize", "synthesized", "synthesizing", "synthesizes", "synthesised"],
+      "score": {
+        "baseWeight": 0.84,
+        "quality": "GOOD",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the scale of data and the decision it drove",
+        "suggestion": "E.g. 'synthesized 50K user interviews into 6 persona archetypes shaping 2025 roadmap'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "identified",
+      "match": ["identify", "identified", "identifying", "identifies"],
+      "score": {
+        "baseWeight": 0.80,
+        "quality": "GOOD",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the impact of what you identified — cost saved, risk mitigated",
+        "suggestion": "E.g. 'identified $800K in duplicate vendor spend, eliminating 3 contracts'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "evaluated",
+      "match": ["evaluate", "evaluated", "evaluating", "evaluates"],
+      "score": {
+        "baseWeight": 0.78,
+        "quality": "GOOD",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what you evaluated and what decision it drove",
+        "suggestion": "E.g. 'evaluated 8 ML frameworks, selecting PyTorch and reducing training time by 40%'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "benchmarked",
+      "match": ["benchmark", "benchmarked", "benchmarking", "benchmarks"],
+      "score": {
+        "baseWeight": 0.84,
+        "quality": "GOOD",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the benchmark results and what decision they informed",
+        "suggestion": "Strong technical signal — pair with a performance figure",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+
+    {
+      "key": "closed",
+      "match": ["close", "closed", "closing", "closes"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.40,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "Extremely important to quantify — add $ value and/or number of deals",
+        "suggestion": "E.g. 'closed 14 enterprise contracts totalling $3.2M ARR'",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP"]
+      }
+    },
+    {
+      "key": "acquired",
+      "match": ["acquire", "acquired", "acquiring", "acquires"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.40,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "Add number of customers acquired and/or CAC vs target",
+        "suggestion": "E.g. 'acquired 2,400 new SMB accounts at 18% below target CAC'",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP"]
+      }
+    },
+    {
+      "key": "cultivated",
+      "match": ["cultivate", "cultivated", "cultivating", "cultivates"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add number of relationships and business outcome",
+        "suggestion": "E.g. 'cultivated 30+ C-suite relationships leading to $5M in renewed contracts'",
+        "impliesSeniority": ["Senior", "Director", "VP", "C-Suite"]
+      }
+    },
+    {
+      "key": "exceeded",
+      "match": ["exceed", "exceeded", "exceeding", "exceeds"],
+      "score": {
+        "baseWeight": 0.92,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.35,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "Critical to add the target and the actual — 'exceeded quota by 134%'",
+        "suggestion": "Always show target vs actual when using 'exceeded'",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP"]
+      }
+    },
+    {
+      "key": "retained",
+      "match": ["retain", "retained", "retaining", "retains"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.45,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add retention rate % or revenue retained",
+        "suggestion": "E.g. 'retained top 10 accounts representing $8M ARR through contract renewal'",
+        "impliesSeniority": ["Mid", "Senior", "Director"]
+      }
+    },
+    {
+      "key": "upsold",
+      "match": ["upsell", "upsold", "upselling", "upsells"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.40,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "Highly quantifiable — add average expansion revenue or NRR impact",
+        "suggestion": "E.g. 'upsold 40% of existing accounts, growing NRR to 128%'",
+        "impliesSeniority": ["Mid", "Senior"]
+      }
+    },
+
+    {
+      "key": "published",
+      "match": ["publish", "published", "publishing", "publishes"],
+      "score": {
+        "baseWeight": 0.85,
+        "quality": "STRONG",
+        "impactDirection": "COMMUNICATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add reach, citations, or business outcome of the publication",
+        "suggestion": "E.g. 'published 4 papers with 500+ citations' or 'published blog post reaching 80K readers'",
+        "impliesSeniority": ["Mid", "Senior", "Staff", "Principal"]
+      }
+    },
+    {
+      "key": "authored",
+      "match": ["author", "authored", "authoring", "authors"],
+      "score": {
+        "baseWeight": 0.86,
+        "quality": "STRONG",
+        "impactDirection": "COMMUNICATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add reach or adoption of what was authored",
+        "suggestion": "E.g. 'authored internal design docs adopted by 60-person org'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "evangelized",
+      "match": ["evangelize", "evangelized", "evangelizing", "evangelizes"],
+      "score": {
+        "baseWeight": 0.84,
+        "quality": "GOOD",
+        "impactDirection": "COMMUNICATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add audience reach and adoption outcome",
+        "suggestion": "E.g. 'evangelized GraphQL across 5 teams, driving 80% API migration in 6 months'",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director"]
+      }
+    },
+    {
+      "key": "facilitated",
+      "match": ["facilitate", "facilitated", "facilitating", "facilitates"],
+      "score": {
+        "baseWeight": 0.72,
+        "quality": "GOOD",
+        "impactDirection": "COMMUNICATION",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what the facilitation produced — a decision, alignment, or outcome",
+        "suggestion": "Consider 'led', 'ran', or 'organized' depending on your actual role",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+
+    {
+      "key": "fundraised",
+      "match": ["fundraise", "fundraised", "fundraising", "fundraises"],
+      "score": {
+        "baseWeight": 0.92,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.35,
+        "penaltyIfPassive": 0.50
+      },
+      "feedback": {
+        "missingMetricMessage": "Always quantify — the $ amount is the entire point of this verb",
+        "suggestion": "E.g. 'fundraised $2.5M Seed round from 12 angel investors'",
+        "impliesSeniority": ["Director", "VP", "C-Suite"]
+      }
+    },
+    {
+      "key": "founded",
+      "match": ["found", "founded", "founding", "founds"],
+      "score": {
+        "baseWeight": 1.0,
+        "quality": "ELITE",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.50
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the company's scale — revenue, team size, or funding",
+        "suggestion": "E.g. 'founded SaaS startup growing to $1.2M ARR in 18 months'",
+        "impliesSeniority": ["C-Suite", "Director", "VP"]
+      }
+    },
+    {
+      "key": "hired",
+      "match": ["hire", "hired", "hiring", "hires"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add headcount, time-to-hire, or quality signal (offer acceptance rate)",
+        "suggestion": "E.g. 'hired 12 engineers in 5 months with 95% offer acceptance rate'",
+        "impliesSeniority": ["Senior", "Staff", "Director", "VP", "C-Suite"]
+      }
+    },
+    {
+      "key": "restructured",
+      "match": ["restructure", "restructured", "restructuring", "restructures"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add team size affected and outcome achieved",
+        "suggestion": "E.g. 'restructured 3 reporting lines, improving velocity by 2x'",
+        "impliesSeniority": ["Director", "VP", "C-Suite"]
+      }
+    },
+    {
+      "key": "defined",
+      "match": ["define", "defined", "defining", "defines"],
+      "score": {
+        "baseWeight": 0.86,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add adoption and impact of what was defined",
+        "suggestion": "E.g. 'defined OKR framework adopted org-wide, improving goal attainment to 82%'",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director", "VP"]
+      }
+    },
+    {
+      "key": "aligned",
+      "match": ["align", "aligned", "aligning", "aligns"],
+      "score": {
+        "baseWeight": 0.80,
+        "quality": "GOOD",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the scope (# of stakeholders) and the resulting outcome",
+        "suggestion": "E.g. 'aligned 4 cross-functional teams on roadmap, unblocking $1.5M project'",
+        "impliesSeniority": ["Senior", "Staff", "Director", "VP"]
+      }
+    },
+
+    {
+      "key": "certified",
+      "match": ["certify", "certified", "certifying", "certifies"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what achieving certification enabled — compliance, contracts, or access",
+        "suggestion": "E.g. 'achieved SOC 2 Type II, unlocking $4M in enterprise deals'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "audited",
+      "match": ["audit", "audited", "auditing", "audits"],
+      "score": {
+        "baseWeight": 0.84,
+        "quality": "GOOD",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add scope and findings or improvements that resulted",
+        "suggestion": "E.g. 'audited 200 IAM policies, eliminating 60 overprivileged accounts'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "standardized",
+      "match": ["standardize", "standardized", "standardizing", "standardizes", "standardised"],
+      "score": {
+        "baseWeight": 0.86,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the adoption scale and efficiency gained",
+        "suggestion": "E.g. 'standardized API response schema across 8 services, eliminating 200 hours/year of integration work'",
+        "impliesSeniority": ["Senior", "Staff", "Principal"]
+      }
+    },
+    {
+      "key": "enforced",
+      "match": ["enforce", "enforced", "enforcing", "enforces"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add compliance rate or risk reduction outcome",
+        "suggestion": "E.g. 'enforced GDPR data retention policy across 12 product teams'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "revamped",
+      "match": ["revamp", "revamped", "revamping", "revamps"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the before/after metric to show the magnitude of improvement",
+        "suggestion": "E.g. 'revamped checkout flow, increasing conversion from 2.1% to 4.8%'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "championed",
+      "match": ["champion", "championed", "championing", "champions"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what was championed and the adoption or outcome",
+        "suggestion": "E.g. 'championed accessibility standards, achieving WCAG 2.1 AA across all products'",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director"]
+      }
+    },
+    {
+      "key": "unified",
+      "match": ["unify", "unified", "unifying", "unifies"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what was consolidated and the efficiency gained",
+        "suggestion": "E.g. 'unified 4 data pipelines into one platform, reducing ingestion costs by $120K/year'",
+        "impliesSeniority": ["Senior", "Staff", "Principal"]
+      }
+    },
+
+    {
+      "key": "wrote",
+      "match": ["write", "wrote", "writing", "writes"],
+      "score": {
+        "baseWeight": 0.62,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Add reach, adoption, or outcome of what was written",
+        "suggestion": "E.g. 'wrote runbooks that reduced mean time to resolve (MTTR) by 35%'",
+        "impliesSeniority": ["Intern", "Junior", "Mid"]
+      }
+    },
+    {
+      "key": "documented",
+      "match": ["document", "documented", "documenting", "documents"],
+      "score": {
+        "baseWeight": 0.65,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the downstream impact — onboarding time reduced, support tickets cut",
+        "suggestion": "E.g. 'documented REST API, reducing developer onboarding from 2 weeks to 3 days'",
+        "impliesSeniority": ["Intern", "Junior", "Mid"]
+      }
+    },
+
+    {
+      "key": "grew",
+      "match": ["grow", "grew", "growing", "grows"],
+      "score": {
+        "baseWeight": 0.85,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.35,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "Always quantify — grew what, by how much, over what period?",
+        "suggestion": "E.g. 'grew MRR from $80K to $600K in 12 months'",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP", "C-Suite"]
+      }
+    },
+    {
+      "key": "expanded",
+      "match": ["expand", "expanded", "expanding", "expands"],
+      "score": {
+        "baseWeight": 0.84,
+        "quality": "GOOD",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.45,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what was expanded and by what magnitude",
+        "suggestion": "E.g. 'expanded into 3 new EMEA markets, adding $1.8M ARR'",
+        "impliesSeniority": ["Senior", "Director", "VP", "C-Suite"]
+      }
+    },
+    {
+      "key": "cut",
+      "match": ["cut", "cutting", "cuts"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.40,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "Always show how much — 'cut costs by $500K' is the minimum viable form",
+        "suggestion": "E.g. 'cut infrastructure spend by 42% by migrating to spot instances'",
+        "impliesSeniority": ["Mid", "Senior", "Director"]
+      }
+    },
+    {
+      "key": "saved",
+      "match": ["save", "saved", "saving", "saves"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.35,
+        "penaltyIfPassive": 0.55
+      },
+      "feedback": {
+        "missingMetricMessage": "The dollar amount is essential — saved how much? Annually or total?",
+        "suggestion": "E.g. 'saved $240K annually by renegotiating SaaS contracts'",
+        "impliesSeniority": ["Mid", "Senior", "Director", "VP"]
+      }
+    },
+    {
+      "key": "eliminated",
+      "match": ["eliminate", "eliminated", "eliminating", "eliminates"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.60
+      },
+    "feedback": {
+        "missingMetricMessage": "Add what was eliminated and the value of the elimination",
+        "suggestion": "E.g. 'eliminated manual reconciliation process, saving 20 engineer-hours/week'",
+        "impliesSeniority": ["Mid", "Senior", "Staff", "Director"]
+      }
+    },
+
+    {
+      "key": "advised",
+      "match": ["advise", "advised", "advising", "advises"],
+      "score": {
+        "baseWeight": 0.84,
+        "quality": "GOOD",
+        "impactDirection": "COMMUNICATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add who was advised and the decision or outcome that followed",
+        "suggestion": "E.g. 'advised CFO on cloud migration strategy, reducing 3-year TCO by 28%'",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director", "VP"]
+      }
+    },
+    {
+      "key": "influenced",
+      "match": ["influence", "influenced", "influencing", "influences"],
+      "score": {
+        "baseWeight": 0.82,
+        "quality": "GOOD",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Influence without a result is unverifiable — add the outcome",
+        "suggestion": "E.g. 'influenced product roadmap prioritization, accelerating feature delivery by 6 weeks'",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director"]
+      }
+    },
+    {
+      "key": "proposed",
+      "match": ["propose", "proposed", "proposing", "proposes"],
+      "score": {
+        "baseWeight": 0.68,
+        "quality": "GOOD",
+        "impactDirection": "COMMUNICATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Was the proposal accepted? Add the outcome — adoption is what matters",
+        "suggestion": "If it was adopted, use 'implemented', 'drove', or 'led' instead",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+
+    {
+      "key": "ran",
+      "match": ["run", "ran", "running", "runs"],
+      "score": {
+        "baseWeight": 0.72,
+        "quality": "GOOD",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what was run and its scale or outcome",
+        "suggestion": "E.g. 'ran weekly sprint reviews for a 12-person team' — consider 'led' for stronger signal",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "enabled",
+      "match": ["enable", "enabled", "enabling", "enables"],
+      "score": {
+        "baseWeight": 0.78,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what was enabled and the measurable result",
+        "suggestion": "E.g. 'enabled real-time analytics, reducing report generation from 8 hours to 2 minutes'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "reengineered",
+      "match": ["reengineer", "reengineered", "reengineering", "re-engineer", "re-engineered"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the before/after metric to justify the re-engineering effort",
+        "suggestion": "E.g. 're-engineered batch job to stream processing, reducing lag from 6h to 30s'",
+        "impliesSeniority": ["Senior", "Staff", "Principal"]
+      }
+    },
+    {
+      "key": "consolidated",
+      "match": ["consolidate", "consolidated", "consolidating", "consolidates"],
+      "score": {
+        "baseWeight": 0.86,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add what was consolidated and cost or complexity reduction achieved",
+        "suggestion": "E.g. 'consolidated 6 data warehouses into 1 Snowflake instance, saving $180K/year'",
+        "impliesSeniority": ["Senior", "Staff", "Director"]
+      }
+    },
+    {
+      "key": "operationalized",
+      "match": ["operationalize", "operationalized", "operationalizing", "operationalizes"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add scale or efficiency metric from operationalization",
+        "suggestion": "E.g. 'operationalized ML model serving 4M predictions/day at <50ms p99'",
+        "impliesSeniority": ["Senior", "Staff", "Principal", "Director"]
+      }
+    },
+    {
+      "key": "productionized",
+      "match": ["productionize", "productionized", "productionizing", "productionises"],
+      "score": {
+        "baseWeight": 0.88,
+        "quality": "STRONG",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the scale or reliability metric",
+        "suggestion": "E.g. 'productionized prototype to serve 500K users with 99.95% uptime'",
+        "impliesSeniority": ["Senior", "Staff"]
+      }
+    },
+    {
+      "key": "validated",
+      "match": ["validate", "validated", "validating", "validates"],
+      "score": {
+        "baseWeight": 0.80,
+        "quality": "GOOD",
+        "impactDirection": "ANALYSIS",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add sample size and what the validation determined",
+        "suggestion": "E.g. 'validated hypothesis through 200-user A/B test, achieving statistical significance at p<0.01'",
+        "impliesSeniority": ["Mid", "Senior", "Staff"]
+      }
+    },
+    {
+      "key": "coordinated",
+      "match": ["coordinate", "coordinated", "coordinating", "coordinates"],
+      "score": {
+        "baseWeight": 0.74,
+        "quality": "GOOD",
+        "impactDirection": "LEADERSHIP",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the number of teams and the deliverable",
+        "suggestion": "Consider 'orchestrated' or 'led' for stronger ownership signal",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "contributed_oss",
+      "match": ["contributed to", "open-source contribution", "contributed patches"],
+      "score": {
+        "baseWeight": 0.84,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.55,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add lines changed, issues resolved, or project stars",
+        "suggestion": "E.g. 'contributed 14 PRs to kubernetes/kubernetes, 3 merged to main'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "prototyped",
+      "match": ["prototype", "prototyped", "prototyping", "prototypes"],
+      "score": {
+        "baseWeight": 0.78,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.60,
+        "penaltyIfPassive": 0.65
+      },
+      "feedback": {
+        "missingMetricMessage": "Add whether it shipped and what it proved",
+        "suggestion": "If the prototype shipped, use 'built' or 'launched' instead for stronger signal",
+        "impliesSeniority": ["Intern", "Junior", "Mid", "Senior"]
+      }
+    },
+    {
+      "key": "overhauled",
+      "match": ["overhaul", "overhauled", "overhauling", "overhauls"],
+      "score": {
+        "baseWeight": 0.90,
+        "quality": "STRONG",
+        "impactDirection": "IMPROVEMENT",
+        "penaltyIfNoMetric": 0.50,
+        "penaltyIfPassive": 0.60
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the magnitude of the overhaul and resulting improvement",
+        "suggestion": "E.g. 'overhauled authentication system, reducing login errors by 94%'",
+        "impliesSeniority": ["Senior", "Staff", "Principal"]
+      }
+    },
+    {
+      "key": "curated",
+      "match": ["curate", "curated", "curating", "curates"],
+      "score": {
+        "baseWeight": 0.72,
+        "quality": "GOOD",
+        "impactDirection": "CREATION",
+        "penaltyIfNoMetric": 0.65,
+        "penaltyIfPassive": 0.70
+      },
+      "feedback": {
+        "missingMetricMessage": "Add the scale and adoption of what was curated",
+        "suggestion": "E.g. 'curated training dataset of 50K examples achieving 91% model accuracy'",
+        "impliesSeniority": ["Junior", "Mid", "Senior"]
+      }
+    }
+
+  ]
+}

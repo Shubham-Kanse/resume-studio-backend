@@ -1,0 +1,1962 @@
+[
+  {
+    "_meta": {
+      "version": "3.0.0",
+      "schema": "resume-ontology",
+      "lastUpdated": "2025-01-01",
+      "description": "SOTA production-grade resume/CV parsing ontology with full NLP, regex, normalization, validation, and disambiguation support",
+      "locale": "GLOBAL",
+      "supportedLanguages": ["en", "de", "fr", "es", "pt", "nl", "it", "zh", "ja", "ar", "hi", "ru"],
+      "parserTargets": ["PDF", "DOCX", "HTML", "TXT", "RTF", "IMAGE_OCR"],
+      "confidenceThresholds": {
+        "high": 0.85,
+        "medium": 0.65,
+        "low": 0.45,
+        "reject": 0.30
+      }
+    }
+  },
+
+  {
+    "fieldId": "FULL_NAME",
+    "displayName": "Full Name",
+    "javaFieldName": "fullName",
+    "dataType": "STRING",
+    "required": true,
+    "priority": 1,
+    "sectionType": "IDENTITY",
+    "sectionSynonyms": [],
+    "fieldSynonyms": [
+      "name", "full name", "candidate name", "applicant name", "legal name",
+      "full legal name", "preferred name", "display name", "applicant", "nominee",
+      "naam", "nom", "nombre", "nome"
+    ],
+    "labelPatterns": [
+      "^name\\s*:", "^full name\\s*:", "^candidate\\s*:", "^applicant\\s*:",
+      "^naam\\s*:", "^nom\\s*:"
+    ],
+    "locationHints": {
+      "position": "TOP_OF_DOCUMENT",
+      "relativeToSection": null,
+      "linePosition": "FIRST_5_LINES",
+      "pageNumber": 1,
+      "typography": ["LARGEST_FONT", "BOLD", "CENTERED", "ALL_CAPS_POSSIBLE"],
+      "spatialZone": "HEADER_BLOCK",
+      "proximityTo": ["EMAIL", "PHONE", "LINKEDIN_URL"],
+      "standaloneLine": true
+    },
+    "regexPatterns": [
+      {
+        "pattern": "^[A-Z][a-záéíóúàèìòùäëïöüâêîôûçñ]+([ \\-][A-Z][a-záéíóúàèìòùäëïöüâêîôûçñ]+){1,4}$",
+        "flags": "u",
+        "description": "Western name with diacritics support",
+        "weight": 1.0
+      },
+      {
+        "pattern": "^[A-Z][A-Z \\-]{3,40}$",
+        "flags": "",
+        "description": "All-caps name format",
+        "weight": 0.85
+      },
+      {
+        "pattern": "^([A-Z][a-z]+\\.?\\s){1,2}[A-Z][a-z]+(\\s[A-Z][a-z]+)?$",
+        "flags": "",
+        "description": "Name with initials e.g. J. R. Smith",
+        "weight": 0.9
+      }
+    ],
+    "nlpHints": {
+      "nerLabel": "PERSON",
+      "nerModels": ["spaCy en_core_web_trf", "flair NER", "BERT-NER"],
+      "posPattern": "NNP (NNP)+",
+      "contextClues": [
+        "resume of", "cv of", "curriculum vitae of", "prepared by", "submitted by",
+        "profile of"
+      ],
+      "embeddingAnchor": "person proper noun header",
+      "corefResolution": false
+    },
+    "disambiguationRules": [
+      {
+        "rule": "If line contains @, it is EMAIL not NAME",
+        "action": "REJECT"
+      },
+      {
+        "rule": "If token matches known company suffix (Inc, Ltd, LLC), classify as ORG",
+        "action": "REJECT"
+      },
+      {
+        "rule": "If line is ALL digits or contains 4+ consecutive digits, it is phone/zip",
+        "action": "REJECT"
+      },
+      {
+        "rule": "If preceded by 'Dear' or 'To:', likely salutation not candidate name",
+        "action": "REJECT"
+      },
+      {
+        "rule": "Prefer token appearing before EMAIL in top 5 lines",
+        "action": "BOOST",
+        "confidenceDelta": 0.15
+      }
+    ],
+    "negativePatterns": [
+      "company", "university", "institute", "ltd", "inc", "llc", "pvt", "corp",
+      "solutions", "technologies", "services", "group", "associates", "consulting",
+      "noreply", "support", "info@", "hr@", "admin@",
+      "resume", "curriculum vitae", "cv", "page \\d"
+    ],
+    "normalization": {
+      "trim": true,
+      "titleCase": true,
+      "removeExtraSpaces": true,
+      "expandInitials": false,
+      "stripHonorifics": {
+        "enabled": true,
+        "honorifics": ["Mr.", "Mrs.", "Ms.", "Dr.", "Prof.", "Sir", "Rev.", "Mx."],
+        "storeOriginal": true
+      },
+      "stripSuffixes": {
+        "enabled": true,
+        "suffixes": ["Jr.", "Sr.", "II", "III", "IV", "Esq."],
+        "storeOriginal": true
+      },
+      "unicodeNormalization": "NFC"
+    },
+    "validation": {
+      "minLength": 3,
+      "maxLength": 120,
+      "minWords": 2,
+      "maxWords": 6,
+      "noDigits": true,
+      "noSpecialChars": true,
+      "allowedSpecialChars": ["-", "'", "."],
+      "allowDiacritics": true,
+      "blocklist": ["null", "n/a", "na", "none", "not applicable", "unknown", "test", "sample", "candidate"]
+    },
+    "confidenceBooster": [
+      { "condition": "appears before email on same page", "delta": 0.20 },
+      { "condition": "appears before phone on same page", "delta": 0.15 },
+      { "condition": "largest font size on page 1", "delta": 0.25 },
+      { "condition": "bold formatting", "delta": 0.10 },
+      { "condition": "centered alignment", "delta": 0.10 },
+      { "condition": "no punctuation except hyphens or apostrophes", "delta": 0.10 },
+      { "condition": "NER model returns PERSON with >0.9 confidence", "delta": 0.30 }
+    ],
+    "outputFields": {
+      "rawValue": "STRING",
+      "firstName": "STRING",
+      "middleName": "STRING",
+      "lastName": "STRING",
+      "honorific": "STRING",
+      "suffix": "STRING",
+      "preferredName": "STRING",
+      "fullNameNormalized": "STRING"
+    },
+    "multilingualHandling": {
+      "CJK": "Extract full token; do not apply titleCase",
+      "Arabic": "RTL aware; do not reverse token order",
+      "Cyrillic": "Transliterate if needed; store original"
+    },
+    "example": "Jane Marie Doe",
+    "alternativeExamples": [
+      "Dr. John R. Smith Jr.",
+      "MARÍA JOSÉ RODRÍGUEZ",
+      "Jean-Pierre Dupont",
+      "Li Wei"
+    ]
+  },
+
+  {
+    "fieldId": "EMAIL",
+    "displayName": "Email Address",
+    "javaFieldName": "email",
+    "dataType": "STRING",
+    "required": true,
+    "priority": 2,
+    "sectionType": "IDENTITY",
+    "sectionSynonyms": [],
+    "fieldSynonyms": [
+      "email", "e-mail", "email address", "mail", "contact email",
+      "electronic mail", "e mail", "emailid", "email id", "courriel",
+      "correo", "korrespondenz"
+    ],
+    "labelPatterns": [
+      "email\\s*:", "e-mail\\s*:", "mail\\s*:", "email address\\s*:",
+      "contact\\s*:", "reach me at\\s*:", "✉", "📧"
+    ],
+    "locationHints": {
+      "position": "TOP_OF_DOCUMENT",
+      "linePosition": "FIRST_15_LINES",
+      "pageNumber": 1,
+      "typography": ["NORMAL", "MAY_BE_HYPERLINK", "MONOSPACE_POSSIBLE"],
+      "spatialZone": "HEADER_BLOCK",
+      "proximityTo": ["FULL_NAME", "PHONE"]
+    },
+    "regexPatterns": [
+      {
+        "pattern": "[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,63}",
+        "flags": "i",
+        "description": "RFC 5322 simplified email regex",
+        "weight": 1.0
+      },
+      {
+        "pattern": "[a-zA-Z0-9._%+\\-]+\\s*\\[at\\]\\s*[a-zA-Z0-9.\\-]+\\s*\\[dot\\]\\s*[a-zA-Z]{2,}",
+        "flags": "i",
+        "description": "Obfuscated email with [at] and [dot]",
+        "weight": 0.9
+      },
+      {
+        "pattern": "[a-zA-Z0-9._%+\\-]+\\s*(\\(at\\)|@|AT)\\s*[a-zA-Z0-9.\\-]+\\s*(\\(dot\\)|\\.|\\.+)\\s*[a-zA-Z]{2,}",
+        "flags": "i",
+        "description": "Obfuscated variants",
+        "weight": 0.85
+      }
+    ],
+    "nlpHints": {
+      "nerLabel": null,
+      "contextClues": ["@", ".com", ".org", ".net", ".io", ".co", ".ai", ".dev", ".me", ".info"],
+      "tokenFeature": "CONTAINS_AT_SIGN"
+    },
+    "disambiguationRules": [
+      {
+        "rule": "If email matches known no-reply patterns, reject",
+        "action": "REJECT"
+      },
+      {
+        "rule": "If multiple emails found, prefer one closest to FULL_NAME",
+        "action": "PREFER_FIRST"
+      },
+      {
+        "rule": "Domain must not be a known company domain that doesn't match candidate's own company",
+        "action": "FLAG_FOR_REVIEW"
+      }
+    ],
+    "negativePatterns": [
+      "noreply", "no-reply", "donotreply", "do-not-reply",
+      "support@", "info@", "hr@", "careers@", "jobs@", "admin@",
+      "hello@company", "contact@company"
+    ],
+    "normalization": {
+      "trim": true,
+      "toLowerCase": true,
+      "deobfuscate": true,
+      "removeEmbeddedMailto": true,
+      "unicodeNormalization": "NFC"
+    },
+    "validation": {
+      "regex": "[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,63}",
+      "mustContain": "@",
+      "noSpaces": true,
+      "minLength": 6,
+      "maxLength": 254,
+      "domainMustHaveTLD": true,
+      "blockedTLDs": [],
+      "blocklist": ["test@test.com", "example@example.com", "foo@bar.com"]
+    },
+    "confidenceBooster": [
+      { "condition": "near phone number", "delta": 0.15 },
+      { "condition": "near full name", "delta": 0.20 },
+      { "condition": "in header section of document", "delta": 0.15 },
+      { "condition": "preceded by email label", "delta": 0.25 },
+      { "condition": "personal domain (gmail, yahoo, outlook, hotmail, icloud)", "delta": 0.10 }
+    ],
+    "outputFields": {
+      "rawValue": "STRING",
+      "normalizedEmail": "STRING",
+      "localPart": "STRING",
+      "domain": "STRING",
+      "tld": "STRING",
+      "isPersonalDomain": "BOOLEAN",
+      "isObfuscated": "BOOLEAN"
+    },
+    "example": "jane.doe@gmail.com",
+    "alternativeExamples": [
+      "j.doe+resume@outlook.com",
+      "janedoe [at] protonmail [dot] com"
+    ]
+  },
+
+  {
+    "fieldId": "PHONE",
+    "displayName": "Phone Number",
+    "javaFieldName": "phone",
+    "dataType": "STRING",
+    "required": false,
+    "priority": 3,
+    "sectionType": "IDENTITY",
+    "sectionSynonyms": [],
+    "fieldSynonyms": [
+      "phone", "mobile", "cell", "telephone", "tel", "contact number",
+      "ph", "mob", "phone number", "contact", "whatsapp", "call",
+      "cell phone", "direct line", "office phone", "home phone",
+      "téléphone", "telefon", "teléfono"
+    ],
+    "labelPatterns": [
+      "phone\\s*:", "mobile\\s*:", "cell\\s*:", "tel\\s*:", "ph\\s*:",
+      "mob\\s*:", "contact\\s*:", "m\\s*:", "t\\s*:", "c\\s*:",
+      "📱", "☎", "📞"
+    ],
+    "locationHints": {
+      "position": "TOP_OF_DOCUMENT",
+      "linePosition": "FIRST_15_LINES",
+      "pageNumber": 1,
+      "typography": ["NORMAL"],
+      "spatialZone": "HEADER_BLOCK",
+      "proximityTo": ["EMAIL", "FULL_NAME"]
+    },
+    "regexPatterns": [
+      {
+        "pattern": "\\+?[0-9]{1,3}[\\s\\-]?\\(?[0-9]{2,4}\\)?[\\s\\-]?[0-9]{3,4}[\\s\\-]?[0-9]{3,4}",
+        "flags": "",
+        "description": "International format with country code",
+        "weight": 1.0
+      },
+      {
+        "pattern": "\\(?[0-9]{3}\\)?[\\s.\\-][0-9]{3}[\\s.\\-][0-9]{4}",
+        "flags": "",
+        "description": "NANP format (US/Canada)",
+        "weight": 0.95
+      },
+      {
+        "pattern": "\\+?[\\d\\s\\-\\.\\(\\)]{7,25}",
+        "flags": "",
+        "description": "Generic international fallback",
+        "weight": 0.7
+      },
+      {
+        "pattern": "\\b0[0-9]{9,11}\\b",
+        "flags": "",
+        "description": "Leading zero national format (EU/Asia)",
+        "weight": 0.8
+      }
+    ],
+    "nlpHints": {
+      "nerLabel": null,
+      "contextClues": ["+", "mobile", "cell", "ph", "whatsapp"],
+      "tokenFeature": "NUMERIC_WITH_SPECIAL_CHARS"
+    },
+    "disambiguationRules": [
+      { "rule": "Sequence of 10–15 digits near 'fax' label => FAX, not PHONE", "action": "CLASSIFY_AS_FAX" },
+      { "rule": "4-digit sequence near 'ext' or 'extension' => EXTENSION", "action": "EXTRACT_AS_EXTENSION" },
+      { "rule": "5-digit sequence near 'zip' or 'pin' => POSTAL CODE", "action": "REJECT" },
+      { "rule": "Year-like 4-digit (1900-2099) => DATE", "action": "REJECT" },
+      { "rule": "If multiple phone numbers, prefer mobile/cell-labeled one", "action": "PREFER_LABELED" }
+    ],
+    "phoneTypes": {
+      "MOBILE": ["mobile", "cell", "mob", "cellular", "whatsapp", "📱"],
+      "HOME": ["home", "residence", "landline", "h:"],
+      "OFFICE": ["office", "work", "business", "direct", "o:"],
+      "FAX": ["fax", "facsimile", "f:"]
+    },
+    "negativePatterns": [
+      "fax", "year", "pin", "zip", "postal", "ssn", "ein", "gst",
+      "invoice", "order", "reference", "account"
+    ],
+    "normalization": {
+      "trim": true,
+      "removeSpaces": false,
+      "e164Format": true,
+      "defaultCountryCode": "US",
+      "stripLeadingZeroIfCountryCodePresent": true,
+      "preserveExtension": true,
+      "libraryHint": "libphonenumber"
+    },
+    "validation": {
+      "minDigits": 7,
+      "maxDigits": 15,
+      "allowedChars": ["digits", "+", "-", "(", ")", " ", ".", "x", "ext"],
+      "mustNotBeAllSameDigit": true,
+      "mustNotBeSequential": true
+    },
+    "confidenceBooster": [
+      { "condition": "near email", "delta": 0.15 },
+      { "condition": "starts with + or recognised country code", "delta": 0.20 },
+      { "condition": "in header section", "delta": 0.15 },
+      { "condition": "preceded by phone/mobile label", "delta": 0.25 },
+      { "condition": "matches libphonenumber VALID result", "delta": 0.30 }
+    ],
+    "outputFields": {
+      "rawValue": "STRING",
+      "e164": "STRING",
+      "nationalFormat": "STRING",
+      "internationalFormat": "STRING",
+      "countryCode": "STRING",
+      "extension": "STRING",
+      "phoneType": "ENUM[MOBILE, HOME, OFFICE, FAX, UNKNOWN]",
+      "isValid": "BOOLEAN",
+      "region": "STRING"
+    },
+    "example": "+1-555-123-4567",
+    "alternativeExamples": [
+      "(555) 987-6543",
+      "+44 7911 123456",
+      "+91 98765 43210",
+      "0171 234 5678 ext. 42"
+    ]
+  },
+
+  {
+    "fieldId": "LOCATION",
+    "displayName": "Location / Address",
+    "javaFieldName": "location",
+    "dataType": "OBJECT",
+    "required": false,
+    "priority": 4,
+    "sectionType": "IDENTITY",
+    "fieldSynonyms": [
+      "location", "address", "city", "residence", "based in", "lives in",
+      "current location", "postal address", "home address", "domicile",
+      "headquarters", "region", "area", "locality"
+    ],
+    "labelPatterns": [
+      "address\\s*:", "location\\s*:", "city\\s*:", "based in\\s*:",
+      "residence\\s*:", "📍", "🗺", "addr\\s*:"
+    ],
+    "locationHints": {
+      "position": "TOP_OF_DOCUMENT",
+      "linePosition": "FIRST_15_LINES",
+      "pageNumber": 1,
+      "spatialZone": "HEADER_BLOCK"
+    },
+    "regexPatterns": [
+      {
+        "pattern": "[A-Za-z ]+,\\s*[A-Za-z ]+,\\s*[A-Za-z ]+",
+        "description": "City, State, Country",
+        "weight": 0.9
+      },
+      {
+        "pattern": "[A-Z]{1,2}[0-9][A-Z0-9]?\\s?[0-9][A-Z]{2}",
+        "description": "UK postcode",
+        "weight": 0.95
+      },
+      {
+        "pattern": "\\b\\d{5}(-\\d{4})?\\b",
+        "description": "US ZIP code",
+        "weight": 0.85
+      }
+    ],
+    "nlpHints": {
+      "nerLabel": "GPE",
+      "secondaryNER": ["LOC", "FAC"],
+      "contextClues": ["city", "state", "province", "country", "street", "avenue", "road", "lane"]
+    },
+    "privacyFlags": {
+      "fullStreetAddress": "SENSITIVE_PII",
+      "cityAndCountry": "SAFE_TO_STORE",
+      "redactFullAddress": false,
+      "hashStreetAddress": true
+    },
+    "normalization": {
+      "trim": true,
+      "titleCase": true,
+      "geocodeEnabled": true,
+      "geocodeProvider": "Google Maps API / Nominatim"
+    },
+    "outputFields": {
+      "rawValue": "STRING",
+      "streetAddress": "STRING",
+      "city": "STRING",
+      "state": "STRING",
+      "stateCode": "STRING",
+      "postalCode": "STRING",
+      "country": "STRING",
+      "countryCode": "ISO_3166_1_ALPHA2",
+      "latitude": "FLOAT",
+      "longitude": "FLOAT",
+      "remoteOnly": "BOOLEAN",
+      "willingToRelocate": "BOOLEAN"
+    },
+    "remoteIndicators": ["remote", "open to remote", "fully remote", "work from home", "wfh", "virtual"],
+    "relocationIndicators": ["willing to relocate", "open to relocation", "flexible location"],
+    "example": "San Francisco, CA, USA",
+    "alternativeExamples": ["London, UK", "Berlin, Germany", "Remote", "Galway, Ireland"]
+  },
+
+  {
+    "fieldId": "LINKEDIN_URL",
+    "displayName": "LinkedIn URL",
+    "javaFieldName": "linkedinUrl",
+    "dataType": "STRING",
+    "required": false,
+    "priority": 5,
+    "sectionType": "IDENTITY",
+    "fieldSynonyms": [
+      "linkedin", "linkedin profile", "linkedin url", "linkedin.com",
+      "linked in", "li profile", "lnkd.in"
+    ],
+    "labelPatterns": [
+      "linkedin\\s*:", "linkedin profile\\s*:", "linked in\\s*:",
+      "in\\s*:", "🔗", "linkedin.com/in/"
+    ],
+    "locationHints": {
+      "position": "TOP_OF_DOCUMENT",
+      "linePosition": "FIRST_15_LINES",
+      "typography": ["HYPERLINK", "NORMAL", "UNDERLINED"],
+      "spatialZone": "HEADER_BLOCK"
+    },
+    "regexPatterns": [
+      {
+        "pattern": "https?://(www\\.)?linkedin\\.com/in/[a-zA-Z0-9\\-_%]{3,100}/?",
+        "flags": "i",
+        "description": "Full LinkedIn profile URL",
+        "weight": 1.0
+      },
+      {
+        "pattern": "linkedin\\.com/in/[a-zA-Z0-9\\-_%]{3,100}",
+        "flags": "i",
+        "description": "LinkedIn URL without protocol",
+        "weight": 0.95
+      },
+      {
+        "pattern": "lnkd\\.in/[a-zA-Z0-9\\-_%]+",
+        "flags": "i",
+        "description": "LinkedIn short URL",
+        "weight": 0.9
+      }
+    ],
+    "nlpHints": {
+      "contextClues": ["linkedin.com/in/", "linkedin profile", "lnkd.in"]
+    },
+    "normalization": {
+      "trim": true,
+      "toLowerCase": true,
+      "ensureHttps": true,
+      "removeTrailingSlash": true,
+      "removeQueryParams": true,
+      "expandShortUrl": true
+    },
+    "validation": {
+      "mustContain": "linkedin.com/in/",
+      "minLength": 20,
+      "maxLength": 200,
+      "profileSlugMinLength": 3,
+      "profileSlugMaxLength": 100
+    },
+    "confidenceBooster": [
+      { "condition": "near email", "delta": 0.15 },
+      { "condition": "near github url", "delta": 0.10 },
+      { "condition": "preceded by LinkedIn label or icon", "delta": 0.25 }
+    ],
+    "outputFields": {
+      "rawValue": "STRING",
+      "normalizedUrl": "STRING",
+      "profileSlug": "STRING",
+      "isVanityUrl": "BOOLEAN"
+    },
+    "example": "https://linkedin.com/in/janedoe",
+    "alternativeExamples": [
+      "linkedin.com/in/john-r-smith-dev",
+      "https://www.linkedin.com/in/maría-rodriguez-123/"
+    ]
+  },
+
+  {
+    "fieldId": "GITHUB_URL",
+    "displayName": "GitHub / Source Profile URL",
+    "javaFieldName": "githubUrl",
+    "dataType": "STRING",
+    "required": false,
+    "priority": 6,
+    "sectionType": "IDENTITY",
+    "fieldSynonyms": [
+      "github", "github profile", "github url", "git", "gitlab",
+      "bitbucket", "source code", "portfolio code", "open source profile",
+      "code repository", "coding profile"
+    ],
+    "labelPatterns": [
+      "github\\s*:", "git\\s*:", "gitlab\\s*:", "bitbucket\\s*:",
+      "source\\s*:", "code\\s*:", "⌨", "💻"
+    ],
+    "locationHints": {
+      "position": "TOP_OF_DOCUMENT",
+      "linePosition": "FIRST_15_LINES",
+      "typography": ["HYPERLINK", "NORMAL"],
+      "spatialZone": "HEADER_BLOCK"
+    },
+    "regexPatterns": [
+      {
+        "pattern": "https?://(www\\.)?github\\.com/[a-zA-Z0-9\\-]{1,39}/?",
+        "flags": "i",
+        "description": "GitHub profile URL",
+        "weight": 1.0
+      },
+      {
+        "pattern": "https?://(www\\.)?gitlab\\.com/[a-zA-Z0-9\\-_.]{1,255}/?",
+        "flags": "i",
+        "description": "GitLab profile URL",
+        "weight": 1.0
+      },
+      {
+        "pattern": "https?://(www\\.)?bitbucket\\.org/[a-zA-Z0-9\\-_.]{1,255}/?",
+        "flags": "i",
+        "description": "Bitbucket profile URL",
+        "weight": 0.9
+      },
+      {
+        "pattern": "github\\.com/[a-zA-Z0-9\\-]{1,39}",
+        "flags": "i",
+        "description": "GitHub without protocol",
+        "weight": 0.9
+      }
+    ],
+    "nlpHints": {
+      "contextClues": ["github.com/", "gitlab.com/", "bitbucket.org/", "open source", "contributions"]
+    },
+    "normalization": {
+      "trim": true,
+      "toLowerCase": true,
+      "ensureHttps": true,
+      "removeTrailingSlash": true
+    },
+    "validation": {
+      "mustContainOneOf": ["github.com/", "gitlab.com/", "bitbucket.org/"],
+      "maxLength": 200
+    },
+    "outputFields": {
+      "rawValue": "STRING",
+      "normalizedUrl": "STRING",
+      "platform": "ENUM[GITHUB, GITLAB, BITBUCKET, OTHER]",
+      "username": "STRING"
+    },
+    "additionalProfileUrls": {
+      "fieldId": "OTHER_PROFILE_URLS",
+      "javaFieldName": "otherProfileUrls",
+      "supportedPlatforms": [
+        { "platform": "PORTFOLIO", "patterns": ["behance.net/", "dribbble.com/", "medium.com/@", "dev.to/"] },
+        { "platform": "STACKOVERFLOW", "patterns": ["stackoverflow.com/users/"] },
+        { "platform": "KAGGLE", "patterns": ["kaggle.com/"] },
+        { "platform": "TWITTER_X", "patterns": ["twitter.com/", "x.com/"] },
+        { "platform": "PERSONAL_WEBSITE", "patterns": ["https?://(?!linkedin|github|gitlab)[a-zA-Z0-9\\-]+\\.[a-zA-Z]{2,}"] }
+      ]
+    },
+    "example": "https://github.com/janedoe",
+    "alternativeExamples": [
+      "https://gitlab.com/john-smith",
+      "github.com/jane-doe-dev"
+    ]
+  },
+
+  {
+    "fieldId": "PROFESSIONAL_SUMMARY",
+    "displayName": "Professional Summary",
+    "javaFieldName": "professionalSummary",
+    "dataType": "STRING",
+    "required": false,
+    "priority": 7,
+    "sectionType": "SUMMARY",
+    "sectionSynonyms": [
+      "summary", "professional summary", "career summary", "executive summary",
+      "about me", "about", "intro", "introduction", "profile",
+      "professional profile", "career profile", "overview", "career overview",
+      "background", "objective", "career objective", "professional objective",
+      "job objective", "goal", "career goal", "personal statement", "statement",
+      "bio", "biography", "highlights", "career highlights", "snapshot",
+      "who i am", "elevator pitch", "pitch", "mission", "value proposition",
+      "core competencies overview", "executive profile", "professional brand",
+      "résumé summary", "personal brand", "candidature", "candidacy statement"
+    ],
+    "fieldSynonyms": [],
+    "labelPatterns": [
+      "summary", "about", "profile", "objective", "overview", "introduction",
+      "bio", "statement", "highlights", "pitch"
+    ],
+    "locationHints": {
+      "position": "AFTER_CONTACT_INFO",
+      "relativeToSection": "BEFORE_EXPERIENCE",
+      "linePosition": "EARLY_IN_DOCUMENT",
+      "pageNumber": 1,
+      "typography": ["NORMAL", "ITALIC", "PARAGRAPH_BLOCK"],
+      "structureHint": "PROSE_PARAGRAPH_NOT_BULLETS"
+    },
+    "regexPatterns": [],
+    "nlpHints": {
+      "nerLabel": null,
+      "posPattern": null,
+      "contextClues": [
+        "years of experience", "passionate about", "results-driven", "seeking",
+        "looking for", "proven track record", "expertise in", "specializing in",
+        "dedicated professional", "dynamic", "innovative", "strategic",
+        "cross-functional", "stakeholder", "impact-driven", "customer-focused",
+        "data-driven", "full-stack", "end-to-end", "transformational"
+      ],
+      "sentimentHint": "PROFESSIONAL_POSITIVE",
+      "firstPersonIndicators": ["I am", "I have", "My", "I bring", "I lead"],
+      "thirdPersonIndicators": ["Jane is", "John brings", "She has", "He has"]
+    },
+    "sectionBoundaryDetection": {
+      "startAfter": ["IDENTITY", "CONTACT_INFO"],
+      "endBefore": ["EXPERIENCE", "EDUCATION", "SKILLS", "CERTIFICATIONS"],
+      "maxLinesToScan": 40,
+      "stopPatterns": [
+        "^experience$", "^work history$", "^education$", "^skills$",
+        "^certifications$", "^employment$"
+      ]
+    },
+    "negativePatterns": [
+      "references available", "reference on request",
+      "skills:", "experience:", "education:"
+    ],
+    "normalization": {
+      "trim": true,
+      "collapseWhitespace": true,
+      "fixSmartQuotes": true,
+      "normalizeLineBreaks": true
+    },
+    "validation": {
+      "minWords": 15,
+      "maxWords": 400,
+      "isBlock": true,
+      "minSentences": 1,
+      "maxSentences": 15
+    },
+    "confidenceBooster": [
+      { "condition": "paragraph prose (not bullet list)", "delta": 0.25 },
+      { "condition": "follows contact section", "delta": 0.20 },
+      { "condition": "precedes experience section", "delta": 0.20 },
+      { "condition": "contains years of experience phrase", "delta": 0.15 },
+      { "condition": "section heading matches sectionSynonyms", "delta": 0.30 }
+    ],
+    "outputFields": {
+      "rawValue": "STRING",
+      "normalizedText": "STRING",
+      "wordCount": "INTEGER",
+      "detectedTone": "ENUM[FIRST_PERSON, THIRD_PERSON, MIXED]",
+      "extractedKeywords": "ARRAY_OF_STRINGS",
+      "yearsOfExperienceMentioned": "INTEGER"
+    },
+    "example": "Results-driven software engineer with 8+ years of experience building scalable cloud-native applications...",
+    "alternativeExamples": [
+      "Seasoned product manager with a track record of launching 0-to-1 products...",
+      "Data scientist specializing in NLP and LLM fine-tuning with 5 years of industry experience..."
+    ]
+  },
+
+    {
+    "fieldId": "WORK_EXPERIENCE",
+    "displayName": "Work Experience",
+    "javaFieldName": "workExperience",
+    "dataType": "ARRAY_OF_OBJECTS",
+    "required": true,
+    "priority": 8,
+    "sectionType": "EXPERIENCE",
+    "sectionSynonyms": [
+      "experience", "work experience", "professional experience",
+      "employment history", "employment", "work history", "career history",
+      "career experience", "job history", "positions held", "relevant experience",
+      "industry experience", "roles", "past roles", "previous roles",
+      "previous employment", "assignments", "engagements", "consulting engagements",
+      "professional background", "work", "internship experience",
+      "research experience", "clinical experience", "practicum", "residency",
+      "fellowship", "tenure", "appointments"
+    ],
+    "labelPatterns": [
+      "experience", "employment", "work history", "career", "positions",
+      "roles", "history"
+    ],
+    "locationHints": {
+      "position": "MIDDLE_OF_DOCUMENT",
+      "relativeToSection": "AFTER_SUMMARY",
+      "typography": ["SECTION_HEADING", "CONTAINS_DATES", "CONTAINS_BULLET_POINTS"],
+      "structureHint": "REPEATED_ENTRY_BLOCKS"
+    },
+    "entryDetection": {
+      "strategy": "DATE_RANGE_ANCHOR",
+      "fallback": "COMPANY_ORG_NER_ANCHOR",
+      "minEntrySeparationLines": 1,
+      "entryStartPatterns": [
+        "date range on same line as title or company",
+        "bold title at start of block",
+        "company name as standalone line"
+      ]
+    },
+    "entryFields": {
+      "jobTitle": {
+        "fieldId": "JOB_TITLE",
+        "javaFieldName": "jobTitle",
+        "dataType": "STRING",
+        "synonyms": [
+          "title", "role", "position", "designation", "job title",
+          "position title", "current role", "job role", "post", "appointment",
+          "function", "capacity"
+        ],
+        "locationHints": ["bold text", "first line of entry", "above company name", "largest font in entry"],
+        "regexPatterns": [],
+        "nlpHints": {
+          "nerLabel": "JOB_TITLE",
+          "titleKeywords": [
+            "engineer", "manager", "developer", "analyst", "designer", "lead",
+            "head", "director", "architect", "consultant", "intern", "officer",
+            "specialist", "coordinator", "executive", "principal", "senior",
+            "junior", "associate", "vice president", "vp", "cto", "ceo",
+            "coo", "cfo", "founder", "co-founder", "partner", "president",
+            "chairman", "fellow", "scientist", "researcher", "product",
+            "program", "project", "scrum master", "agile coach", "devops",
+            "sre", "platform", "data", "ml", "ai", "cloud", "security",
+            "fullstack", "full-stack", "frontend", "backend", "mobile",
+            "qa", "test", "automation", "bi", "business intelligence"
+          ]
+        },
+        "normalization": { "trim": true, "titleCase": true },
+        "validation": { "minLength": 2, "maxLength": 200 },
+        "outputFields": {
+          "rawValue": "STRING",
+          "normalizedTitle": "STRING",
+          "seniorityLevel": "ENUM[INTERN, JUNIOR, MID, SENIOR, LEAD, PRINCIPAL, STAFF, DIRECTOR, VP, C_LEVEL, FOUNDER]",
+          "functionArea": "ENUM[ENGINEERING, PRODUCT, DESIGN, DATA, MARKETING, SALES, FINANCE, HR, LEGAL, OPERATIONS, RESEARCH, OTHER]"
+        }
+      },
+      "companyName": {
+        "fieldId": "COMPANY_NAME",
+        "javaFieldName": "companyName",
+        "dataType": "STRING",
+        "synonyms": [
+          "company", "employer", "organization", "organisation", "firm",
+          "client", "agency", "corporation", "business", "startup",
+          "enterprise", "brand", "institution", "practice"
+        ],
+        "locationHints": ["near job title", "after pipe | or comma or dash", "before location", "second line of entry"],
+        "regexPatterns": [],
+        "nlpHints": {
+          "nerLabel": "ORGANIZATION",
+          "contextClues": [
+            "inc", "ltd", "llc", "pvt", "corp", "technologies", "solutions",
+            "consulting", "services", "group", "co.", "gmbh", "ag", "plc",
+            "sarl", "sas", "bv", "nv", "sa", "labs", "systems", "networks",
+            "media", "software", "digital", "ventures", "capital", "holdings",
+            "international", "global", "worldwide"
+          ]
+        },
+        "normalization": { "trim": true, "titleCase": false, "preserveAcronyms": true },
+        "validation": { "minLength": 1, "maxLength": 200 },
+        "outputFields": {
+          "rawValue": "STRING",
+          "normalizedName": "STRING",
+          "companySizeHint": "ENUM[STARTUP, SMB, MID_MARKET, ENTERPRISE, UNKNOWN]",
+          "industryHint": "STRING"
+        }
+      },
+      "employmentType": {
+        "fieldId": "EMPLOYMENT_TYPE",
+        "javaFieldName": "employmentType",
+        "dataType": "ENUM",
+        "enumValues": [
+          "FULL_TIME", "PART_TIME", "CONTRACT", "FREELANCE",
+          "INTERNSHIP", "VOLUNTEER", "TEMPORARY", "CONSULTANT",
+          "APPRENTICESHIP", "CO_OP", "RESEARCH", "FELLOWSHIP"
+        ],
+        "synonyms": {
+          "FULL_TIME": ["full-time", "full time", "permanent", "regular", "fte", "perm"],
+          "PART_TIME": ["part-time", "part time", "p/t", "flexible hours"],
+          "CONTRACT": ["contract", "contractor", "fixed term", "fixed-term", "c2c", "corp to corp", "b2b", "limited term"],
+          "FREELANCE": ["freelance", "freelancer", "self-employed", "independent", "solo", "own company"],
+          "INTERNSHIP": ["intern", "internship", "trainee", "apprentice", "graduate trainee", "placement", "work experience"],
+          "VOLUNTEER": ["volunteer", "voluntary", "pro bono", "unpaid"],
+          "TEMPORARY": ["temp", "temporary", "ad hoc", "casual", "seasonal", "project-based"],
+          "CONSULTANT": ["consultant", "consulting", "advisory", "advisor", "external", "retainer"],
+          "APPRENTICESHIP": ["apprenticeship", "apprentice"],
+          "CO_OP": ["co-op", "coop", "cooperative education"],
+          "RESEARCH": ["research assistant", "ra", "postdoc", "postdoctoral", "research fellow"],
+          "FELLOWSHIP": ["fellow", "fellowship", "resident", "residency"]
+        },
+        "locationHints": ["in brackets after title", "after company name", "small or italic text", "in parentheses"],
+        "defaultValue": "FULL_TIME",
+        "inferenceRules": [
+          { "if": "job title contains 'intern'", "then": "INTERNSHIP" },
+          { "if": "date range < 12 months AND context contains 'contract'", "then": "CONTRACT" },
+          { "if": "companyName matches candidateName", "then": "FREELANCE" }
+        ]
+      },
+      "startDate": {
+        "fieldId": "START_DATE",
+        "javaFieldName": "startDate",
+        "dataType": "DATE",
+        "synonyms": ["from", "since", "joined", "started", "beginning", "commenced", "effective"],
+        "dateFormats": [
+          "MMM yyyy", "MMMM yyyy", "MM/yyyy", "yyyy-MM", "yyyy",
+          "MMM, yyyy", "Q[1-4] yyyy", "dd MMM yyyy", "MM-yyyy"
+        ],
+        "locationHints": [
+          "right-aligned on title/company line",
+          "in parentheses after title",
+          "separated by dash, en-dash, em-dash, or 'to'"
+        ],
+        "regexPatterns": [
+          {
+            "pattern": "(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[,\\s]+\\d{4}",
+            "flags": "i",
+            "description": "Month Year"
+          },
+          { "pattern": "\\d{2}/\\d{4}", "description": "MM/YYYY" },
+          { "pattern": "\\d{4}\\-\\d{2}", "description": "YYYY-MM" },
+          { "pattern": "Q[1-4]\\s?\\d{4}", "flags": "i", "description": "Quarter Year" },
+          { "pattern": "\\b\\d{4}\\b", "description": "Year only" }
+        ],
+        "normalization": {
+          "outputFormat": "YYYY-MM",
+          "quarterToMonth": { "Q1": "01", "Q2": "04", "Q3": "07", "Q4": "10" },
+          "yearOnlyDefaultMonth": "01"
+        }
+      },
+      "endDate": {
+        "fieldId": "END_DATE",
+        "javaFieldName": "endDate",
+        "dataType": "DATE_OR_PRESENT",
+        "synonyms": ["to", "until", "through", "till", "upto", "ending", "concluded"],
+        "currentIndicators": [
+          "present", "current", "now", "ongoing", "till date", "to date",
+          "currently", "today", "—", "-", "–", "still", "cont.", "cont",
+          "continuing", "active"
+        ],
+        "dateFormats": [
+          "MMM yyyy", "MMMM yyyy", "MM/yyyy", "yyyy-MM", "yyyy"
+        ],
+        "regexPatterns": [
+          {
+            "pattern": "(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)[,\\s]+\\d{4}",
+            "flags": "i"
+          },
+          { "pattern": "\\d{2}/\\d{4}" },
+          { "pattern": "present|current|now|ongoing|till date|to date|today|active", "flags": "i" }
+        ],
+        "normalization": {
+          "outputFormat": "YYYY-MM",
+          "presentValue": "PRESENT",
+          "yearOnlyDefaultMonth": "12"
+        },
+        "outputFields": {
+          "rawValue": "STRING",
+          "parsedDate": "DATE",
+          "isPresent": "BOOLEAN",
+          "durationMonths": "INTEGER"
+        }
+      },
+      "location": {
+        "fieldId": "JOB_LOCATION",
+        "javaFieldName": "jobLocation",
+        "dataType": "STRING",
+        "synonyms": ["location", "place", "city", "office", "site", "based", "region", "country"],
+        "remoteIndicators": [
+          "remote", "work from home", "wfh", "fully remote", "distributed",
+          "virtual", "telecommute", "anywhere", "global remote"
+        ],
+        "hybridIndicators": ["hybrid", "partial remote", "flexible", "flex", "on-site/remote"],
+        "locationHints": ["after company name", "after pipe |", "in parentheses", "same line as company"],
+        "nlpHints": { "nerLabel": "GPE", "secondaryNER": ["LOC"] },
+        "outputFields": {
+          "rawValue": "STRING",
+          "city": "STRING",
+          "country": "STRING",
+          "workMode": "ENUM[ON_SITE, REMOTE, HYBRID, UNKNOWN]"
+        }
+      },
+      "responsibilities": {
+        "fieldId": "RESPONSIBILITIES",
+        "javaFieldName": "responsibilities",
+        "dataType": "ARRAY_OF_STRINGS",
+        "synonyms": [
+          "responsibilities", "duties", "key responsibilities",
+          "role description", "what i did", "tasks", "accountabilities",
+          "key duties", "primary duties", "day-to-day", "scope of work"
+        ],
+        "locationHints": ["bullet points under job entry", "indented text", "hanging indent"],
+        "nlpHints": {
+          "posPattern": "VBD|VBZ|VB at start of bullet",
+          "actionVerbsStart": [
+            "led", "built", "developed", "managed", "designed", "implemented",
+            "delivered", "owned", "drove", "created", "maintained", "architected",
+            "collaborated", "coordinated", "oversaw", "supervised", "trained",
+            "mentored", "coached", "facilitated", "negotiated", "analyzed",
+            "reviewed", "tested", "deployed", "automated", "optimized",
+            "integrated", "launched", "migrated", "refactored", "documented",
+            "researched", "evaluated", "established", "defined", "streamlined"
+          ]
+        },
+        "normalization": {
+          "trim": true,
+          "stripLeadingBullet": true,
+          "stripLeadingDash": true,
+          "capitalizeFirst": true
+        }
+      },
+      "achievements": {
+        "fieldId": "ACHIEVEMENTS",
+        "javaFieldName": "achievements",
+        "dataType": "ARRAY_OF_STRINGS",
+        "synonyms": [
+          "achievements", "accomplishments", "impact", "results",
+          "key achievements", "highlights", "wins", "outcomes",
+          "key results", "okr outcomes", "metrics", "kpis"
+        ],
+        "locationHints": ["bullet points with metrics", "contains % or numbers or $"],
+        "nlpHints": {
+          "contextClues": [
+            "increased", "decreased", "reduced", "improved", "saved",
+            "grew", "achieved", "delivered", "exceeded", "%", "x faster",
+            "revenue", "cost", "users", "customers", "team of",
+            "$", "million", "billion", "k users", "latency", "uptime",
+            "nps", "csat", "roi", "irr", "ebitda"
+          ],
+          "hasQuantitativeMetric": true
+        },
+        "normalization": {
+          "trim": true,
+          "stripLeadingBullet": true
+        },
+        "outputFields": {
+          "rawValue": "STRING",
+          "hasMetric": "BOOLEAN",
+          "extractedMetrics": "ARRAY_OF_OBJECTS[{value: STRING, unit: STRING, direction: ENUM[INCREASE, DECREASE, NEUTRAL]}]"
+        }
+      },
+      "technologiesUsed": {
+        "fieldId": "JOB_TECHNOLOGIES",
+        "javaFieldName": "technologiesUsed",
+        "dataType": "ARRAY_OF_STRINGS",
+        "synonyms": ["tech stack", "tools used", "technologies", "built with", "using", "stack", "environment"],
+        "locationHints": ["last bullet or separate line in entry", "in parentheses at end of entry"],
+        "extractionHint": "CROSS_REFERENCE_WITH_SKILLS_SECTION"
+      }
+    },
+    "regexPatterns": [],
+    "nlpHints": {
+      "nerLabel": null,
+      "contextClues": ["company names", "date ranges", "bullet points", "job titles"]
+    },
+    "negativePatterns": ["references", "education", "skills"],
+    "normalization": { "trim": true },
+    "validation": {
+      "minEntries": 0,
+      "maxEntries": 30,
+      "warnIfNoEntries": true
+    },
+    "gapDetection": {
+      "enabled": true,
+      "flagGapsExceedingMonths": 6,
+      "ignoreOverlapMonths": 1
+    },
+    "outputFields": {
+      "entries": "ARRAY_OF_OBJECTS",
+      "totalExperienceMonths": "INTEGER",
+      "totalExperienceYears": "FLOAT",
+      "currentRole": "OBJECT",
+      "hasGaps": "BOOLEAN",
+      "gapPeriods": "ARRAY_OF_OBJECTS"
+    }
+  },
+
+  {
+    "fieldId": "EDUCATION",
+    "displayName": "Education",
+    "javaFieldName": "education",
+    "dataType": "ARRAY_OF_OBJECTS",
+    "required": false,
+    "priority": 9,
+    "sectionType": "EDUCATION",
+    "sectionSynonyms": [
+      "education", "educational background", "academic background",
+      "academic history", "academic qualifications", "qualifications",
+      "schooling", "academic details", "degrees", "studies",
+      "training and education", "educational qualifications",
+      "university", "college", "academics", "formal education",
+      "higher education", "tertiary education", "secondary education",
+      "professional education", "continuing education"
+    ],
+    "entryDetection": {
+      "strategy": "DEGREE_INSTITUTION_ANCHOR",
+      "fallback": "DATE_RANGE_ANCHOR"
+    },
+    "entryFields": {
+      "degree": {
+        "fieldId": "DEGREE",
+        "javaFieldName": "degree",
+        "dataType": "STRING",
+        "synonyms": [
+          "degree", "qualification", "diploma", "certificate",
+          "certification", "credential", "award", "programme"
+        ],
+        "degreeAliases": {
+          "BACHELORS": [
+            "b.sc", "bsc", "b.e", "be", "b.tech", "btech", "ba", "b.a",
+            "bca", "b.ca", "bachelor", "bachelors", "undergraduate", "ug",
+            "b.eng", "b.com", "bcom", "b.s", "bs", "b.s.", "b.a.",
+            "bachelor of science", "bachelor of arts", "bachelor of engineering",
+            "bachelor of commerce", "bachelor of technology", "honours", "hons"
+          ],
+          "MASTERS": [
+            "m.sc", "msc", "m.e", "me", "m.tech", "mtech", "ma", "m.a",
+            "mca", "m.ca", "master", "masters", "postgraduate", "pg",
+            "m.eng", "mba", "m.b.a", "m.com", "mcom", "m.s", "ms",
+            "master of science", "master of arts", "master of engineering",
+            "master of business administration", "master of technology",
+            "mscs", "m.s.c.s"
+          ],
+          "PHD": [
+            "phd", "ph.d", "ph.d.", "doctorate", "doctoral", "d.phil",
+            "doctor of philosophy", "dba", "doctor of business administration",
+            "d.sc", "d.eng", "eng.d"
+          ],
+          "DIPLOMA": [
+            "diploma", "pg diploma", "post graduate diploma", "advanced diploma",
+            "higher national diploma", "hnd", "hnc", "foundation diploma"
+          ],
+          "ASSOCIATE": [
+            "associate", "associate degree", "a.s", "a.a", "a.a.s",
+            "associate of science", "associate of arts"
+          ],
+          "HIGH_SCHOOL": [
+            "high school", "hsc", "ssc", "10th", "12th", "secondary",
+            "senior secondary", "matric", "gcse", "a-levels", "o-levels",
+            "ib", "international baccalaureate", "abitur", "baccalauréat",
+            "leaving certificate", "advanced level"
+          ],
+          "PROFESSIONAL": [
+            "llb", "ll.b", "mbbs", "m.b.b.s", "md", "m.d", "bds",
+            "b.arch", "b.pharm", "lld", "jd", "j.d"
+          ]
+        },
+        "locationHints": ["bold text", "first line of education entry", "largest font in entry"],
+        "normalization": {
+          "trim": true,
+          "titleCase": true,
+          "expandAbbreviations": true
+        },
+        "outputFields": {
+          "rawValue": "STRING",
+          "normalizedDegree": "STRING",
+          "degreeLevel": "ENUM[HIGH_SCHOOL, ASSOCIATE, BACHELORS, MASTERS, PHD, DIPLOMA, PROFESSIONAL, OTHER]",
+          "degreeType": "STRING"
+        }
+      },
+      "institution": {
+        "fieldId": "INSTITUTION",
+        "javaFieldName": "institution",
+        "dataType": "STRING",
+        "synonyms": [
+          "university", "college", "institute", "school", "academy",
+          "institution", "faculty", "polytechnic", "conservatory", "seminary"
+        ],
+        "locationHints": ["near degree", "second line of education entry", "bold text"],
+        "nlpHints": {
+          "nerLabel": "ORGANIZATION",
+          "contextClues": ["university", "college", "institute", "academy", "school of", "faculty of"]
+        },
+        "normalization": { "trim": true, "titleCase": true },
+        "validation": { "minLength": 2, "maxLength": 200 },
+        "outputFields": {
+          "rawValue": "STRING",
+          "normalizedName": "STRING",
+          "country": "STRING",
+          "isAccredited": "BOOLEAN"
+        }
+      },
+      "fieldOfStudy": {
+        "fieldId": "FIELD_OF_STUDY",
+        "javaFieldName": "fieldOfStudy",
+        "dataType": "STRING",
+        "synonyms": [
+          "major", "specialization", "specialisation", "stream", "branch",
+          "concentration", "subject", "discipline", "field", "course",
+          "track", "minor", "emphasis", "focus", "programme"
+        ],
+        "locationHints": ["after degree name", "in parentheses", "after 'in'", "after comma following degree"],
+        "normalization": { "trim": true, "titleCase": true }
+      },
+      "startDate": {
+        "fieldId": "EDU_START_DATE",
+        "javaFieldName": "startDate",
+        "dataType": "DATE",
+        "dateFormats": ["yyyy", "MMM yyyy", "MM/yyyy"],
+        "normalization": { "outputFormat": "YYYY", "yearOnlyDefaultMonth": "08" }
+      },
+      "endDate": {
+        "fieldId": "EDU_END_DATE",
+        "javaFieldName": "endDate",
+        "dataType": "DATE_OR_PRESENT",
+        "currentIndicators": ["present", "current", "expected", "ongoing", "pursuing", "candidate"],
+        "dateFormats": ["yyyy", "MMM yyyy", "MM/yyyy"],
+        "normalization": { "outputFormat": "YYYY", "presentValue": "PRESENT" },
+        "outputFields": {
+          "rawValue": "STRING",
+          "parsedDate": "DATE",
+          "isPresent": "BOOLEAN",
+          "isExpected": "BOOLEAN"
+        }
+      },
+      "grade": {
+        "fieldId": "GRADE",
+        "javaFieldName": "grade",
+        "dataType": "STRING",
+        "synonyms": [
+          "gpa", "cgpa", "grade", "percentage", "score", "marks",
+          "result", "distinction", "first class", "second class",
+          "classification", "standing", "honours"
+        ],
+        "gradeFormats": [
+          "3.8/4.0", "3.8 GPA", "8.5/10 CGPA", "85%", "85 percent",
+          "First Class", "First Class Honours", "Distinction",
+          "cum laude", "magna cum laude", "summa cum laude",
+          "Pass", "Merit", "Credit", "High Distinction"
+        ],
+        "regexPatterns": [
+          { "pattern": "\\d+\\.?\\d*/\\d+\\.?\\d*\\s*(GPA|CGPA)?", "flags": "i" },
+          { "pattern": "\\d+\\.?\\d*\\s*%", "flags": "" },
+          { "pattern": "(first|second|third)\\s+class(\\s+honours)?", "flags": "i" },
+          { "pattern": "(summa|magna)?\\s*cum\\s+laude", "flags": "i" },
+          { "pattern": "(distinction|merit|credit|pass|high distinction)", "flags": "i" }
+        ],
+        "normalization": {
+          "normalizeGPA": true,
+          "targetScale": 4.0
+        },
+        "outputFields": {
+          "rawValue": "STRING",
+          "normalizedGPA": "FLOAT",
+          "scale": "FLOAT",
+          "classification": "STRING"
+        }
+      },
+      "honors": {
+        "fieldId": "HONORS",
+        "javaFieldName": "honors",
+        "dataType": "STRING",
+        "synonyms": ["honors", "honours", "distinction", "award", "scholarship", "dean's list", "valedictorian"],
+        "examples": ["Dean's List", "Summa Cum Laude", "Rhodes Scholar", "National Merit Scholar", "Top 5% of class"]
+      },
+      "activities": {
+        "fieldId": "EDU_ACTIVITIES",
+        "javaFieldName": "activities",
+        "dataType": "ARRAY_OF_STRINGS",
+        "synonyms": ["activities", "clubs", "societies", "extracurricular", "student organizations", "leadership"],
+        "locationHints": ["indented under education entry"]
+      },
+      "thesis": {
+        "fieldId": "THESIS",
+        "javaFieldName": "thesis",
+        "dataType": "STRING",
+        "synonyms": ["thesis", "dissertation", "research project", "capstone", "final project", "research topic"],
+        "relevantFor": ["PHD", "MASTERS", "BACHELORS"]
+      }
+    },
+    "nlpHints": {
+      "contextClues": [
+        "university", "college", "degree", "graduated", "bachelor",
+        "master", "gpa", "cgpa", "class of", "enrolled", "alumni"
+      ]
+    },
+    "validation": { "minEntries": 0, "maxEntries": 10 }
+  },
+
+  {
+    "fieldId": "SKILLS",
+    "displayName": "Skills",
+    "javaFieldName": "skills",
+    "dataType": "OBJECT",
+    "required": false,
+    "priority": 10,
+    "sectionType": "SKILLS",
+    "sectionSynonyms": [
+      "skills", "technical skills", "core skills", "key skills",
+      "competencies", "core competencies", "expertise",
+      "areas of expertise", "technologies", "tech stack",
+      "tools", "tools and technologies", "tools & technologies",
+      "proficiencies", "capabilities", "skill set", "skillset",
+      "strengths", "what i know", "technical proficiencies",
+      "programming languages", "languages and frameworks",
+      "software skills", "hard skills", "soft skills",
+      "domain knowledge", "technical competencies",
+      "technical abilities", "functional skills", "transferable skills"
+    ],
+    "subCategories": {
+      "programmingLanguages": {
+        "categoryId": "PROG_LANGS",
+        "synonyms": ["languages", "programming languages", "coding languages", "scripting languages", "development languages"],
+        "examples": ["Java", "Python", "JavaScript", "TypeScript", "C++", "C#", "Go", "Rust", "Ruby", "Swift", "Kotlin", "PHP", "Scala", "R", "MATLAB", "Perl", "Bash", "Shell", "Dart", "Elixir"]
+      },
+      "frameworks": {
+        "categoryId": "FRAMEWORKS",
+        "synonyms": ["frameworks", "libraries", "sdk", "runtime"],
+        "examples": ["Spring Boot", "React", "Next.js", "Angular", "Vue.js", "Django", "Flask", "FastAPI", "Node.js", "Express", "NestJS", "Laravel", "Rails", "ASP.NET", "Gin", "Echo", "Fiber", "Quarkus", "Micronaut", "Svelte", "Nuxt.js"]
+      },
+      "databases": {
+        "categoryId": "DATABASES",
+        "synonyms": ["databases", "db", "data stores", "storage", "persistence"],
+        "examples": ["MySQL", "PostgreSQL", "SQLite", "MongoDB", "Redis", "Cassandra", "Oracle", "DynamoDB", "Elasticsearch", "Neo4j", "CockroachDB", "Snowflake", "BigQuery", "Redshift", "ClickHouse", "TimescaleDB", "MariaDB", "SQL Server", "Couchbase"]
+      },
+      "cloudAndDevOps": {
+        "categoryId": "CLOUD_DEVOPS",
+        "synonyms": ["cloud", "devops", "infrastructure", "platforms", "cloud platforms", "mlops", "devsecops"],
+        "examples": ["AWS", "Azure", "GCP", "Docker", "Kubernetes", "Terraform", "Ansible", "Jenkins", "GitLab CI", "GitHub Actions", "CircleCI", "ArgoCD", "Helm", "Prometheus", "Grafana", "Datadog", "Splunk", "Vault", "Consul", "Istio", "Envoy", "Pulumi"]
+      },
+      "aiAndML": {
+        "categoryId": "AI_ML",
+        "synonyms": ["machine learning", "ai", "ml", "deep learning", "nlp", "computer vision", "data science"],
+        "examples": ["TensorFlow", "PyTorch", "scikit-learn", "Keras", "Hugging Face", "LangChain", "OpenCV", "NLTK", "spaCy", "XGBoost", "LightGBM", "MLflow", "Kubeflow", "Ray", "Spark MLlib", "Pandas", "NumPy", "JAX"]
+      },
+      "testingAndQA": {
+        "categoryId": "TESTING",
+        "synonyms": ["testing", "qa", "quality assurance", "test automation"],
+        "examples": ["JUnit", "Jest", "Pytest", "Selenium", "Cypress", "Playwright", "TestNG", "Mockito", "Postman", "k6", "Gatling", "Robot Framework", "Cucumber", "Appium"]
+      },
+      "softSkills": {
+        "categoryId": "SOFT_SKILLS",
+        "synonyms": ["soft skills", "interpersonal skills", "people skills", "behavioral skills", "leadership skills"],
+        "examples": [
+          "Leadership", "Communication", "Problem Solving", "Critical Thinking",
+          "Teamwork", "Collaboration", "Adaptability", "Creativity", "Empathy",
+          "Time Management", "Project Management", "Stakeholder Management",
+          "Negotiation", "Presentation", "Mentoring", "Coaching", "Decision Making",
+          "Agile", "Scrum", "Kanban", "OKR", "Strategic Planning"
+        ]
+      },
+      "domainKnowledge": {
+        "categoryId": "DOMAIN",
+        "synonyms": ["domain", "industry knowledge", "business knowledge", "functional expertise"],
+        "examples": ["FinTech", "HealthTech", "E-commerce", "SaaS", "B2B", "B2C", "Blockchain", "Payments", "Logistics", "Supply Chain", "CRM", "ERP", "HIPAA", "GDPR", "SOC2", "PCI-DSS"]
+      }
+    },
+    "extractionHints": {
+      "formats": [
+        "comma separated list",
+        "pipe separated list",
+        "bullet points",
+        "grouped by category with heading",
+        "tag cloud style",
+        "table format with proficiency columns",
+        "starred/rated proficiency",
+        "progress bar visual (extract label only)"
+      ],
+      "proficiencyIndicators": {
+        "EXPERT": ["expert", "advanced", "proficient", "master", "★★★★★", "5/5", "10/10"],
+        "INTERMEDIATE": ["intermediate", "working knowledge", "familiar", "experienced", "★★★☆☆", "3/5"],
+        "BEGINNER": ["beginner", "basic", "learning", "novice", "entry-level", "★☆☆☆☆", "1/5"]
+      }
+    },
+    "normalization": {
+      "deduplicateAcrossCategories": true,
+      "canonicalize": true,
+      "canonicalizationSource": "ESCO_SKILLS_TAXONOMY + ONET_OCCUPATIONS",
+      "crossReferenceWithExperience": true
+    },
+    "outputFields": {
+      "allSkills": "ARRAY_OF_OBJECTS[{name, category, proficiency, source}]",
+      "byCategory": "OBJECT",
+      "topSkills": "ARRAY_OF_STRINGS",
+      "inferredSkillsFromExperience": "ARRAY_OF_STRINGS"
+    }
+  },
+
+  {
+    "fieldId": "CERTIFICATIONS",
+    "displayName": "Certifications",
+    "javaFieldName": "certifications",
+    "dataType": "ARRAY_OF_OBJECTS",
+    "required": false,
+    "priority": 11,
+    "sectionType": "CERTIFICATIONS",
+    "sectionSynonyms": [
+      "certifications", "certificates", "professional certifications",
+      "accreditations", "credentials", "licenses", "licences",
+      "training", "courses", "professional development",
+      "continuing education", "badges", "achievements",
+      "professional qualifications", "industry certifications",
+      "online courses", "mooc", "micro-credentials", "nanodegree"
+    ],
+    "entryFields": {
+      "certificationName": {
+        "fieldId": "CERT_NAME",
+        "javaFieldName": "certificationName",
+        "dataType": "STRING",
+        "synonyms": ["certification", "certificate", "course", "credential", "license", "badge"],
+        "nlpHints": {
+          "contextClues": ["certified", "certificate in", "professional", "associate", "foundation", "expert", "practitioner", "specialist", "licensed", "registered"]
+        },
+        "knownCertifications": [
+          "AWS Certified Solutions Architect", "AWS Certified Developer",
+          "Google Cloud Professional", "Azure Solutions Architect",
+          "Certified Kubernetes Administrator (CKA)", "CKAD",
+          "PMP", "PMI-ACP", "CSM", "CSPO", "SAFe",
+          "CISSP", "CEH", "CompTIA Security+", "CISM",
+          "Salesforce Administrator", "Salesforce Developer",
+          "Oracle Certified Professional", "OCJP",
+          "Cisco CCNA", "CCNP", "CCIE",
+          "Google Analytics", "HubSpot", "Marketo",
+          "TensorFlow Developer Certificate",
+          "Deep Learning Specialization", "Machine Learning Engineer"
+        ],
+        "normalization": { "trim": true, "expandAcronyms": false }
+      },
+      "issuingBody": {
+        "fieldId": "CERT_ISSUER",
+        "javaFieldName": "issuingBody",
+        "dataType": "STRING",
+        "synonyms": ["issued by", "provider", "issuer", "organization", "institute", "authority", "vendor", "platform"],
+        "knownIssuers": [
+          "Amazon Web Services (AWS)", "Google", "Microsoft", "Oracle", "Cisco",
+          "CompTIA", "PMI", "Salesforce", "IBM", "Red Hat",
+          "Coursera", "Udemy", "edX", "LinkedIn Learning", "Pluralsight",
+          "DataCamp", "Udacity", "Codecademy", "A Cloud Guru",
+          "ISACA", "ISC2", "EC-Council", "SANS Institute",
+          "(ISC)²", "Scrum Alliance", "SAFe (Scaled Agile)"
+        ],
+        "normalization": { "trim": true, "titleCase": true }
+      },
+      "issueDate": {
+        "fieldId": "CERT_ISSUE_DATE",
+        "javaFieldName": "issueDate",
+        "dataType": "DATE",
+        "synonyms": ["issued", "completed", "earned", "obtained", "date", "awarded", "granted"],
+        "dateFormats": ["MMM yyyy", "yyyy", "MM/yyyy", "dd/MM/yyyy"],
+        "normalization": { "outputFormat": "YYYY-MM" }
+      },
+      "expiryDate": {
+        "fieldId": "CERT_EXPIRY_DATE",
+        "javaFieldName": "expiryDate",
+        "dataType": "DATE",
+        "synonyms": ["expires", "valid until", "expiry", "expiration", "valid through", "renewal date", "valid to"],
+        "noExpiryIndicators": ["no expiry", "lifetime", "does not expire", "permanent", "no expiration", "valid indefinitely"],
+        "normalization": { "outputFormat": "YYYY-MM" },
+        "outputFields": {
+          "parsedDate": "DATE",
+          "isExpired": "BOOLEAN",
+          "daysUntilExpiry": "INTEGER",
+          "isLifetime": "BOOLEAN"
+        }
+      },
+      "credentialId": {
+        "fieldId": "CREDENTIAL_ID",
+        "javaFieldName": "credentialId",
+        "dataType": "STRING",
+        "synonyms": ["credential id", "certificate id", "license number", "badge id", "verification id", "cert id", "reg no", "license no"],
+        "regexPatterns": [
+          { "pattern": "[A-Z0-9\\-]{6,50}", "flags": "", "description": "Alphanumeric credential ID" }
+        ]
+      },
+      "verificationUrl": {
+        "fieldId": "CERT_VERIFICATION_URL",
+        "javaFieldName": "verificationUrl",
+        "dataType": "STRING",
+        "synonyms": ["verify at", "verification link", "badge url", "credential url", "view credential"],
+        "regexPatterns": [
+          { "pattern": "https?://[^\\s]+", "flags": "i" }
+        ]
+      }
+    },
+    "validation": { "minEntries": 0, "maxEntries": 50 }
+  },
+
+  {
+    "fieldId": "PROJECTS",
+    "displayName": "Projects",
+    "javaFieldName": "projects",
+    "dataType": "ARRAY_OF_OBJECTS",
+    "required": false,
+    "priority": 12,
+    "sectionType": "PROJECTS",
+    "sectionSynonyms": [
+      "projects", "personal projects", "side projects", "key projects",
+      "notable projects", "academic projects", "portfolio",
+      "open source", "open source contributions", "contributions",
+      "case studies", "work samples", "selected projects",
+      "featured projects", "independent projects", "research projects",
+      "capstone projects", "hackathons", "product builds"
+    ],
+    "entryFields": {
+      "projectName": {
+        "fieldId": "PROJECT_NAME",
+        "javaFieldName": "projectName",
+        "dataType": "STRING",
+        "locationHints": ["bold", "heading of entry", "first line of entry"],
+        "normalization": { "trim": true, "titleCase": true }
+      },
+      "description": {
+        "fieldId": "PROJECT_DESCRIPTION",
+        "javaFieldName": "description",
+        "dataType": "STRING",
+        "normalization": { "trim": true, "collapseWhitespace": true },
+        "validation": { "maxWords": 300 }
+      },
+      "technologiesUsed": {
+        "fieldId": "PROJECT_TECH",
+        "javaFieldName": "technologiesUsed",
+        "dataType": "ARRAY_OF_STRINGS",
+        "synonyms": ["built with", "tech stack", "technologies", "tools used", "using", "stack", "implemented in"],
+        "locationHints": ["inline after description", "separate line labeled 'Tech:'", "in parentheses"]
+      },
+      "role": {
+        "fieldId": "PROJECT_ROLE",
+        "javaFieldName": "role",
+        "dataType": "STRING",
+        "synonyms": ["my role", "role", "contribution", "responsibilities"],
+        "examples": ["Lead Developer", "Solo Developer", "Backend Engineer", "Team of 3"]
+      },
+      "startDate": {
+        "fieldId": "PROJECT_START_DATE",
+        "javaFieldName": "startDate",
+        "dataType": "DATE",
+        "dateFormats": ["MMM yyyy", "yyyy", "MM/yyyy"]
+      },
+      "endDate": {
+        "fieldId": "PROJECT_END_DATE",
+        "javaFieldName": "endDate",
+        "dataType": "DATE_OR_PRESENT",
+        "currentIndicators": ["ongoing", "active", "present", "current"]
+      },
+      "projectUrl": {
+        "fieldId": "PROJECT_URL",
+        "javaFieldName": "projectUrl",
+        "dataType": "STRING",
+        "synonyms": ["url", "link", "demo", "live", "website", "github", "gitlab", "app", "deployed at"],
+        "regexPatterns": [
+          { "pattern": "https?://[^\\s]+", "flags": "i" }
+        ]
+      },
+      "impact": {
+        "fieldId": "PROJECT_IMPACT",
+        "javaFieldName": "impact",
+        "dataType": "STRING",
+        "synonyms": ["impact", "result", "outcome", "achievement", "users", "stars", "downloads", "revenue"]
+      },
+      "teamSize": {
+        "fieldId": "PROJECT_TEAM_SIZE",
+        "javaFieldName": "teamSize",
+        "dataType": "INTEGER",
+        "regexPatterns": [
+          { "pattern": "team of (\\d+)", "flags": "i" },
+          { "pattern": "(\\d+)[-\\s]?person team", "flags": "i" }
+        ]
+      }
+    },
+    "validation": { "minEntries": 0, "maxEntries": 20 }
+  },
+
+  {
+    "fieldId": "LANGUAGES",
+    "displayName": "Languages",
+    "javaFieldName": "languages",
+    "dataType": "ARRAY_OF_OBJECTS",
+    "required": false,
+    "priority": 13,
+    "sectionType": "LANGUAGES",
+    "sectionSynonyms": [
+      "languages", "spoken languages", "language proficiency",
+      "linguistic skills", "language skills", "languages known",
+      "language abilities", "foreign languages", "multilingual",
+      "communication languages", "natural languages"
+    ],
+    "disambiguationNote": "MUST distinguish from PROGRAMMING LANGUAGES section. Only extract human/spoken languages here.",
+    "disambiguationRules": [
+      { "rule": "If language name is a programming language (Java, Python, etc.), skip", "action": "REJECT" },
+      { "rule": "If section heading is 'Programming Languages', skip entire section", "action": "REJECT_SECTION" }
+    ],
+    "entryFields": {
+      "language": {
+        "fieldId": "LANGUAGE_NAME",
+        "javaFieldName": "language",
+        "dataType": "STRING",
+        "iso639Mapping": true,
+        "examples": [
+          "English", "Spanish", "French", "German", "Mandarin", "Hindi",
+          "Arabic", "Portuguese", "Russian", "Japanese", "Korean", "Italian",
+          "Dutch", "Swedish", "Polish", "Turkish", "Vietnamese", "Thai",
+          "Indonesian", "Malay", "Hebrew", "Swahili", "Urdu", "Bengali"
+        ],
+        "normalization": { "trim": true, "titleCase": true, "mapToISO639": true },
+        "outputFields": {
+          "rawValue": "STRING",
+          "isoCode": "ISO_639_1",
+          "isoName": "STRING"
+        }
+      },
+      "proficiency": {
+        "fieldId": "LANGUAGE_PROFICIENCY",
+        "javaFieldName": "proficiency",
+        "dataType": "ENUM",
+        "enumValues": ["NATIVE", "FLUENT", "PROFESSIONAL", "CONVERSATIONAL", "BASIC"],
+        "cefrMapping": {
+          "NATIVE": "C2+",
+          "FLUENT": "C1-C2",
+          "PROFESSIONAL": "B2",
+          "CONVERSATIONAL": "B1-B2",
+          "BASIC": "A1-A2"
+        },
+        "synonyms": {
+          "NATIVE": ["native", "mother tongue", "first language", "native speaker", "bilingual", "c2", "mother language"],
+          "FLUENT": ["fluent", "full professional proficiency", "advanced", "near-native", "c1", "c2"],
+          "PROFESSIONAL": ["professional working proficiency", "business level", "working proficiency", "b2", "upper intermediate"],
+          "CONVERSATIONAL": ["conversational", "intermediate", "limited working proficiency", "b1", "b2"],
+          "BASIC": ["basic", "elementary", "beginner", "a1", "a2", "rudimentary", "survival"]
+        }
+      }
+    },
+    "validation": { "minEntries": 0, "maxEntries": 15 }
+  },
+
+  {
+    "fieldId": "AWARDS",
+    "displayName": "Awards & Honors",
+    "javaFieldName": "awards",
+    "dataType": "ARRAY_OF_OBJECTS",
+    "required": false,
+    "priority": 14,
+    "sectionType": "AWARDS",
+    "sectionSynonyms": [
+      "awards", "honors", "honours", "achievements", "recognition",
+      "accolades", "accomplishments", "prizes", "distinctions",
+      "awards and honors", "awards & recognition", "scholarships",
+      "fellowships", "grants", "competitions", "hackathon wins"
+    ],
+    "entryFields": {
+      "awardTitle": {
+        "fieldId": "AWARD_TITLE",
+        "javaFieldName": "awardTitle",
+        "dataType": "STRING",
+        "normalization": { "trim": true, "titleCase": true }
+      },
+      "issuer": {
+        "fieldId": "AWARD_ISSUER",
+        "javaFieldName": "issuer",
+        "dataType": "STRING",
+        "synonyms": ["awarded by", "given by", "from", "organization", "sponsor"],
+        "nlpHints": { "nerLabel": "ORGANIZATION" }
+      },
+      "date": {
+        "fieldId": "AWARD_DATE",
+        "javaFieldName": "date",
+        "dataType": "DATE",
+        "dateFormats": ["yyyy", "MMM yyyy"],
+        "normalization": { "outputFormat": "YYYY" }
+      },
+      "description": {
+        "fieldId": "AWARD_DESC",
+        "javaFieldName": "description",
+        "dataType": "STRING",
+        "validation": { "maxWords": 100 }
+      },
+      "awardType": {
+        "fieldId": "AWARD_TYPE",
+        "javaFieldName": "awardType",
+        "dataType": "ENUM",
+        "enumValues": ["ACADEMIC", "PROFESSIONAL", "COMPETITION", "SCHOLARSHIP", "FELLOWSHIP", "GRANT", "COMMUNITY", "OTHER"]
+      }
+    },
+    "validation": { "minEntries": 0, "maxEntries": 20 }
+  },
+
+  {
+    "fieldId": "PUBLICATIONS",
+    "displayName": "Publications",
+    "javaFieldName": "publications",
+    "dataType": "ARRAY_OF_OBJECTS",
+    "required": false,
+    "priority": 15,
+    "sectionType": "PUBLICATIONS",
+    "sectionSynonyms": [
+      "publications", "research", "papers", "research papers", "articles",
+      "journal articles", "conference papers", "patents", "books",
+      "authored works", "written works", "whitepapers", "blog posts",
+      "thought leadership", "technical writing", "preprints", "arxiv",
+      "peer-reviewed publications", "academic publications"
+    ],
+    "entryFields": {
+      "title": {
+        "fieldId": "PUB_TITLE",
+        "javaFieldName": "title",
+        "dataType": "STRING",
+        "normalization": { "trim": true, "fixSmartQuotes": true }
+      },
+      "authors": {
+        "fieldId": "PUB_AUTHORS",
+        "javaFieldName": "authors",
+        "dataType": "ARRAY_OF_STRINGS",
+        "synonyms": ["authors", "co-authors", "written with"],
+        "normalization": { "splitOn": [", ", " and ", " & "] }
+      },
+      "publisher": {
+        "fieldId": "PUB_PUBLISHER",
+        "javaFieldName": "publisher",
+        "dataType": "STRING",
+        "synonyms": ["published in", "journal", "conference", "proceedings", "publisher", "venue"],
+        "nlpHints": { "nerLabel": "ORGANIZATION" }
+      },
+      "date": {
+        "fieldId": "PUB_DATE",
+        "javaFieldName": "date",
+        "dataType": "DATE",
+        "dateFormats": ["yyyy", "MMM yyyy", "MM/yyyy"],
+        "normalization": { "outputFormat": "YYYY-MM" }
+      },
+      "url": {
+        "fieldId": "PUB_URL",
+        "javaFieldName": "url",
+        "dataType": "STRING",
+        "synonyms": ["doi", "link", "arxiv", "preprint", "url", "available at"],
+        "regexPatterns": [
+          { "pattern": "https?://[^\\s]+", "flags": "i" },
+          { "pattern": "10\\.\\d{4,}/[^\\s]+", "description": "DOI pattern" }
+        ]
+      },
+      "type": {
+        "fieldId": "PUB_TYPE",
+        "javaFieldName": "type",
+        "dataType": "ENUM",
+        "enumValues": ["JOURNAL", "CONFERENCE", "BOOK", "BOOK_CHAPTER", "PATENT", "BLOG", "WHITEPAPER", "PREPRINT", "THESIS", "REPORT"]
+      },
+      "citationCount": {
+        "fieldId": "PUB_CITATIONS",
+        "javaFieldName": "citationCount",
+        "dataType": "INTEGER",
+        "synonyms": ["cited by", "citations", "cited"],
+        "regexPatterns": [
+          { "pattern": "cited by (\\d+)", "flags": "i" },
+          { "pattern": "(\\d+) citations", "flags": "i" }
+        ]
+      }
+    },
+    "validation": { "minEntries": 0, "maxEntries": 50 }
+  },
+
+  {
+    "fieldId": "VOLUNTEERING",
+    "displayName": "Volunteering",
+    "javaFieldName": "volunteering",
+    "dataType": "ARRAY_OF_OBJECTS",
+    "required": false,
+    "priority": 16,
+    "sectionType": "VOLUNTEERING",
+    "sectionSynonyms": [
+      "volunteering", "volunteer experience", "volunteer work",
+      "community service", "social work", "non-profit", "ngo experience",
+      "extracurricular", "community involvement", "civic engagement",
+      "charity work", "pro bono work", "social impact", "giving back"
+    ],
+    "entryFields": {
+      "organization": {
+        "fieldId": "VOL_ORG",
+        "javaFieldName": "organization",
+        "dataType": "STRING",
+        "nlpHints": { "nerLabel": "ORGANIZATION" },
+        "normalization": { "trim": true }
+      },
+      "role": {
+        "fieldId": "VOL_ROLE",
+        "javaFieldName": "role",
+        "dataType": "STRING",
+        "normalization": { "trim": true, "titleCase": true }
+      },
+      "startDate": {
+        "fieldId": "VOL_START",
+        "javaFieldName": "startDate",
+        "dataType": "DATE",
+        "dateFormats": ["MMM yyyy", "yyyy"],
+        "normalization": { "outputFormat": "YYYY-MM" }
+      },
+      "endDate": {
+        "fieldId": "VOL_END",
+        "javaFieldName": "endDate",
+        "dataType": "DATE_OR_PRESENT",
+        "currentIndicators": ["present", "current", "ongoing"],
+        "normalization": { "outputFormat": "YYYY-MM", "presentValue": "PRESENT" }
+      },
+      "description": {
+        "fieldId": "VOL_DESC",
+        "javaFieldName": "description",
+        "dataType": "STRING",
+        "validation": { "maxWords": 200 }
+      },
+      "cause": {
+        "fieldId": "VOL_CAUSE",
+        "javaFieldName": "cause",
+        "dataType": "STRING",
+        "synonyms": ["cause", "focus area", "mission", "issue", "area"],
+        "examples": ["Education", "Environment", "Healthcare", "Animal Welfare", "Poverty", "Tech for Good"]
+      }
+    },
+    "validation": { "minEntries": 0, "maxEntries": 15 }
+  },
+
+  {
+    "fieldId": "REFERENCES",
+    "displayName": "References",
+    "javaFieldName": "references",
+    "dataType": "ARRAY_OF_OBJECTS",
+    "required": false,
+    "priority": 17,
+    "sectionType": "REFERENCES",
+    "sectionSynonyms": [
+      "references", "referees", "professional references",
+      "character references", "recommendations", "referrals",
+      "reference contacts"
+    ],
+    "availableOnRequestIndicators": [
+      "references available on request",
+      "references upon request",
+      "available on request",
+      "provided upon request",
+      "references furnished upon request",
+      "will provide upon request"
+    ],
+    "privacyFlags": {
+      "refereePII": "SENSITIVE",
+      "redactByDefault": false,
+      "consentRequired": true
+    },
+    "entryFields": {
+      "name": {
+        "fieldId": "REF_NAME",
+        "javaFieldName": "name",
+        "dataType": "STRING",
+        "nlpHints": { "nerLabel": "PERSON" },
+        "normalization": { "trim": true, "titleCase": true }
+      },
+      "title": {
+        "fieldId": "REF_TITLE",
+        "javaFieldName": "title",
+        "dataType": "STRING",
+        "normalization": { "trim": true, "titleCase": true }
+      },
+      "company": {
+        "fieldId": "REF_COMPANY",
+        "javaFieldName": "company",
+        "dataType": "STRING",
+        "nlpHints": { "nerLabel": "ORGANIZATION" }
+      },
+      "email": {
+        "fieldId": "REF_EMAIL",
+        "javaFieldName": "email",
+        "dataType": "STRING",
+        "regexPatterns": [
+          { "pattern": "[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}", "flags": "i" }
+        ]
+      },
+      "phone": {
+        "fieldId": "REF_PHONE",
+        "javaFieldName": "phone",
+        "dataType": "STRING"
+      },
+      "relationship": {
+        "fieldId": "REF_RELATIONSHIP",
+        "javaFieldName": "relationship",
+        "dataType": "STRING",
+        "examples": ["Direct Manager", "Former Colleague", "Mentor", "Client", "Professor", "Peer"],
+        "normalization": { "trim": true }
+      },
+      "linkedinUrl": {
+        "fieldId": "REF_LINKEDIN",
+        "javaFieldName": "linkedinUrl",
+        "dataType": "STRING",
+        "regexPatterns": [
+          { "pattern": "linkedin\\.com/in/[a-zA-Z0-9\\-_%]+", "flags": "i" }
+        ]
+      }
+    },
+    "validation": { "minEntries": 0, "maxEntries": 10 }
+  },
+
+  {
+    "fieldId": "ADDITIONAL_SECTIONS",
+    "displayName": "Additional Sections",
+    "javaFieldName": "additionalSections",
+    "dataType": "OBJECT",
+    "required": false,
+    "priority": 18,
+    "description": "Catch-all for non-standard resume sections detected by heading + content analysis",
+    "supportedAdditionalSections": [
+      {
+        "sectionId": "INTERESTS",
+        "displayName": "Interests & Hobbies",
+        "synonyms": ["interests", "hobbies", "hobbies and interests", "personal interests", "extracurricular interests", "passions"],
+        "dataType": "ARRAY_OF_STRINGS"
+      },
+      {
+        "sectionId": "SPEAKING",
+        "displayName": "Speaking & Talks",
+        "synonyms": ["speaking", "talks", "conference talks", "presentations", "keynotes", "panels", "speaking engagements"],
+        "dataType": "ARRAY_OF_OBJECTS",
+        "entryFields": ["title", "event", "date", "url"]
+      },
+      {
+        "sectionId": "PATENTS",
+        "displayName": "Patents",
+        "synonyms": ["patents", "intellectual property", "ip"],
+        "dataType": "ARRAY_OF_OBJECTS",
+        "entryFields": ["title", "patentNumber", "status", "date", "url"]
+      },
+      {
+        "sectionId": "PROFESSIONAL_MEMBERSHIPS",
+        "displayName": "Professional Memberships",
+        "synonyms": ["memberships", "professional memberships", "affiliations", "associations", "organizations", "professional associations"],
+        "dataType": "ARRAY_OF_OBJECTS",
+        "entryFields": ["organization", "membershipType", "startDate", "endDate"]
+      },
+      {
+        "sectionId": "COURSES",
+        "displayName": "Courses & Training",
+        "synonyms": ["courses", "training", "workshops", "bootcamps", "seminars", "online courses"],
+        "dataType": "ARRAY_OF_OBJECTS",
+        "entryFields": ["courseName", "provider", "completionDate"]
+      },
+      {
+        "sectionId": "MILITARY",
+        "displayName": "Military Service",
+        "synonyms": ["military", "military service", "armed forces", "service", "defense"],
+        "dataType": "ARRAY_OF_OBJECTS",
+        "entryFields": ["branch", "rank", "startDate", "endDate", "description"]
+      }
+    ]
+  },
+
+  {
+    "_parserConfig": {
+      "globalSettings": {
+        "maxPagesToProcess": 5,
+        "primaryLanguage": "en",
+        "autoDetectLanguage": true,
+        "ocrEnabled": true,
+        "ocrEngine": "Tesseract / Google Vision",
+        "tableExtractionEnabled": true,
+        "columnLayoutDetection": true,
+        "twoColumnLayout": "SPLIT_AND_MERGE",
+        "headerFooterRemoval": true,
+        "watermarkRemoval": true,
+        "fontSizeNormalization": true,
+        "imageBasedSectionDetection": false
+      },
+      "sectionOrdering": {
+        "strategy": "FLEXIBLE",
+        "typicalOrder": [
+          "IDENTITY", "SUMMARY", "EXPERIENCE", "EDUCATION",
+          "SKILLS", "CERTIFICATIONS", "PROJECTS", "LANGUAGES",
+          "AWARDS", "PUBLICATIONS", "VOLUNTEERING", "REFERENCES"
+        ],
+        "alternativeOrders": [
+          ["IDENTITY", "EDUCATION", "EXPERIENCE", "SKILLS"],
+          ["IDENTITY", "SUMMARY", "SKILLS", "EXPERIENCE", "EDUCATION"]
+        ]
+      },
+      "conflictResolution": {
+        "multipleValuesForSingleField": "TAKE_HIGHEST_CONFIDENCE",
+        "ambiguousSection": "FLAG_FOR_HUMAN_REVIEW",
+        "lowConfidenceThreshold": 0.45
+      },
+      "postProcessing": {
+        "crossFieldValidation": true,
+        "chronologyCheck": true,
+        "piiDetectionAndFlagging": true,
+        "skillsEnrichmentFromExperience": true,
+        "seniorityInference": true,
+        "totalExperienceComputation": true,
+        "gapAnalysis": true,
+        "deduplication": true
+      },
+      "outputSchema": {
+        "format": "JSON",
+        "includeConfidenceScores": true,
+        "includeRawValues": true,
+        "includeSourcePageRef": true,
+        "includeBoundingBoxes": false,
+        "nullHandling": "OMIT_NULL_FIELDS",
+        "arrayEmptyHandling": "OMIT_EMPTY_ARRAYS"
+      }
+    }
+  }
+]
