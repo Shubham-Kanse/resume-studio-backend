@@ -77,17 +77,20 @@ resume-studio-reviewer/src/main/resources/nlp/
 resume-studio-reviewer/src/main/resources/**/*.bin
 
 # ── Secrets / local config ────────────────────────────────────────────────
+# Raw .env files — never commit
 *.env
 *.env.*
-application-local.properties
+
+# Plaintext secret files — never commit
 application-secret.properties
-application-prod.properties
+
+# NOTE: application-local.properties and application-prod.properties are
+# intentionally tracked — they contain only Jasypt ENC() ciphertext, not
+# plaintext secrets. The master key (JASYPT_ENCRYPTOR_PASSWORD) is the only
+# secret that must never be committed.
 
 # ── Docs / conversation exports ───────────────────────────────────────────
 claude-conversation.md
 
 # ── IntelliJ bin output ───────────────────────────────────────────────────
 bin/
-
-# Local secrets
-**/application-local.properties
