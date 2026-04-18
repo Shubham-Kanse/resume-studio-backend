@@ -19,6 +19,7 @@ class JobTrackerControllerTest {
     private JobApplicationRepository repo;
     private ResumeStorageService storage;
     private SupabaseJwtVerifier verifier;
+    private com.resumestudio.auth.UserService userService;
     private JobTrackerController controller;
 
     private static final String BEARER = "Bearer valid-token";
@@ -30,7 +31,10 @@ class JobTrackerControllerTest {
         repo = mock(JobApplicationRepository.class);
         storage = mock(ResumeStorageService.class);
         verifier = mock(SupabaseJwtVerifier.class);
-        controller = new JobTrackerController(repo, storage, verifier);
+        userService = mock(com.resumestudio.auth.UserService.class);
+        // Default: PRO plan so no quota enforcement in most tests
+        when(userService.getPlan(any())).thenReturn(com.resumestudio.auth.model.Plan.PRO);
+        controller = new JobTrackerController(repo, storage, verifier, userService);
         when(verifier.verify("valid-token")).thenReturn(CLAIMS);
     }
 

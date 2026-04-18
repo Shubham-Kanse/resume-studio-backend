@@ -3,10 +3,12 @@ package com.resumestudio.reviewer.classification;
 import com.resumestudio.reviewer.classification.ClassificationEngine.ClassificationResult;
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.enums.*;
+import com.resumestudio.reviewer.skills.MindTechOntology;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 /**
  * Classification edge cases for fresher / entry-level candidates.
@@ -16,7 +18,7 @@ class FresherClassificationTest {
     private ClassificationEngine engine;
 
     @BeforeEach
-    void setUp() { engine = new ClassificationEngine(); }
+    void setUp() { engine = new ClassificationEngine(mock(MindTechOntology.class)); }
 
     private ResumeSignals fresherSignals() {
         ResumeSignals s = new ResumeSignals();

@@ -16,6 +16,7 @@ public class Signal {
     private SignalMagnitude magnitude;       // nullable
     private String observation;
     private String interpretation;
+    private String evidence;                 // nullable — verbatim resume excerpt that drove this signal
     private String equivalent;              // nullable — e.g. "similar to X"
     private AbsenceReason absenceReason;    // nullable
     private LanguageMismatch languageMismatch;
@@ -63,6 +64,9 @@ public class Signal {
 
     public String getInterpretation() { return interpretation; }
     public void setInterpretation(String interpretation) { this.interpretation = interpretation; }
+
+    public String getEvidence() { return evidence; }
+    public void setEvidence(String evidence) { this.evidence = evidence; }
 
     public String getEquivalent() { return equivalent; }
     public void setEquivalent(String equivalent) { this.equivalent = equivalent; }

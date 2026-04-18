@@ -152,32 +152,39 @@ public class TimelineEngine {
 
     private TimelineEvent buildSkillsEvent(ResumeSignals signals) {
         if (signals.isHasMissingMustHaves()) {
+            // Name the missing skills if available
+            List<String> missing = signals.getMissingMustHavesList();
+            String detail = (missing != null && !missing.isEmpty())
+                ? "Missing: " + String.join(", ", missing.subList(0, Math.min(3, missing.size())))
+                  + (missing.size() > 3 ? " and " + (missing.size() - 3) + " more." : ".")
+                  + " These were listed as requirements. Most recruiters stop here."
+                : "The primary technical requirements for this role don't appear on the resume. Most recruiters stop here.";
             return event(TimelineEventType.SKILLS,
-                "Must-have skills not found anywhere",
-                "The primary technical requirements for this role don't appear on the resume. Typically a decisive filter.",
+                "Required skills not found",
+                detail,
                 TimelineOutcome.HARD_STOP, "NEGATIVE");
         }
         if (signals.isHasBuriedMustHaves() && !signals.isAllMustHavesVisible()) {
             return event(TimelineEventType.SKILLS,
                 "Key skills buried — not visible at a glance",
-                "Required skills exist but only in old job bullets. A recruiter's eye doesn't reach there in 10 seconds.",
+                "Required skills exist but only appear inside job bullets. In a 7-second scan, a recruiter's eye doesn't reach there.",
                 TimelineOutcome.NEAR_EXIT, "NEGATIVE");
         }
         if (signals.getSkillsFormat() != null && signals.getSkillsFormat() == SkillsFormat.PROSE) {
             return event(TimelineEventType.SKILLS,
                 "Skills written as prose — hard to scan",
-                "Skills in paragraph form require reading rather than scanning. High friction.",
+                "Skills in paragraph form require reading rather than scanning. A dedicated skills section would clear this in under a second.",
                 TimelineOutcome.FRICTION_FLAG, "NEGATIVE");
         }
         if (signals.isAllMustHavesVisible()) {
             return event(TimelineEventType.SKILLS,
-                "Required skills found immediately",
-                "Must-have skills visible in under 1 second. Skills section is doing its job.",
+                "Required skills visible immediately",
+                "Must-have skills found in the skills section. No hunting required — this is what a recruiter wants.",
                 TimelineOutcome.POSITIVE, "POSITIVE");
         }
         return event(TimelineEventType.SKILLS,
             "Skills found — minor friction",
-            "Required skills are present but took a moment to locate.",
+            "Required skills are present but took a moment to locate. Moving them higher would help.",
             TimelineOutcome.CAUTION, "NEUTRAL");
     }
 
@@ -356,25 +363,25 @@ public class TimelineEngine {
     private TimelineEvent buildVerdictEvent(Verdict verdict, boolean fullRead) {
         return switch (verdict) {
             case STRONG_FIT -> event(TimelineEventType.VERDICT,
-                "Moved to interview pile",
-                "Strong enough signal on first pass. This resume earns a full read.",
+                "Added to interview shortlist",
+                "Passed all first-pass filters. This resume earns a full read and a call.",
                 TimelineOutcome.POSITIVE, "POSITIVE");
             case POSSIBLE_FIT -> event(TimelineEventType.VERDICT,
-                "Moved to the maybe pile",
-                "Not rejected. Not prioritised. Will be revisited if the strong pile runs thin.",
+                "Held in the maybe pile",
+                "Not rejected outright. Will be revisited if the strong pile is thin — but not prioritised.",
                 TimelineOutcome.NEUTRAL, "NEUTRAL");
             case NO_FIT -> event(TimelineEventType.VERDICT,
-                "Rejected immediately",
-                "No meaningful signal found. Review ended before a full scan.",
+                "Rejected — did not pass first filter",
+                "A hard stop was hit before the recruiter reached the experience section.",
                 TimelineOutcome.HARD_STOP, "NEGATIVE");
             case WEAK_FIT -> fullRead
                 ? event(TimelineEventType.VERDICT,
-                    "Passed on after full scan",
-                    "Resume was reviewed but no strong signal emerged. Moved to the reject pile.",
+                    "Rejected after full scan",
+                    "Resume was read in full but no strong signal emerged. Passed on.",
                     TimelineOutcome.HARD_STOP, "NEGATIVE")
                 : event(TimelineEventType.VERDICT,
-                    "Review stopped early",
-                    "A decisive negative signal ended the review before a full scan.",
+                    "Rejected — scan ended early",
+                    "A decisive negative signal caused the recruiter to stop before finishing the page.",
                     TimelineOutcome.HARD_STOP, "NEGATIVE");
         };
     }
@@ -382,21 +389,22 @@ public class TimelineEngine {
     // ── Utilities ─────────────────────────────────────────────────────────────
 
     private void assignTimestamps(List<TimelineEvent> events) {
-        // Weights spread across 15-20s window (per AI-integration.md)
+        // Based on TheLadders 2018 eye-tracking study: avg 7.4s, F-pattern scan.
+        // Title/name: ~1s, current role+company: ~2s, skills: ~2s, rest: ~1s each.
         int elapsed = 0;
         for (TimelineEvent event : events) {
             event.setTimeLabel(elapsed + "s");
             elapsed += switch (event.getType()) {
-                case TITLE -> 2;
-                case SUMMARY -> 2;
-                case SKILLS -> 4;
-                case YOE -> 3;
-                case COMPANY -> 2;
-                case BULLET -> 2;
-                case LOCATION -> 2;
-                case FORMAT -> 2;
-                case VERDICT -> 1;
-                default -> 2;
+                case TITLE   -> 1;
+                case SUMMARY -> 1;
+                case SKILLS  -> 2;
+                case YOE     -> 2;
+                case COMPANY -> 1;
+                case BULLET  -> 1;
+                case LOCATION -> 1;
+                case FORMAT  -> 1;
+                case VERDICT -> 0;
+                default      -> 1;
             };
         }
     }

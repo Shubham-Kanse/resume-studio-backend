@@ -32,6 +32,7 @@ public class SupabaseJwtVerifier {
     private final ObjectMapper mapper = new ObjectMapper();
     private final HttpClient http = HttpClient.newHttpClient();
     private final ConcurrentHashMap<String, PublicKey> keyCache = new ConcurrentHashMap<>();
+    private final Object refreshLock = new Object();
 
     public SupabaseJwtVerifier(@Value("${supabase.url}") String supabaseUrl) {
         this.jwksUrl = supabaseUrl + "/auth/v1/.well-known/jwks.json";
@@ -99,8 +100,12 @@ public class SupabaseJwtVerifier {
 
     private PublicKey resolveKey(String kid) {
         if (kid != null && keyCache.containsKey(kid)) return keyCache.get(kid);
-        refreshKeys();
-        // After refresh, try again; fall back to first key if kid is null
+        // Synchronize to prevent concurrent JWKS fetches (B4)
+        synchronized (refreshLock) {
+            // Re-check after acquiring lock — another thread may have refreshed already
+            if (kid != null && keyCache.containsKey(kid)) return keyCache.get(kid);
+            refreshKeys();
+        }
         if (kid != null && keyCache.containsKey(kid)) return keyCache.get(kid);
         if (!keyCache.isEmpty()) return keyCache.values().iterator().next();
         throw new IllegalArgumentException("No public key available");

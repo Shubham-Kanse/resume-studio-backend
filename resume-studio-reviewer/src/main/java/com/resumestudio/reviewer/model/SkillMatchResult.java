@@ -1,6 +1,7 @@
 package com.resumestudio.reviewer.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.resumestudio.reviewer.model.enums.AbsenceReason;
 import com.resumestudio.reviewer.model.enums.SkillMatchType;
 import com.resumestudio.reviewer.model.enums.SkillVisibility;
@@ -13,6 +14,7 @@ public class SkillMatchResult {
     private String jdSkill;                // skill as written in JD
     private String resumeSkill;            // skill as written on resume (null if missing)
     private String canonicalName;          // resolved canonical form
+    private String sourceText;             // verbatim resume excerpt where skill was found (provenance)
     private SkillMatchType matchType;      // how it was matched
     private SkillVisibility visibility;    // where it was found on resume
     private boolean isMustHave;
@@ -31,6 +33,7 @@ public class SkillMatchResult {
         this.visibility = SkillVisibility.MISSING;
     }
 
+    @JsonIgnore
     public boolean isMatched() {
         return matchType != null && matchType != SkillMatchType.MISSING;
     }
@@ -43,6 +46,9 @@ public class SkillMatchResult {
 
     public String getCanonicalName() { return canonicalName; }
     public void setCanonicalName(String canonicalName) { this.canonicalName = canonicalName; }
+
+    public String getSourceText() { return sourceText; }
+    public void setSourceText(String sourceText) { this.sourceText = sourceText; }
 
     public SkillMatchType getMatchType() { return matchType; }
     public void setMatchType(SkillMatchType matchType) { this.matchType = matchType; }

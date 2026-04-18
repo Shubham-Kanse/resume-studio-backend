@@ -37,6 +37,11 @@ public class AiReviewService {
 
     private static final Logger log = LoggerFactory.getLogger(AiReviewService.class);
 
+    private static final java.util.Set<String> VALID_SIGNAL_IDS = java.util.Set.of(
+        "skill_match", "yoe_fit", "title_match", "summary", "bullets",
+        "format", "tailoring", "chronology"
+    );
+
     private final AiProperties ai;
     private final FeedbackGenerator fallback;
     private final ObjectMapper mapper = new ObjectMapper()
@@ -70,9 +75,21 @@ public class AiReviewService {
             JobDescription jd,
             Resume resume,
             CoherenceEngine.CoherenceResult coherence) {
+        return enrich(builder, signals, classification, jd, resume, coherence, classification.tailoringScore());
+    }
 
-        String prompt = buildPrompt(signals, classification, jd, resume, coherence);
-        prompt = smartTruncate(prompt, 4000);
+    public FeedbackReport.Builder enrich(
+            FeedbackReport.Builder builder,
+            ResumeSignals signals,
+            ClassificationResult classification,
+            JobDescription jd,
+            Resume resume,
+            CoherenceEngine.CoherenceResult coherence,
+            int tailoringScore) {
+
+        // Issue 2: tailoringScore passed in from ResumeScore — single source of truth
+        String prompt = buildPrompt(signals, classification, jd, resume, coherence, tailoringScore);
+        prompt = smartTruncate(prompt, 8000); // Kimi K2 has 262k context — raise limit for richer prompts
 
         // Build ground-truth before-text map from actual resume data
         // so AI-generated "before" is overridden with real resume text
@@ -80,7 +97,7 @@ public class AiReviewService {
 
         try {
             String raw = callGroq(prompt);
-            FeedbackReport.Builder result = mergeAiOutput(builder, raw, signals, classification);
+            FeedbackReport.Builder result = mergeAiOutput(builder, raw, signals, classification, resume);
             injectRealBeforeText(result, signalToRealText);
             return result;
         } catch (Exception first) {
@@ -89,12 +106,14 @@ public class AiReviewService {
                 String retryPrompt = prompt + "\n\nPrevious attempt failed: " + first.getMessage()
                     + "\nEnsure output is valid JSON matching the schema exactly.";
                 String raw = callGroq(retryPrompt);
-                FeedbackReport.Builder result = mergeAiOutput(builder, raw, signals, classification);
+                FeedbackReport.Builder result = mergeAiOutput(builder, raw, signals, classification, resume);
                 injectRealBeforeText(result, signalToRealText);
                 return result;
             } catch (Exception second) {
                 log.warn("AI retry failed ({}), using fallback", second.getMessage());
-                return applyFallback(builder, signals, classification);
+                FeedbackReport.Builder fallbackResult = applyFallback(builder, signals, classification, resume);
+                injectRealBeforeText(fallbackResult, signalToRealText);
+                return fallbackResult;
             }
         }
     }
@@ -166,14 +185,19 @@ public class AiReviewService {
             String signalId = fix.getSignalId();
             if (signalId == null) continue;
             if (TEXT_INJECTABLE_SIGNALS.contains(signalId)) {
-                // Replace AI-fabricated before with real resume text
                 String realText = signalTextMap.get(signalId);
-                if (realText != null) {
+                // Only inject if it's actual resume text — absence reason strings start with '"'
+                if (realText != null && !realText.startsWith("\"")) {
                     if (fix.getBeforeAfter() == null) fix.setBeforeAfter(new Fix.BeforeAfter(realText, null));
                     else fix.getBeforeAfter().setBefore(realText);
+                } else {
+                    // No real text available (skill is missing) — keep AI's beforeAfter or clear it
+                    if (fix.getBeforeAfter() != null && fix.getBeforeAfter().getBefore() != null
+                            && fix.getBeforeAfter().getBefore().contains("not found on resume")) {
+                        fix.setBeforeAfter(null);
+                    }
                 }
             } else {
-                // Non-text signal (title_match, yoe_fit, format, etc.) — suppress beforeAfter entirely
                 fix.setBeforeAfter(null);
             }
         }
@@ -184,6 +208,14 @@ public class AiReviewService {
     private String buildPrompt(ResumeSignals signals, ClassificationResult classification,
                                 JobDescription jd, Resume resume,
                                 CoherenceEngine.CoherenceResult coherence) {
+        // Always use the tailoringScore passed from ResumeScore (single source of truth)
+        // This overload should not be called directly — use the one with explicit tailoringScore
+        return buildPrompt(signals, classification, jd, resume, coherence, classification.tailoringScore());
+    }
+
+    private String buildPrompt(ResumeSignals signals, ClassificationResult classification,
+                                JobDescription jd, Resume resume,
+                                CoherenceEngine.CoherenceResult coherence, int tailoringScore) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("You are simulating an experienced technical recruiter reading a resume.\n");
@@ -194,12 +226,14 @@ public class AiReviewService {
         sb.append("- narrative: 3-5 sentences, warm but honest, past tense\n");
         sb.append("- never mention scores or confidence numbers\n");
         sb.append("- fixes: maximum 3, ranked by impact\n");
+        sb.append("- CRITICAL: the verdict is ").append(classification.verdict())
+          .append(" — your narrative MUST reflect this. Do not describe the candidate as a strong fit if the verdict is WEAK_FIT or NO_FIT.\n");
         if (classification.jdClarity() == JdClarity.LOW)
             sb.append("- jdClarity is LOW: hedge language in narrative, acknowledge uncertainty\n\n");
 
         sb.append("=== JD ===\n");
         if (jd.getTrimmedText() != null) {
-            sb.append(jd.getTrimmedText()).append("\n");
+            sb.append(sanitizeForPrompt(jd.getTrimmedText())).append("\n");
         } else {
             sb.append("Role: ").append(jd.getRoleTitle()).append("\n");
             sb.append("Required: ").append(String.join(", ", jd.getMustHaveSkills())).append("\n");
@@ -222,7 +256,20 @@ public class AiReviewService {
         }
         if (!topBullets.isEmpty()) {
             sb.append("Top bullets:\n");
-            topBullets.forEach(b -> sb.append("- ").append(b).append("\n"));
+            topBullets.forEach(b -> sb.append("- ").append(sanitizeForPrompt(b)).append("\n"));
+        }
+
+        // Weakest bullet — give the AI the specific text to reference in fixes
+        if (resume.getEnrichedBullets() != null && !resume.getEnrichedBullets().isEmpty()) {
+            resume.getEnrichedBullets().stream()
+                .filter(b -> !b.duplicateFlag())
+                .min(java.util.Comparator.comparingDouble(b -> {
+                    double v = b.metricDetected() ? 1.0 : 0.0;
+                    double verb = switch (b.actionVerbQuality()) { case "STRONG" -> 1.0; case "MEDIUM" -> 0.6; default -> 0.1; };
+                    return v * 0.4 + verb * 0.3 + b.specificityScore() / 10.0 * 0.3;
+                }))
+                .ifPresent(b -> sb.append("Weakest bullet (use this as the 'before' in your bullets fix): ")
+                    .append(sanitizeForPrompt(b.text())).append("\n"));
         }
 
         sb.append("\n=== Skill matching ===\n");
@@ -237,7 +284,6 @@ public class AiReviewService {
             sb.append("Found: ").append(String.join(", ", found)).append("\n");
             sb.append("Missing: ").append(String.join(", ", missing)).append("\n");
         }
-
         // Structured signals section (Layer 7 per AI-integration.md)
         sb.append("\n=== Pre-computed signals ===\n");
         appendSignal(sb, "title_match", signals.getTitleMatch());
@@ -257,6 +303,47 @@ public class AiReviewService {
             signals.isHasUnexplainedGap() ? "GAP_DETECTED (" + (int)signals.getLongestGapMonths() + " months)" : "NONE");
         appendSignal(sb, "jd_clarity", classification.jdClarity());
 
+        // NLU signals — skill credibility and task alignment
+        if (signals.getSkillCredibilityScore() < 0.5) {
+            sb.append("skill_credibility: LOW (").append(String.format("%.0f%%", signals.getSkillCredibilityScore() * 100))
+              .append(" — claimed skills are not well-evidenced in bullets)\n");
+        } else if (signals.getSkillCredibilityScore() > 0.75) {
+            sb.append("skill_credibility: HIGH (skills are well-evidenced with outcomes and metrics)\n");
+        }
+        if (signals.isHasUnevidencedSkills()) {
+            sb.append("unevidenced_skills: true — some skills appear only in the skills section with no bullet evidence\n");
+        }
+        if (!signals.getImpliedSkillsFound().isEmpty()) {
+            sb.append("implied_skills_found: ").append(String.join(", ", signals.getImpliedSkillsFound()))
+              .append(" (inferred from ontology — candidate likely knows these even if not listed)\n");
+        }
+        if (signals.getDemonstratedSeniorityLevel() > 0) {
+            String[] levelNames = {"", "Intern", "Junior", "Mid", "Senior", "Staff", "Principal"};
+            int level = Math.min(signals.getDemonstratedSeniorityLevel(), 6);
+            sb.append("demonstrated_seniority: ").append(levelNames[level])
+              .append(" (inferred from bullet verb language — independent of title)\n");
+        }
+
+        // Semantic alignment signals
+        if (signals.getIntentAlignmentScore() > 0.5) {
+            sb.append("intent_alignment: ").append(String.format("%.0f%%", signals.getIntentAlignmentScore() * 100))
+              .append(" — bullets semantically match JD responsibilities\n");
+            if (signals.getTopAlignedBullet() != null) {
+                sb.append("best_aligned_bullet: \"").append(signals.getTopAlignedBullet()).append("\"\n");
+            }
+        } else if (signals.getIntentAlignmentScore() > 0) {
+            sb.append("intent_alignment: LOW — bullet language doesn't closely match what the JD asks candidates to do\n");
+        }
+        if (!signals.getShallowSkills().isEmpty()) {
+            sb.append("shallow_skills: ").append(String.join(", ", signals.getShallowSkills()))
+              .append(" (required skills mentioned only once — depth of expertise unclear)\n");
+        }
+        if (signals.getKeywordDensityScore() < 0.3) {
+            sb.append("keyword_density: LOW — most required skills appear only once; ATS expects primary keywords 3-5x\n");
+        } else if (signals.getKeywordDensityScore() > 0.7) {
+            sb.append("keyword_density: GOOD — required skills appear multiple times across the resume\n");
+        }
+
         // Coherence flags
         if (coherence != null && !coherence.flags().isEmpty()) {
             sb.append("\n=== Coherence flags ===\n");
@@ -273,7 +360,7 @@ public class AiReviewService {
         sb.append("confidence: ").append(classification.confidence()).append("\n");
         sb.append("scanDuration: ").append(classification.scanDuration()).append("s\n");
         sb.append("seniorityCalibration: ").append(classification.seniorityCalibration()).append("\n");
-        sb.append("tailoringScore: ").append(classification.tailoringScore()).append("/10\n");
+        sb.append("tailoringScore: ").append(tailoringScore).append("/10\n");
         sb.append("jdClarity: ").append(classification.jdClarity()).append("\n");
         sb.append("interviewLikelihood: ").append(classification.interviewLikelihood()).append("\n");
 
@@ -281,6 +368,24 @@ public class AiReviewService {
     }
 
     // ── Groq HTTP call ────────────────────────────────────────────────────────
+
+    /**
+     * Sanitizes user-provided text before injecting into AI prompt.
+     * Strips common prompt injection patterns.
+     */
+    private static String sanitizeForPrompt(String text) {
+        if (text == null) return "";
+        return text
+            // Strip role injection attempts
+            .replaceAll("(?i)(ignore|disregard|forget).{0,30}(previous|above|instructions|system|prompt)", "[REDACTED]")
+            .replaceAll("(?i)you are (now|a|an) ", "")
+            // Strip markdown that could confuse the JSON schema boundary
+            .replaceAll("```json", "")
+            .replaceAll("```", "")
+            // Limit to printable ASCII + common Unicode — strip control chars
+            .replaceAll("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]", "")
+            .trim();
+    }
 
     /**
      * Truncates prompt to maxChars by dropping low-priority sections first,
@@ -350,6 +455,11 @@ public class AiReviewService {
 
     private FeedbackReport.Builder mergeAiOutput(FeedbackReport.Builder builder, String json,
                                                    ResumeSignals signals, ClassificationResult classification) {
+        return mergeAiOutput(builder, json, signals, classification, null);
+    }
+
+    private FeedbackReport.Builder mergeAiOutput(FeedbackReport.Builder builder, String json,
+                                                   ResumeSignals signals, ClassificationResult classification, Resume resume) {
         try {
             JsonNode root = mapper.readTree(json);
 
@@ -357,7 +467,7 @@ public class AiReviewService {
             builder.summaryLine(summaryLine != null ? summaryLine : "Review complete.");
             String narrative = root.path("narrative").asText(null);
             builder.narrative(narrative != null ? narrative : "");
-            builder.momentOfDecision(root.path("momentOfDecision").asText(null));
+            // momentOfDecision is set deterministically in ReviewerPipeline — do NOT let AI overwrite it
 
             String toneStr = root.path("narrativeTone").asText(null);
             if (toneStr != null) {
@@ -411,7 +521,9 @@ public class AiReviewService {
                     if (rank > 3) break; // cap at 3
                     Fix fix = new Fix();
                     fix.setRank(rank++);
-                    fix.setSignalId(f.path("signalId").asText(null));
+                    // Validate signalId — reject invented IDs, fall back to skill_match
+                    String rawSignalId = f.path("signalId").asText(null);
+                    fix.setSignalId(VALID_SIGNAL_IDS.contains(rawSignalId) ? rawSignalId : "skill_match");
                     fix.setAction(f.path("action").asText(null));
                     fix.setReason(f.path("reason").asText(null));
                     String ft = f.path("fixType").asText(null);
@@ -434,9 +546,9 @@ public class AiReviewService {
             }
 
             // signals — deterministic structure from FeedbackGenerator only
-            // AI signal text is intentionally NOT merged — SentenceBank generates
-            // specific, data-grounded observations that the AI consistently degrades
-            FeedbackGenerator.FeedbackOutput fb = fallback.generate(signals, classification.verdict());
+            FeedbackGenerator.FeedbackOutput fb = resume != null
+                ? fallback.generate(signals, classification.verdict(), resume)
+                : fallback.generate(signals, classification.verdict());
             List<Signal> cappedSignals = fb.signals().stream().limit(6).toList();
             builder.signals(cappedSignals);
 
@@ -453,7 +565,14 @@ public class AiReviewService {
 
     private FeedbackReport.Builder applyFallback(FeedbackReport.Builder builder,
                                                    ResumeSignals signals, ClassificationResult classification) {
-        FeedbackGenerator.FeedbackOutput fb = fallback.generate(signals, classification.verdict());
+        return applyFallback(builder, signals, classification, null);
+    }
+
+    private FeedbackReport.Builder applyFallback(FeedbackReport.Builder builder,
+                                                   ResumeSignals signals, ClassificationResult classification, Resume resume) {
+        FeedbackGenerator.FeedbackOutput fb = resume != null
+            ? fallback.generate(signals, classification.verdict(), resume)
+            : fallback.generate(signals, classification.verdict());
 
         // Generate differentiators from strong signals when AI is unavailable
         List<FeedbackReport.Differentiator> diffs = new java.util.ArrayList<>();
@@ -478,11 +597,12 @@ public class AiReviewService {
         return builder
             .summaryLine(fb.summaryLine() != null ? fb.summaryLine() : "Review complete.")
             .signals(fb.signals() != null ? fb.signals() : List.of())
-            .fixes(fb.fixes() != null ? fb.fixes() : List.of())
+            // Issue 4: cap fallback fixes to 3, same as AI path
+            .fixes(fb.fixes() != null ? fb.fixes().stream().limit(3).collect(java.util.stream.Collectors.toList()) : List.of())
             .narrative("")
             .narrativeTone(NarrativeTone.NEUTRAL)
             .differentiators(diffs)
-            .recruiterGutFeel(null); // explicitly null — frontend must handle
+            .recruiterGutFeel(null);
     }
 
     // ── Schema sent to AI ─────────────────────────────────────────────────────
@@ -492,7 +612,6 @@ public class AiReviewService {
           "summaryLine": "string — one sentence shown at top of UI",
           "narrative": "string — 3-5 sentences recruiter perspective",
           "narrativeTone": "ENCOURAGING | NEUTRAL | CAUTIONARY",
-          "momentOfDecision": "string — e.g. 'Skills section, ~8 seconds in'",
           "recruiterGutFeel": {
             "firstImpression": "string",
             "trustLevel": "HIGH | MEDIUM | LOW",
@@ -503,7 +622,7 @@ public class AiReviewService {
           ],
           "fixes": [
             {
-              "signalId": "string",
+              "signalId": "skill_match | yoe_fit | title_match | summary | bullets | format | tailoring | chronology",
               "fixType": "MISSING_SKILL | REFRAME | DOMAIN_GAP | PRESENTATION",
               "fixScope": "BEFORE_SUBMIT | RESUME_REBUILD | LONG_TERM",
               "action": "string",
@@ -523,9 +642,9 @@ public class AiReviewService {
         @com.fasterxml.jackson.annotation.JsonProperty("messages")
         public final java.util.List<java.util.Map<String, String>> messages;
         @com.fasterxml.jackson.annotation.JsonProperty("temperature")
-        public final double temperature = 0.3;
+        public final double temperature = 0.1; // Lower temperature = more deterministic output
         @com.fasterxml.jackson.annotation.JsonProperty("max_tokens")
-        public final int maxTokens = 2000;
+        public final int maxTokens = 4000;
 
         GroqRequest(String model, String prompt) {
             this.model = model;

@@ -149,8 +149,9 @@ public class YoeSignalCalculator {
     private YoeFit computeFit(double yoe, Double jdMin, Double jdMax) {
         if (jdMin == null && jdMax == null) return YoeFit.IN_RANGE; // no requirement stated
 
-        // Overqualified: more than 2 years over the max
+        // Overqualified: more than 3 years over the max, or more than 2x the min when no max stated
         if (jdMax != null && yoe > jdMax + 2) return YoeFit.OVER_RANGE;
+        if (jdMax == null && jdMin != null && yoe > jdMin * 2.5 && yoe > jdMin + 8) return YoeFit.OVER_RANGE;
 
         // In range
         double min = jdMin != null ? jdMin : 0.0;

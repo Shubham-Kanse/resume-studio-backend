@@ -5,6 +5,8 @@ import com.resumestudio.reviewer.model.DeepDiveReport.*;
 import com.resumestudio.reviewer.model.enums.*;
 import com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet;
 import com.resumestudio.reviewer.signals.ResumeScoreCalculator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,6 +19,8 @@ import java.util.Map;
  */
 @Component
 public class DeepDiveGenerator {
+
+    private static final Logger log = LoggerFactory.getLogger(DeepDiveGenerator.class);
 
     private final ResumeScoreCalculator scoreCalculator;
     private final SentenceBankOntologyService ontologyBank;
@@ -100,44 +104,44 @@ public class DeepDiveGenerator {
     private Section buildSummarySection(Resume resume, ResumeSignals signals) {
         List<ReviewItem> items = new ArrayList<>();
         String text = resume.getSummaryText();
-
-        // Presence & length
         int wordCount = text.split("\\s+").length;
+
+        // P12: consolidate all issues into a single item with one prioritised action
+        List<String> issues = new ArrayList<>();
+        List<String> actions = new ArrayList<>();
+        int score = 90;
+
         if (wordCount < 15) {
-            items.add(warn("SUMMARY_TEXT", text, 20,
-                "Summary is too short (" + wordCount + " words). A recruiter gets no useful context.",
-                "Expand to 2–3 sentences: title + YOE + core skills + what you're targeting."));
+            issues.add("too short (" + wordCount + " words)");
+            actions.add("Expand to 2–3 sentences: title + YOE + core skills + what you're targeting.");
+            score = Math.min(score, 20);
         } else if (wordCount > 100) {
-            items.add(warn("SUMMARY_TEXT", text.substring(0, 80) + "…", 50,
-                "Summary is too long (" + wordCount + " words). Recruiters read the first 2 lines.",
-                "Trim to 40–60 words. Every word must earn its place."));
+            issues.add("too long (" + wordCount + " words — recruiters read the first 2 lines)");
+            actions.add("Trim to 40–60 words. Every word must earn its place.");
+            score = Math.min(score, 50);
         }
-
-        // Generic language
         if (signals.isSummaryIsGeneric()) {
-            items.add(warn("SUMMARY_TEXT", text, 25,
-                "Summary uses generic phrases ('passionate', 'team player') that add no signal.",
-                "Replace with specifics: your actual title, years, and 3 core technologies."));
+            issues.add("generic language ('passionate', 'team player') adds no signal");
+            actions.add("Replace with specifics: your actual title, years, and 3 core technologies.");
+            score = Math.min(score, 25);
         }
-
-        // Mentions required skills
         if (!signals.isSummaryMentionsSkills()) {
-            items.add(warn("SUMMARY_TEXT", text, 35,
-                "Summary doesn't mention the core skills this role requires.",
-                "Add the 2–3 most important required skills from the JD into your summary."));
+            issues.add("doesn't mention the core skills this role requires");
+            if (actions.isEmpty()) actions.add("Add the 2–3 most important required skills from the JD into your summary.");
+            score = Math.min(score, 35);
         }
-
-        // Mentions YOE
         if (!signals.isSummaryMentionsYoe()) {
-            items.add(warn("SUMMARY_TEXT", text, 40,
-                "Summary doesn't state your years of experience.",
-                "Add your YOE explicitly: 'Backend engineer with 3.5 years of experience…'"));
+            issues.add("doesn't state your years of experience");
+            if (actions.isEmpty()) actions.add("Add your YOE explicitly: 'Backend engineer with 3.5 years of experience…'");
+            score = Math.min(score, 40);
         }
 
-        // If everything is good
-        if (items.isEmpty()) {
-            items.add(pass("SUMMARY_TEXT", text, 90,
-                "Summary is specific, mentions YOE and core skills. Strong opening.", null));
+        if (issues.isEmpty()) {
+            items.add(pass("SUMMARY_TEXT", text, 90, "Summary is specific, mentions YOE and core skills. Strong opening.", null));
+        } else {
+            String obs = String.join("; ", issues) + ".";
+            String action = actions.isEmpty() ? null : actions.get(0);
+            items.add(new ReviewItem("SUMMARY_TEXT", text, score >= 50 ? "WARN" : "FAIL", score, obs, action));
         }
 
         int sectionScore = items.stream().mapToInt(ReviewItem::getScore).sum() / items.size();
@@ -200,7 +204,8 @@ public class DeepDiveGenerator {
 
     private ReviewItem reviewBullet(String bullet, EnrichedBullet eb, JobDescription jd) {
         if (eb == null) {
-            // No enrichment data — basic heuristic
+            // P13: enrichment should never be null — log so we can detect silent failures
+            log.warn("BulletEnricher returned null for bullet: '{}'", bullet.length() > 60 ? bullet.substring(0, 60) + "…" : bullet);
             boolean hasNumber = bullet.matches(".*\\d+.*");
             int score = hasNumber ? 60 : 35;
             return new ReviewItem("BULLET", bullet, score >= 50 ? "WARN" : "FAIL", score,
@@ -212,11 +217,11 @@ public class DeepDiveGenerator {
         List<String> issues = new ArrayList<>();
         List<String> actions = new ArrayList<>();
 
-        // Verb quality (0–40 pts)
+        // Verb quality (0–35 pts)
         score += switch (eb.actionVerbQuality()) {
-            case "STRONG" -> 40;
-            case "MEDIUM" -> 28;
-            case "WEAK" -> 10;
+            case "STRONG" -> 35;
+            case "MEDIUM" -> 24;
+            case "WEAK" -> 8;
             default -> 0;
         };
         if ("WEAK".equals(eb.actionVerbQuality()) || "MISSING".equals(eb.actionVerbQuality())) {
@@ -231,8 +236,20 @@ public class DeepDiveGenerator {
             actions.add("Add a number: %, $, time saved, users served, team size.");
         }
 
-        // Specificity (0–25 pts)
-        score += (int)(eb.specificityScore() / 10.0 * 25);
+        // Specificity (0–20 pts)
+        score += (int)(eb.specificityScore() / 10.0 * 20);
+
+        // Issue 5: role relevance — check if bullet mentions any JD must-have skill (0–10 pts)
+        if (jd != null && jd.getMustHaveSkills() != null && !jd.getMustHaveSkills().isEmpty()) {
+            String bulletLower = bullet.toLowerCase();
+            boolean mentionsJdSkill = jd.getMustHaveSkills().stream()
+                .anyMatch(skill -> bulletLower.contains(skill.toLowerCase()));
+            if (mentionsJdSkill) {
+                score += 10;
+            } else {
+                issues.add("doesn't reference required skills for this role");
+            }
+        }
 
         // Penalties
         if (eb.duplicateFlag()) { score = Math.max(0, score - 20); issues.add("similar to another bullet"); }
@@ -267,29 +284,37 @@ public class DeepDiveGenerator {
                 "Reformat as a comma-separated list grouped by category."));
         }
 
-        // Per required skill — visibility
+        // P11: only show BURIED and MISSING skills — passing skills add no value
         if (signals.getMustHaveResults() != null) {
+            long total = signals.getMustHaveResults().size();
+            long passing = signals.getMustHaveResults().stream()
+                .filter(r -> r.getVisibility() == SkillVisibility.SURFACE).count();
+            if (passing > 0) {
+                items.add(pass("SKILL", passing + " of " + total + " required skills visible", 100,
+                    passing + " required skill" + (passing == 1 ? "" : "s") + " found and visible in your skills section.", null));
+            }
             for (var result : signals.getMustHaveResults()) {
-                String skillName = result.getJdSkill();
                 SkillVisibility vis = result.getVisibility();
+                if (vis == SkillVisibility.SURFACE) continue; // P11: skip passing skills
+                String skillName = result.getJdSkill();
                 int score = switch (vis) {
-                    case SURFACE -> 100;
                     case MID -> 65;
                     case BURIED -> 35;
                     case MISSING -> 0;
+                    default -> 100;
                 };
                 String verdict = score >= 70 ? "PASS" : score >= 40 ? "WARN" : "FAIL";
                 String obs = switch (vis) {
-                    case SURFACE -> "\"" + skillName + "\" is visible in your skills section.";
                     case MID -> "\"" + skillName + "\" appears in a recent bullet but not your skills section.";
                     case BURIED -> "\"" + skillName + "\" only appears in an older role — effectively invisible.";
                     case MISSING -> "\"" + skillName + "\" does not appear anywhere on your resume.";
+                    default -> "";
                 };
                 String action = switch (vis) {
-                    case SURFACE -> null;
                     case MID -> "Move \"" + skillName + "\" into your skills section.";
                     case BURIED -> "Add \"" + skillName + "\" to your skills section. If you've used it recently, mention it in your latest role.";
                     case MISSING -> "If you have any exposure to \"" + skillName + "\", add it. If not, this is a genuine gap.";
+                    default -> null;
                 };
                 items.add(new ReviewItem("SKILL", skillName, verdict, score, obs, action));
             }
@@ -350,11 +375,11 @@ public class DeepDiveGenerator {
                 "Add more line breaks, increase margins, or reduce content density."));
         }
 
-        // Photo
+        // P14: photo flag is market-specific — soften language
         if (signals.isFormatHasPhoto()) {
             items.add(warn("FORMAT_ISSUE", "[Photo detected]", 40,
-                "Photo present. Non-standard for tech roles in most markets.",
-                "Remove the photo. It introduces bias risk and most ATS systems strip it anyway."));
+                "Photo present — standard in some European markets, but typically omitted for tech roles in the US and UK.",
+                "Consider removing the photo if applying to US/UK companies."));
         }
 
         // Multi-column
@@ -362,6 +387,19 @@ public class DeepDiveGenerator {
             items.add(warn("FORMAT_ISSUE", "[Multi-column layout]", 35,
                 "Multi-column layouts often break ATS parsing.",
                 "Switch to a single-column layout for maximum ATS compatibility."));
+        }
+
+        // Issue 6: surface previously invisible deductions
+        if (signals.isFormatMixedFonts()) {
+            items.add(warn("FORMAT_ISSUE", "[Mixed fonts]", 50,
+                "More than 4 distinct font sizes detected — signals inconsistent formatting.",
+                "Standardise to 2–3 font sizes: one for body text, one for section headers, one for your name."));
+        }
+
+        if (signals.isFormatInconsistentDates()) {
+            items.add(warn("FORMAT_ISSUE", "[Inconsistent date formats]", 55,
+                "Multiple date formats used (e.g. 'Jan 2022' and '01/2022') — looks unpolished and can confuse ATS parsers.",
+                "Pick one format and apply it consistently: 'Month YYYY' (e.g. Jan 2022) is the most readable."));
         }
 
         if (items.stream().allMatch(i -> "PASS".equals(i.getVerdict()))) {

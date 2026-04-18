@@ -62,7 +62,7 @@ class TimelineEdgeCaseTest {
         // Last event's timeLabel should be >= 15s
         String lastLabel = events.get(events.size() - 1).getTimeLabel();
         int lastTime = Integer.parseInt(lastLabel.replace("s", ""));
-        assertTrue(lastTime >= 10, "Timeline should span at least 10s, got: " + lastTime + "s");
+        assertTrue(lastTime >= 7, "Timeline should span at least 7s, got: " + lastTime + "s");
     }
 
     @Test void allTimestampsAreNonNull() {

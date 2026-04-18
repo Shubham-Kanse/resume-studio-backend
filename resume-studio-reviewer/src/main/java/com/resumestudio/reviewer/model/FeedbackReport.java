@@ -40,6 +40,9 @@ public class FeedbackReport {
     private List<Fix> fixes;
     private ResumeScore score;
 
+    // --- Recruiter simulation timeline ---
+    private List<com.resumestudio.reviewer.model.TimelineEvent> timeline;
+
     // -------------------------------------------------------------------------
     // Nested types
     // -------------------------------------------------------------------------
@@ -51,6 +54,9 @@ public class FeedbackReport {
         private List<String> inferred;
         private String domain;
         private List<String> implicitExpectations;
+        private List<String> missingRequired;  // required skills not found on resume
+        private List<String> hardBlockerSkills = new java.util.ArrayList<>(); // career-ops: hard blockers
+        private List<String> niceToHaveGaps = new java.util.ArrayList<>();    // career-ops: addressable gaps
 
         public RoleContext() {}
 
@@ -66,6 +72,12 @@ public class FeedbackReport {
         public void setDomain(String domain) { this.domain = domain; }
         public List<String> getImplicitExpectations() { return implicitExpectations; }
         public void setImplicitExpectations(List<String> implicitExpectations) { this.implicitExpectations = implicitExpectations; }
+        public List<String> getMissingRequired() { return missingRequired; }
+        public void setMissingRequired(List<String> missingRequired) { this.missingRequired = missingRequired; }
+        public List<String> getHardBlockerSkills() { return hardBlockerSkills; }
+        public void setHardBlockerSkills(List<String> hardBlockerSkills) { this.hardBlockerSkills = hardBlockerSkills; }
+        public List<String> getNiceToHaveGaps() { return niceToHaveGaps; }
+        public void setNiceToHaveGaps(List<String> niceToHaveGaps) { this.niceToHaveGaps = niceToHaveGaps; }
     }
 
     public static class Differentiator {
@@ -148,6 +160,7 @@ public class FeedbackReport {
         public Builder recruiterGutFeel(RecruiterGutFeel gf) { r.recruiterGutFeel = gf; return this; }
         public Builder fixes(List<Fix> f) { r.fixes = f; return this; }
         public Builder score(ResumeScore s) { r.score = s; return this; }
+        public Builder timeline(List<com.resumestudio.reviewer.model.TimelineEvent> t) { r.timeline = t; return this; }
 
         public FeedbackReport build() { return r; }
     }
@@ -176,4 +189,5 @@ public class FeedbackReport {
     public RecruiterGutFeel getRecruiterGutFeel() { return recruiterGutFeel; }
     public List<Fix> getFixes() { return fixes; }
     public ResumeScore getScore() { return score; }
+    public List<com.resumestudio.reviewer.model.TimelineEvent> getTimeline() { return timeline; }
 }

@@ -45,23 +45,29 @@ public class OutcomeTracker {
                     .count();
                 skillMatchScore = (int) (found * 100 / total);
             }
+            final int finalSkillMatchScore = skillMatchScore;
 
-            repository.save(new AnalysisSnapshotEntity(
-                UUID.randomUUID().toString(),
-                report.getVerdict() != null ? report.getVerdict().name() : "UNKNOWN",
-                report.getConfidence() != null ? report.getConfidence().name() : "UNKNOWN",
-                signals.getMustHaveResults() != null ? signals.getMustHaveResults().size() : 0,
-                signals.isHasMissingMustHaves(),
-                signals.getCalculatedYoe(),
-                Instant.now(),
-                userId,
-                roleTitle,
-                roleDomain,
-                null, // compositeScore — requires ResumeScoreCalculator, wired separately if needed
-                skillMatchScore,
-                jdHash,
-                resumeHash
-            ));
+            // Upsert: reuse existing snapshot for same JD+resume pair to avoid duplicates
+            AnalysisSnapshotEntity snapshot = (jdHash != null && resumeHash != null)
+                ? repository.findByJdHashAndResumeHash(jdHash, resumeHash)
+                    .orElseGet(() -> new AnalysisSnapshotEntity(UUID.randomUUID().toString(),
+                        report.getVerdict() != null ? report.getVerdict().name() : "UNKNOWN",
+                        report.getConfidence() != null ? report.getConfidence().name() : "UNKNOWN",
+                        signals.getMustHaveResults() != null ? signals.getMustHaveResults().size() : 0,
+                        signals.isHasMissingMustHaves(), signals.getCalculatedYoe(), Instant.now(),
+                        userId, roleTitle, roleDomain,
+                        report.getScore() != null ? report.getScore().getComposite() : null,
+                        finalSkillMatchScore, jdHash, resumeHash))
+                : new AnalysisSnapshotEntity(UUID.randomUUID().toString(),
+                    report.getVerdict() != null ? report.getVerdict().name() : "UNKNOWN",
+                    report.getConfidence() != null ? report.getConfidence().name() : "UNKNOWN",
+                    signals.getMustHaveResults() != null ? signals.getMustHaveResults().size() : 0,
+                    signals.isHasMissingMustHaves(), signals.getCalculatedYoe(), Instant.now(),
+                    userId, roleTitle, roleDomain,
+                    report.getScore() != null ? report.getScore().getComposite() : null,
+                    finalSkillMatchScore, jdHash, resumeHash);
+
+            repository.save(snapshot);
             log.debug("OutcomeTracker: persisted snapshot");
         } catch (Exception e) {
             log.warn("OutcomeTracker: failed to persist ({})", e.getMessage());

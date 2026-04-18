@@ -44,6 +44,9 @@ class JdParserServiceTest {
     @Mock
     private JdRolePatternsService rolePatternsService;
 
+    @Mock
+    private LlmJdExtractor llmExtractor;
+
     private JdParserService parser;
 
     @BeforeEach
@@ -118,7 +121,7 @@ class JdParserServiceTest {
         registerSkill("Go", "golang");
 
         parser = new JdParserService(escoGraph, mindTech, embeddingIndex, tfidfVectorizer, posTagService,
-                rolePatternsService);
+                rolePatternsService, llmExtractor);
     }
 
     /**

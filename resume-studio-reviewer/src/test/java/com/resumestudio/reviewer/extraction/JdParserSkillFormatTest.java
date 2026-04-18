@@ -42,7 +42,7 @@ class JdParserSkillFormatTest {
         when(pos.isVerb(anyString(), anyString())).thenReturn(false);
 
         parser = new JdParserService(escoGraph, mind, embeddingIndex, tfidf, pos,
-                mock(JdRolePatternsService.class));
+                mock(JdRolePatternsService.class), mock(LlmJdExtractor.class));
     }
 
     @Test void slashSeparatedSkills_allExtracted() {

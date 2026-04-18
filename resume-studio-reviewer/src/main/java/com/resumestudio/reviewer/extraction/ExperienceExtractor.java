@@ -234,10 +234,9 @@ public class ExperienceExtractor {
     }
 
     private void parseHeaderLine(String line, WorkExperience role) {
-        // Handle "Company | May 2021 – July 2024" or "Company — May 2021 – July 2024"
-        // Split on pipe or em-dash separator between company and date
+        // Handle "Company | May 2021 – July 2024", "Company — May 2021 – July 2024", "Company · Jan 2022 – Present"
         java.util.regex.Matcher pipeSplit = java.util.regex.Pattern
-            .compile("^(.+?)\\s*[|—]\\s*(.+)$").matcher(line);
+            .compile("^(.+?)\\s*[|—·,]\\s*(.+)$").matcher(line);
         if (pipeSplit.matches()) {
             String left = pipeSplit.group(1).trim();
             String right = pipeSplit.group(2).trim();
@@ -255,6 +254,9 @@ public class ExperienceExtractor {
                         role.setEndDate(parseDate(endStr, false));
                         role.setDatesArePartial(role.isDatesArePartial() || isPartialDate(endStr));
                     }
+                } else if (PRESENT.matcher(right).find()) {
+                    // "Company | Present" — current role with no start date
+                    role.setCurrent(true);
                 }
                 return;
             }

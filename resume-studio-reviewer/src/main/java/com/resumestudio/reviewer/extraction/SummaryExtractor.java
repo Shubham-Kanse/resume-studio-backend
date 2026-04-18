@@ -62,9 +62,12 @@ public class SummaryExtractor {
      * Uses ESCO skill taxonomy for technical skill detection (SOTA).
      */
     public SummaryAnalysis analyse(String summaryText, String jdTitle) {
+        return analyse(summaryText, jdTitle, null);
+    }
+
+    public SummaryAnalysis analyse(String summaryText, String jdTitle, java.util.List<String> jdMustHaves) {
         SummaryAnalysis analysis = new SummaryAnalysis();
 
-        // Use ontology minWords (15) as the minimum — filters contact lines and fragments
         int minWords = Math.max(5, resumeOntology.getMinWords("PROFESSIONAL_SUMMARY"));
         if (summaryText == null || summaryText.isBlank()
                 || summaryText.trim().length() < 30
@@ -74,37 +77,31 @@ public class SummaryExtractor {
         }
 
         analysis.setPresent(true);
-
-        // Check if mentions YOE
         analysis.setMentionsYoe(YOE_IN_SUMMARY.matcher(summaryText).find());
 
-        // Check if mentions tech skills using ESCO taxonomy (n-gram matching)
-        int skillCount = extractTechnicalSkills(summaryText);
-        analysis.setMentionsSkills(skillCount >= 3); // At least 3 technical skills
+        // If JD must-haves provided, check overlap with those specifically
+        if (jdMustHaves != null && !jdMustHaves.isEmpty()) {
+            String summaryLower = summaryText.toLowerCase();
+            long jdSkillHits = jdMustHaves.stream()
+                .filter(s -> s != null && summaryLower.contains(s.toLowerCase()))
+                .count();
+            analysis.setMentionsSkills(jdSkillHits >= 1); // at least 1 JD skill mentioned
+        } else {
+            int skillCount = extractTechnicalSkills(summaryText);
+            analysis.setMentionsSkills(skillCount >= 3);
+        }
 
-        // BoW overlap between summary and JD title — more robust than word-contains
         if (jdTitle != null) {
             double overlap = textNormalizer.jaccardSimilarity(summaryText, jdTitle);
-            analysis.setMentionsTitle(overlap >= 0.15); // at least 15% token overlap
+            analysis.setMentionsTitle(overlap >= 0.15);
         }
 
-        // Check for generic phrases
-        boolean isGeneric = GENERIC_PHRASES.stream()
-            .anyMatch(p -> p.matcher(summaryText).find());
-        
-        // Override: if summary has strong technical content (YOE + skills), ignore generic phrases
-        if (isGeneric && analysis.isMentionsYoe() && analysis.isMentionsSkills()) {
-            isGeneric = false;  // Technical substance overrides generic language
-        }
+        boolean isGeneric = GENERIC_PHRASES.stream().anyMatch(p -> p.matcher(summaryText).find());
+        if (isGeneric && analysis.isMentionsYoe() && analysis.isMentionsSkills()) isGeneric = false;
         analysis.setGeneric(isGeneric);
 
-        // A strong summary: present + mentions YOE + skills + not generic
-        analysis.setStrong(
-            analysis.isPresent()
-            && analysis.isMentionsYoe()
-            && analysis.isMentionsSkills()
-            && !analysis.isGeneric()
-        );
+        analysis.setStrong(analysis.isPresent() && analysis.isMentionsYoe()
+            && analysis.isMentionsSkills() && !analysis.isGeneric());
 
         return analysis;
     }

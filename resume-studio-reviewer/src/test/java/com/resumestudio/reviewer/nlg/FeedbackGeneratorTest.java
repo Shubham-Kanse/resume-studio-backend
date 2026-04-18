@@ -182,9 +182,11 @@ class FeedbackGeneratorTest {
         s.setHasUnexplainedGap(true);
         s.setGapDescriptions(List.of("18-month gap between A and B"));
         FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.WEAK_FIT);
-        assertTrue(out.fixes().stream().anyMatch(f -> f.getBeforeAfter() != null
-            && f.getBeforeAfter().getBefore() != null
-            && f.getBeforeAfter().getBefore().contains("Align work, education, and career breaks")));
+        // Chronology fix should be present with action about fixing chronology
+        assertTrue(out.fixes().stream().anyMatch(f ->
+            f.getSignalId() != null && f.getSignalId().equals("yoe_fit") &&
+            f.getAction() != null && f.getAction().toLowerCase().contains("chronology")));
+        // Gap fix should NOT appear when chronology is already unreliable (redundant)
         assertFalse(out.fixes().stream().anyMatch(f -> "Label your career gap".equals(f.getAction())));
     }
 

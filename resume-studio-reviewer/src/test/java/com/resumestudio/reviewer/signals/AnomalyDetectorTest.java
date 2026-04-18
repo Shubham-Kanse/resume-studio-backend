@@ -41,6 +41,11 @@ class AnomalyDetectorTest {
         when(escoGraph.resolve(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(nlpService.impactVerbRatio(any())).thenReturn(0.5);
         when(nlpService.metricDensity(any())).thenReturn(0.3);
+        // Stub verb quality for title inflation detection
+        when(nlpService.getVerbQuality("Assisted")).thenReturn("WEAK");
+        when(nlpService.getVerbQuality("Helped")).thenReturn("WEAK");
+        when(nlpService.getVerbQuality("Participated")).thenReturn("WEAK");
+        when(nlpService.getVerbQuality("Supported")).thenReturn("WEAK");
         SkillRecencyService recency = mock(SkillRecencyService.class);
         // Default: no suspicious claims
         when(recency.isYoeClaimSuspicious(anyString(), anyInt())).thenReturn(false);

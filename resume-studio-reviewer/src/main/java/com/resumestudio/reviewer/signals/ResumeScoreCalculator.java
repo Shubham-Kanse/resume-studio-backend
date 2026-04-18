@@ -4,29 +4,20 @@ import com.resumestudio.reviewer.model.ResumeScore;
 import com.resumestudio.reviewer.model.ResumeScore.ScoreItem;
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.enums.*;
+import com.resumestudio.reviewer.skills.MindTechOntology;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * SOTA weighted scoring engine.
- *
- * Scoring philosophy:
- *   - Skill match is the dominant signal (weight 10) — no amount of polish compensates for missing skills
- *   - YOE fit and title match are hard filters (weight 8)
- *   - Presentation (summary, bullets, format) is a multiplier — it amplifies or dampens the core signals
- *   - Company context and tailoring are positive differentiators (weight 4–5)
- *
- * Score ranges per signal:
- *   EXCELLENT  80–100
- *   GOOD       60–79
- *   FAIR       40–59
- *   POOR       20–39
- *   CRITICAL   0–19
- */
 @Component
 public class ResumeScoreCalculator {
+
+    private final MindTechOntology ontology;
+
+    public ResumeScoreCalculator(MindTechOntology ontology) {
+        this.ontology = ontology;
+    }
 
     public ResumeScore calculate(ResumeSignals signals) {
         List<ScoreItem> breakdown = new ArrayList<>();
@@ -34,7 +25,7 @@ public class ResumeScoreCalculator {
         // ── Skill match (weight 10) ───────────────────────────────────────────
         breakdown.add(scoreSkillMatch(signals));
 
-        // ── YOE fit (weight 8) ────────────────────────────────────────────────
+        // ── YOE fit (weight 12) — data: r=0.576, second strongest predictor ──
         breakdown.add(scoreYoe(signals));
 
         // ── Title match (weight 8) ────────────────────────────────────────────
@@ -61,17 +52,25 @@ public class ResumeScoreCalculator {
         // ── Tailoring (weight 5) ──────────────────────────────────────────────
         breakdown.add(scoreTailoring(signals));
 
+        // ── Projects / portfolio (weight 4) — data: r=0.331, 5+ projects → 92% hire
+        breakdown.add(scoreProjects(signals));
+
         // ── Composite: weighted average ───────────────────────────────────────
         int totalWeight = breakdown.stream().mapToInt(ScoreItem::getWeight).sum();
         int weightedSum = breakdown.stream().mapToInt(ScoreItem::getWeightedScore).sum();
-        // weightedScore = score * weight / 10, so composite = weightedSum * 10 / totalWeight
-        int composite = totalWeight > 0 ? Math.min(100, weightedSum * 10 / totalWeight) : 0;
+        // P8: use Math.round to avoid integer truncation at grade boundaries
+        int composite = totalWeight > 0 ? Math.min(100, (int) Math.round((double) weightedSum * 10 / totalWeight)) : 0;
 
-        // ── Category scores ───────────────────────────────────────────────────
+        // Cap composite when JD clarity is LOW — a high score against a vague JD is misleading
+        if (signals.getJdClarity() != null && signals.getJdClarity() == com.resumestudio.reviewer.model.enums.JdClarity.LOW) {
+            composite = Math.min(composite, 65);
+        }
+
+        // P5: company belongs in experienceScore, not tailoring
         int skillMatchScore = avg(breakdown, "skill_match", "skills_format");
-        int experienceScore = avg(breakdown, "yoe_fit", "title_match", "chronology");
+        int experienceScore = avg(breakdown, "yoe_fit", "title_match", "chronology", "company");
         int presentationScore = avg(breakdown, "summary", "bullets", "format");
-        int tailoringScoreVal = avg(breakdown, "tailoring", "company");
+        int tailoringScoreVal = avg(breakdown, "tailoring"); // P5: tailoring only
 
         ResumeScore score = new ResumeScore();
         score.setComposite(composite);
@@ -81,7 +80,8 @@ public class ResumeScoreCalculator {
         score.setExperienceScore(experienceScore);
         score.setPresentationScore(presentationScore);
         score.setTailoringScore(tailoringScoreVal);
-        score.setFormatScore(breakdown.stream().filter(i -> "format".equals(i.getSignalId())).mapToInt(ScoreItem::getScore).findFirst().orElse(50));
+        // P9: include skills_format in formatScore
+        score.setFormatScore(avg(breakdown, "format", "skills_format"));
         score.setBreakdown(breakdown);
         return score;
     }
@@ -92,28 +92,20 @@ public class ResumeScoreCalculator {
         if (s.getMustHaveResults() == null || s.getMustHaveResults().isEmpty()) {
             return item("skill_match", "Skill match", 50, 10, "FAIR", "No JD skills to match against.");
         }
-        long total = s.getMustHaveResults().size();
-        long missing = s.getMustHaveResults().stream()
-            .filter(r -> r.getVisibility() == SkillVisibility.MISSING).count();
-        long buried = s.getMustHaveResults().stream()
-            .filter(r -> r.getVisibility() == SkillVisibility.BURIED).count();
-        long found = total - missing;
 
-        double coverageRatio = (double) found / total;
-        double visibilityPenalty = buried * 0.05; // each buried skill costs 5 points
-        int raw = (int) Math.round(coverageRatio * 100 - visibilityPenalty * 100);
-        int score = clamp(raw);
+        SkillGroupUtils.GroupedCounts counts = SkillGroupUtils.count(s.getMustHaveResults(), ontology);
+        double visibilityPenalty = counts.buried() * 0.05;
+        int score = clamp((int) Math.round(counts.found() * 100.0 / counts.total() - visibilityPenalty * 100));
 
-        String tier = tier(score);
-        String obs = found + " of " + total + " required skills found" +
-            (buried > 0 ? ", " + buried + " buried in older roles" : "") + ".";
-        return item("skill_match", "Skill match", score, 10, tier, obs);
+        String obs = counts.found() + " of " + counts.total() + " required skills found" +
+            (counts.buried() > 0 ? ", " + counts.buried() + " buried in older roles" : "") + ".";
+        return item("skill_match", "Skill match", score, 10, tier(score), obs);
     }
 
     private ScoreItem scoreYoe(ResumeSignals s) {
-        if (s.isChronologyUnreliable()) return item("yoe_fit", "Years of experience", 10, 8, "CRITICAL", "Chronology is unreliable — YOE cannot be verified.");
+        if (s.isChronologyUnreliable()) return item("yoe_fit", "Years of experience", 10, 12, "CRITICAL", "Chronology is unreliable — YOE cannot be verified.");
         YoeFit fit = s.getYoeFit();
-        if (fit == null) return item("yoe_fit", "Years of experience", 30, 8, "POOR", "Experience level could not be determined.");
+        if (fit == null) return item("yoe_fit", "Years of experience", 30, 12, "POOR", "Experience level could not be determined.");
         int score = switch (fit) {
             case IN_RANGE -> 90;
             case OVER_RANGE -> 70;
@@ -122,7 +114,7 @@ public class ResumeScoreCalculator {
             case CANNOT_DETERMINE -> 30;
         };
         String yoe = s.getCalculatedYoe() != null ? String.format("%.1f", s.getCalculatedYoe()).replaceAll("\\.0$", "") + " yrs" : "unknown";
-        return item("yoe_fit", "Years of experience", score, 8, tier(score), yoe + " vs " + buildRange(s) + " required.");
+        return item("yoe_fit", "Years of experience", score, 12, tier(score), yoe + " vs " + buildRange(s) + " required.");
     }
 
     private ScoreItem scoreTitleMatch(ResumeSignals s) {
@@ -155,10 +147,21 @@ public class ResumeScoreCalculator {
     private ScoreItem scoreBullets(ResumeSignals s) {
         double verbRatio = s.getImpactVerbRatio();
         double metricDensity = s.getMetricDensity();
-        // verb ratio 0–1 → 0–50 pts, metric density 0–1 → 0–50 pts
-        int score = (int) Math.round(verbRatio * 50 + metricDensity * 50);
-        String obs = String.format("%.0f%% impact verbs, %.0f%% quantified results.", verbRatio * 100, metricDensity * 100);
-        return item("bullets", "Bullet quality", clamp(score), 7, tier(score), obs);
+        // Base: verb quality + metric density
+        int base = (int) Math.round(verbRatio * 30 + metricDensity * 70);
+
+        // NLU boost: intent alignment — bullets semantically match JD responsibilities
+        double intentBoost = 0;
+        if (s.getIntentAlignmentScore() > 0.6) intentBoost = 10;
+        else if (s.getIntentAlignmentScore() > 0.5) intentBoost = 5;
+
+        // NLU penalty: shallow skills — required skills mentioned only once
+        int shallowPenalty = s.getShallowSkills() != null ? Math.min(15, s.getShallowSkills().size() * 5) : 0;
+
+        int score = clamp((int)(base + intentBoost - shallowPenalty));
+        String obs = String.format("%.0f%% impact verbs, %.0f%% quantified results", verbRatio * 100, metricDensity * 100);
+        if (!s.getShallowSkills().isEmpty()) obs += "; shallow evidence for: " + String.join(", ", s.getShallowSkills().stream().limit(2).toList());
+        return item("bullets", "Bullet quality", score, 7, tier(score), obs);
     }
 
     private ScoreItem scoreSkillsFormat(ResumeSignals s) {
@@ -211,26 +214,67 @@ public class ResumeScoreCalculator {
     private ScoreItem scoreChronology(ResumeSignals s) {
         if (s.isChronologyUnreliable()) return item("chronology", "Chronology", 0, 5, "CRITICAL", "Chronology cannot be trusted.");
         if (s.isHasUnexplainedGap()) return item("chronology", "Chronology", 40, 5, "FAIR", "Unexplained employment gap detected.");
-        if (s.isJobHopper()) return item("chronology", "Chronology", 45, 5, "FAIR", "Multiple short tenures detected.");
-        if (s.isHasChronologyIssues()) return item("chronology", "Chronology", 55, 5, "FAIR", "Minor chronology issues.");
+        if (s.isJobHopper()) return item("chronology", "Chronology", 35, 5, "POOR", "Multiple short tenures detected."); // P7: 35 not 45
+        if (s.isHasChronologyIssues()) return item("chronology", "Chronology", 60, 5, "GOOD", "Minor chronology issues."); // P7: 60 not 55
         return item("chronology", "Chronology", 90, 5, "EXCELLENT", "Clean, verifiable work history.");
     }
 
     private ScoreItem scoreTailoring(ResumeSignals s) {
-        // Tailoring = how well the resume is customised for this specific JD
-        // Proxy: skill coverage + summary mentions skills + title match
         int base = 0;
         int count = 0;
         if (s.getMustHaveResults() != null && !s.getMustHaveResults().isEmpty()) {
-            long total = s.getMustHaveResults().size();
-            long found = s.getMustHaveResults().stream().filter(r -> r.getVisibility() != SkillVisibility.MISSING).count();
-            base += (int)(found * 100 / total);
+            SkillGroupUtils.GroupedCounts gc = SkillGroupUtils.count(s.getMustHaveResults(), ontology);
+            base += (int)(gc.found() * 100 / gc.total());
             count++;
         }
         if (s.isSummaryMentionsSkills()) { base += 80; count++; }
         if (s.getTitleMatch() == TitleMatch.EXACT || s.getTitleMatch() == TitleMatch.ADJACENT) { base += 80; count++; }
+
+        // NLU: domain depth — required skills evidenced in 2+ bullets
+        if (s.getDomainDepthScore() > 0) {
+            base += (int)(s.getDomainDepthScore() * 80);
+            count++;
+        }
+
+        // Keyword density: ATS cheatsheet says primary keywords should appear 3-5x
+        if (s.getKeywordDensityScore() > 0) {
+            base += (int)(s.getKeywordDensityScore() * 80);
+            count++;
+        }
+
         int score = count > 0 ? clamp(base / count) : 40;
-        return item("tailoring", "Tailoring", score, 5, tier(score), "How well this resume is customised for the role.");
+
+        String obs;
+        if (s.getMustHaveResults() != null && !s.getMustHaveResults().isEmpty()) {
+            SkillGroupUtils.GroupedCounts gc = SkillGroupUtils.count(s.getMustHaveResults(), ontology);
+            obs = gc.found() + "/" + gc.total() + " required skills present" +
+                (gc.missing() > 0 ? ", " + gc.missing() + " missing" : "") +
+                (s.isSummaryMentionsSkills() ? ", summary mentions JD skills" : ", summary doesn't mention JD skills");
+        } else {
+            obs = s.isSummaryMentionsSkills() ? "Summary mentions JD skills" : "No JD skills to match against";
+        }
+        return item("tailoring", "Tailoring", score, 5, tier(score), obs);
+    }
+
+    /**
+     * Projects / portfolio score.
+     * Data-calibrated: 5+ projects → 92% hire rate, 3+ → 87%, 0 → 68%.
+     * Especially important for candidates with low YOE (fresher/bootcamp).
+     */
+    private ScoreItem scoreProjects(ResumeSignals s) {
+        if (!s.isHasProjectsSection()) {
+            // No projects section — neutral for senior candidates, mild penalty for juniors
+            boolean isJunior = s.getCalculatedYoe() != null && s.getCalculatedYoe() < 3.0;
+            int score = isJunior ? 30 : 60;
+            return item("projects", "Projects & portfolio", score, 4, tier(score),
+                isJunior ? "No projects section — important for early-career candidates." : "No projects section.");
+        }
+        // Has projects — score based on YOE context
+        // For senior candidates, projects are a bonus; for juniors, they're essential
+        boolean isJunior = s.getCalculatedYoe() != null && s.getCalculatedYoe() < 3.0;
+        int score = isJunior ? 85 : 75;
+        return item("projects", "Projects & portfolio", score, 4, tier(score),
+            "Projects section present" + (isJunior ? " — strong signal for early-career candidate." : "."));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

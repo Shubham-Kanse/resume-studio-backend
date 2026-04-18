@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableJpaRepositories(basePackages = "com.resumestudio")
 @EntityScan(basePackages = "com.resumestudio")
 @EnableAsync
+@org.springframework.scheduling.annotation.EnableScheduling
 public class ResumeStudioApplication {
     public static void main(String[] args) {
         SpringApplication.run(ResumeStudioApplication.class, args);

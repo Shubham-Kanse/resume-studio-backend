@@ -178,6 +178,7 @@ public class SemanticExtractor {
 
     public SectionType classifyHeader(String line) {
         String normalised = line.toLowerCase()
+            .replace("&", "and")
             .replaceAll("[:\\-–—|]", "")
             .replaceAll("\\s+", " ")
             .trim();

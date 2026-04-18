@@ -26,16 +26,23 @@ public class JobTrackerController {
         "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     );
-    private static final long MAX_RESUME_BYTES = 10 * 1024 * 1024; // 10 MB
+    private static final long MAX_RESUME_BYTES = 5 * 1024 * 1024; // 5 MB
 
     private final JobApplicationRepository repo;
     private final ResumeStorageService storage;
     private final SupabaseJwtVerifier verifier;
+    private final com.resumestudio.auth.UserService userService;
 
-    public JobTrackerController(JobApplicationRepository repo, ResumeStorageService storage, SupabaseJwtVerifier verifier) {
+    public JobTrackerController(JobApplicationRepository repo, ResumeStorageService storage,
+                                 SupabaseJwtVerifier verifier, com.resumestudio.auth.UserService userService) {
         this.repo = repo;
         this.storage = storage;
         this.verifier = verifier;
+        this.userService = userService;
+    }
+
+    private com.resumestudio.auth.model.Plan userPlan(String userId) {
+        return userService.getPlan(userId);
     }
 
     @GetMapping
@@ -53,6 +60,17 @@ public class JobTrackerController {
         if (body.containsKey("stage") && !VALID_STAGES.contains(body.get("stage"))) {
             return badRequest("Invalid stage value");
         }
+
+        // Free plan: max 10 tracker jobs
+        com.resumestudio.auth.model.Plan plan = verifier != null ? userPlan(claims.userId()) : com.resumestudio.auth.model.Plan.FREE;
+        if (plan == com.resumestudio.auth.model.Plan.FREE) {
+            long count = repo.countByUserId(claims.userId());
+            if (count >= 10) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.PAYMENT_REQUIRED)
+                    .body(Map.of("error", "Free plan is limited to 10 tracked jobs. Upgrade to Basic or Pro for unlimited tracking."));
+            }
+        }
+
         try {
             JobApplication job = new JobApplication();
             job.setUserId(claims.userId());
@@ -106,7 +124,7 @@ public class JobTrackerController {
         if (claims == null) return unauthorized();
 
         if (file.isEmpty()) return badRequest("File is empty");
-        if (file.getSize() > MAX_RESUME_BYTES) return badRequest("File exceeds 10 MB limit");
+        if (file.getSize() > MAX_RESUME_BYTES) return badRequest("File exceeds 5 MB limit");
         String contentType = file.getContentType() != null ? file.getContentType() : "";
         if (!ALLOWED_MIME_TYPES.contains(contentType)) {
             return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
@@ -120,9 +138,10 @@ public class JobTrackerController {
             JobApplication j = jobOpt.get();
             if (j.getResumeS3Key() != null) safeDelete(j.getResumeS3Key());
             String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "resume";
-            String key = storage.upload(claims.userId(), id, file, originalName);
+            String safeName = originalName.replaceAll("[^a-zA-Z0-9._\\-]", "_");
+            String key = storage.upload(claims.userId(), id, file, safeName);
             j.setResumeS3Key(key);
-            j.setResumeName(originalName);
+            j.setResumeName(safeName);
             repo.save(j);
             return ResponseEntity.ok(Map.of("resumeS3Key", key, "resumeName", originalName));
         } catch (RuntimeException e) {

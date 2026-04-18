@@ -10,6 +10,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
@@ -18,6 +19,9 @@ import java.util.regex.Pattern;
  * If the input is a URL, fetches it via Jina Reader (r.jina.ai),
  * which renders JavaScript and returns clean markdown text.
  * Works with LinkedIn, Cisco, Workday, Greenhouse, Lever, and any other job board.
+ *
+ * Results are cached in-memory for the JVM lifetime to avoid redundant fetches
+ * when the same URL is submitted multiple times in quick succession.
  */
 @Service
 public class JdFetchService {
@@ -35,6 +39,9 @@ public class JdFetchService {
         .connectTimeout(Duration.ofSeconds(10))
         .build();
 
+    // Cache: URL → resolved text. Bounded implicitly by distinct URLs seen per JVM lifetime.
+    private final ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();
+
     public String resolve(String input) {
         if (input == null || input.isBlank()) return input;
 
@@ -43,10 +50,27 @@ public class JdFetchService {
             return trimmed;
         }
 
+        String cached = cache.get(trimmed);
+        if (cached != null) {
+            log.debug("JD URL cache hit: {}", trimmed);
+            return cached;
+        }
+
         log.info("JD input is a URL — fetching via Jina Reader: {}", trimmed);
+
+        // Detect known blocked job boards upfront — saves a round-trip and gives a clear message
+        String host = trimmed.toLowerCase();
+        if (host.contains("linkedin.com") || host.contains("indeed.com") ||
+            host.contains("glassdoor.com") || host.contains("ziprecruiter.com")) {
+            throw new RuntimeException(
+                "LinkedIn, Indeed, Glassdoor, and ZipRecruiter block automated access. " +
+                "Please paste the job description text directly instead of the URL.");
+        }
+
         try {
             String text = fetchViaJina(trimmed);
             log.info("JD fetched: {} chars from {}", text.length(), trimmed);
+            cache.put(trimmed, text);
             return text;
         } catch (RuntimeException e) {
             throw e;
@@ -78,6 +102,22 @@ public class JdFetchService {
         String body = response.body();
         if (body == null) {
             throw new IOException("Jina Reader returned null body");
+        }
+
+        // Detect login/auth walls — Jina renders them but they're not job descriptions
+        String bodyLower = body.toLowerCase();
+        boolean looksLikeLoginPage = (bodyLower.contains("sign in") || bodyLower.contains("log in") || bodyLower.contains("login"))
+            && (bodyLower.contains("password") || bodyLower.contains("email address"))
+            && !bodyLower.contains("requirements") && !bodyLower.contains("responsibilities");
+        if (looksLikeLoginPage) {
+            throw new IOException("This job posting requires login to view. Please paste the job description text directly.");
+        }
+
+        // Detect generic error pages
+        boolean looksLikeErrorPage = (bodyLower.contains("page not found") || bodyLower.contains("404") || bodyLower.contains("job no longer available") || bodyLower.contains("this job has expired"))
+            && body.length() < 2000;
+        if (looksLikeErrorPage) {
+            throw new IOException("Job posting not found or has expired. Please paste the job description text directly.");
         }
         
         // Strip Jina Reader metadata and extract only markdown content

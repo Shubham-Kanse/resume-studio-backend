@@ -28,16 +28,6 @@ public class AnomalyDetector {
         "([A-Za-z][A-Za-z0-9.+#\\s]{1,30})\\s+(?:for\\s+)?(\\d+)\\s*\\+?\\s*years?",
         Pattern.CASE_INSENSITIVE);
 
-    private static final List<String> JUNIOR_BULLET_VERBS = List.of(
-        "assisted", "helped", "supported", "shadowed", "learned", "was responsible for",
-        "participated in", "contributed to", "worked on", "involved in"
-    );
-
-    private static final List<String> SENIOR_BULLET_VERBS = List.of(
-        "architected", "designed", "led", "owned", "drove", "established", "defined",
-        "mentored", "spearheaded", "pioneered", "transformed", "built from scratch"
-    );
-
     private final EscoSkillGraph escoGraph;
     private final NlpService nlp;
     private final SkillRecencyService skillRecency;
@@ -83,12 +73,14 @@ public class AnomalyDetector {
         if (recent.getTitle() == null || recent.getBullets() == null) return;
         if (recent.getIcLevel() < 4) return;
 
+        // Use VerbQualityService.impliedSeniority() instead of hardcoded verb lists
         int juniorCount = 0, seniorCount = 0;
         int total = recent.getBullets().size();
         for (String bullet : recent.getBullets()) {
-            String lower = bullet.toLowerCase();
-            if (JUNIOR_BULLET_VERBS.stream().anyMatch(lower::contains)) juniorCount++;
-            if (SENIOR_BULLET_VERBS.stream().anyMatch(lower::contains)) seniorCount++;
+            String firstWord = bullet.trim().split("\\s+")[0];
+            String quality = nlp.getVerbQuality(firstWord);
+            if ("WEAK".equals(quality) || "TOXIC".equals(quality)) juniorCount++;
+            else if ("ELITE".equals(quality) || "STRONG".equals(quality)) seniorCount++;
         }
         if (total >= 3 && juniorCount > seniorCount && juniorCount > total / 2) {
             signals.setHasTitleInflation(true);

@@ -72,6 +72,7 @@ public class ResumeSignals {
     private boolean allMustHavesVisible;       // SURFACE or MID
     private boolean hasBuriedMustHaves;        // found but only in old bullets
     private boolean hasMissingMustHaves;
+    private List<String> missingMustHavesList = new java.util.ArrayList<>();
     private boolean hasAbbreviationMismatches;
     private boolean hasSoftSkillsOnly;
     private boolean hasMixedSoftHard;
@@ -102,6 +103,25 @@ public class ResumeSignals {
 
     // ── Projects / portfolio signals ──────────────────────────
     private boolean hasProjectsSection;  // bootcamp/self-taught candidates
+
+    // ── NLU: Skill credibility signals ───────────────────────
+    private double skillCredibilityScore = 0.5;  // 0–1: how well bullets evidence claimed skills
+    private boolean hasUnevidencedSkills;         // skills listed but never demonstrated in bullets
+    private List<String> impliedSkillsFound = new java.util.ArrayList<>(); // skills implied by ontology
+    private double taskAlignmentScore = 0.5;      // 0–1: bullet outcomes align with JD task requirements
+
+    // ── NLU: Demonstrated seniority ──────────────────────────
+    // Inferred from bullet verb language (0 = unknown, 1=intern, 4=senior, 6=principal)
+    private int demonstratedSeniorityLevel = 0;
+
+    // ── NLU: Semantic alignment ───────────────────────────────
+    private double intentAlignmentScore = 0.5;  // 0–1: bullets match JD responsibility sentences
+    private String topAlignedBullet;             // resume bullet most aligned with JD intent
+    private double domainDepthScore = 0.5;       // 0–1: required skills evidenced in 2+ bullets
+    private List<String> shallowSkills = new java.util.ArrayList<>(); // required skills with only 1 mention
+
+    // ── Keyword density (ATS cheatsheet: primary keywords 3-5x) ──────────────
+    private double keywordDensityScore = 0.5; // fraction of required skills appearing 3+ times
 
     // ── Getters & Setters ────────────────────────────────────
 
@@ -248,6 +268,8 @@ public class ResumeSignals {
 
     public boolean isHasMissingMustHaves() { return hasMissingMustHaves; }
     public void setHasMissingMustHaves(boolean hasMissingMustHaves) { this.hasMissingMustHaves = hasMissingMustHaves; }
+    public List<String> getMissingMustHavesList() { return missingMustHavesList; }
+    public void setMissingMustHavesList(List<String> missingMustHavesList) { this.missingMustHavesList = missingMustHavesList; }
 
     public boolean isHasAbbreviationMismatches() { return hasAbbreviationMismatches; }
     public void setHasAbbreviationMismatches(boolean hasAbbreviationMismatches) { this.hasAbbreviationMismatches = hasAbbreviationMismatches; }
@@ -298,4 +320,28 @@ public class ResumeSignals {
 
     public boolean isHasProjectsSection() { return hasProjectsSection; }
     public void setHasProjectsSection(boolean hasProjectsSection) { this.hasProjectsSection = hasProjectsSection; }
+
+    public double getSkillCredibilityScore() { return skillCredibilityScore; }
+    public void setSkillCredibilityScore(double skillCredibilityScore) { this.skillCredibilityScore = skillCredibilityScore; }
+    public boolean isHasUnevidencedSkills() { return hasUnevidencedSkills; }
+    public void setHasUnevidencedSkills(boolean hasUnevidencedSkills) { this.hasUnevidencedSkills = hasUnevidencedSkills; }
+    public List<String> getImpliedSkillsFound() { return impliedSkillsFound; }
+    public void setImpliedSkillsFound(List<String> impliedSkillsFound) { this.impliedSkillsFound = impliedSkillsFound; }
+    public double getTaskAlignmentScore() { return taskAlignmentScore; }
+    public void setTaskAlignmentScore(double taskAlignmentScore) { this.taskAlignmentScore = taskAlignmentScore; }
+
+    public int getDemonstratedSeniorityLevel() { return demonstratedSeniorityLevel; }
+    public void setDemonstratedSeniorityLevel(int demonstratedSeniorityLevel) { this.demonstratedSeniorityLevel = demonstratedSeniorityLevel; }
+
+    public double getIntentAlignmentScore() { return intentAlignmentScore; }
+    public void setIntentAlignmentScore(double intentAlignmentScore) { this.intentAlignmentScore = intentAlignmentScore; }
+    public String getTopAlignedBullet() { return topAlignedBullet; }
+    public void setTopAlignedBullet(String topAlignedBullet) { this.topAlignedBullet = topAlignedBullet; }
+    public double getDomainDepthScore() { return domainDepthScore; }
+    public void setDomainDepthScore(double domainDepthScore) { this.domainDepthScore = domainDepthScore; }
+    public List<String> getShallowSkills() { return shallowSkills; }
+    public void setShallowSkills(List<String> shallowSkills) { this.shallowSkills = shallowSkills; }
+
+    public double getKeywordDensityScore() { return keywordDensityScore; }
+    public void setKeywordDensityScore(double keywordDensityScore) { this.keywordDensityScore = keywordDensityScore; }
 }

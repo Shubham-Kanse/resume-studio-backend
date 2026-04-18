@@ -6,4 +6,5 @@ import java.util.List;
 public interface JobApplicationRepository extends JpaRepository<JobApplication, String> {
     List<JobApplication> findByUserIdOrderByCreatedAtDesc(String userId);
     void deleteByUserId(String userId);
+    long countByUserId(String userId);
 }

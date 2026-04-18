@@ -4,10 +4,12 @@ import com.resumestudio.reviewer.classification.ClassificationEngine.Classificat
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.model.enums.*;
 import com.resumestudio.reviewer.signals.CoherenceEngine;
+import com.resumestudio.reviewer.skills.MindTechOntology;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 /**
  * Edge cases for classification not covered in ClassificationEngineTest.
@@ -17,7 +19,7 @@ class ClassificationEdgeCaseTest {
     private ClassificationEngine engine;
 
     @BeforeEach
-    void setUp() { engine = new ClassificationEngine(); }
+    void setUp() { engine = new ClassificationEngine(mock(MindTechOntology.class)); }
 
     private ResumeSignals goodSignals() {
         ResumeSignals s = new ResumeSignals();

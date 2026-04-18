@@ -21,6 +21,8 @@ public class Skill {
     private boolean hasVersionNumber;
     private String strippedName;
     private float recencyWeight = 1.0f;  // 1.0 = recent, 0.7 = 1-3 years ago, 0.4 = 3+ years ago
+    private String sourceBullet;          // first bullet text where this skill appears (provenance)
+    private double credibilityScore = 0.5; // NLU: 0–1, how well bullets evidence this skill
 
     public Skill() {}
 
@@ -65,6 +67,12 @@ public class Skill {
 
     public float getRecencyWeight() { return recencyWeight; }
     public void setRecencyWeight(float recencyWeight) { this.recencyWeight = recencyWeight; }
+
+    public String getSourceBullet() { return sourceBullet; }
+    public void setSourceBullet(String sourceBullet) { this.sourceBullet = sourceBullet; }
+
+    public double getCredibilityScore() { return credibilityScore; }
+    public void setCredibilityScore(double credibilityScore) { this.credibilityScore = credibilityScore; }
 
     /** Returns best name to use for display — canonical if resolved, otherwise raw. */
     public String getDisplayName() {

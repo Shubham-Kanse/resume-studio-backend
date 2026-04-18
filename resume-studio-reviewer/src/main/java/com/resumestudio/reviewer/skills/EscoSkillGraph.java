@@ -73,6 +73,12 @@ public class EscoSkillGraph {
         Map.entry("cicd", "CI/CD")
     );
 
+    /** Expand an abbreviation to its full form, or return the input unchanged. */
+    public String expandAbbreviation(String term) {
+        if (term == null) return term;
+        return ABBREV.getOrDefault(term.toLowerCase().trim(), term);
+    }
+
     /** Resolve a skill name or synonym to its canonical form. Delegates to MIND, then abbreviation table. */
     public String resolve(String skillName) {
         if (skillName == null) return skillName;

@@ -44,6 +44,7 @@ public class JdParserService {
     private final TfIdfVectorizer tfidfVectorizer;
     private final PosTagService posTagService;
     private final JdRolePatternsService rolePatternsService;
+    private final LlmJdExtractor llmExtractor;
     
     private double unstructuredMustHaveRatio = 0.7;
     private int unstructuredSplitMinSkills = 8;
@@ -59,13 +60,15 @@ public class JdParserService {
                           SkillEmbeddingIndex embeddingIndex,
                           TfIdfVectorizer tfidfVectorizer,
                           PosTagService posTagService,
-                          JdRolePatternsService rolePatternsService) {
+                          JdRolePatternsService rolePatternsService,
+                          LlmJdExtractor llmExtractor) {
         this.escoGraph = escoGraph;
         this.mindTech = mindTech;
         this.embeddingIndex = embeddingIndex;
         this.tfidfVectorizer = tfidfVectorizer;
         this.posTagService = posTagService;
         this.rolePatternsService = rolePatternsService;
+        this.llmExtractor = llmExtractor;
     }
 
     @Value("${reviewer.jd.unstructured.must-have-ratio:0.7}")
@@ -100,13 +103,21 @@ public class JdParserService {
 
     // ── Section boundary patterns ─────────────────────────────────────────────
     private static final Pattern MUST_HAVE_SECTION = Pattern.compile(
-        "^(requirements?|required|must[- ]have|essential|what you.ll need|" +
-        "what we.re looking for|qualifications?|minimum qualifications?)\\s*:?\\s*$",
+        "^(requirements?|required(\\s+qualifications?)?|must[- ]have|essential(\\s+qualifications?)?|" +
+        "what you.ll need|what you.ll bring|what you bring|what we.re looking for|what we need|" +
+        "minimum qualifications?|basic qualifications?|" +
+        "qualifications?|key qualifications?|technical requirements?|" +
+        "you have|you.ll have|you should have|you must have|" +
+        "the ideal candidate|ideal candidate|about you|who you are|" +
+        "skills and experience|experience and skills|skills.{0,10}required)\\s*:?\\s*$",
         Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
     private static final Pattern NICE_TO_HAVE_SECTION = Pattern.compile(
-        "^(nice[- ]to[- ]have|preferred|preferred qualifications?|bonus|plus|desirable|" +
-        "what would be great|what.s a plus|advantageous)\\s*:?\\s*$",
+        "^((additional\\s+responsibilities?\\s*[&and]*\\s*)?preferred(\\s+qualifications?)?|" +
+        "nice[- ]to[- ]have|bonus|plus|desirable|additional qualifications?|" +
+        "what would be great|what.s a plus|advantageous|" +
+        "it.s a plus|great to have|good to have|" +
+        "preferred skills|preferred experience)\\s*:?\\s*$",
         Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
     // ── Bullet/list item ─────────────────────────────────────────────────────
@@ -172,29 +183,46 @@ public class JdParserService {
         JobDescription jd = new JobDescription();
         jd.setRawText(rawText);
 
-        extractTitle(rawText, jd);
-        extractYoeRequirement(rawText, jd);
-        extractSkillSpecificYoe(rawText, jd);
-        extractSkills(rawText, jd);
+        // ── Step 1: LLM extraction (universal, context-aware) ─────────────────
+        LlmJdExtractor.LlmJdResult llm = llmExtractor.extract(rawText);
+
+        if (llm != null && llm.roleTitle() != null && !llm.requiredSkills().isEmpty()) {
+            // LLM succeeded — use its structured output for the core fields
+            jd.setRoleTitle(llm.roleTitle());
+            jd.setMustHaveSkills(new java.util.ArrayList<>(llm.requiredSkills()));
+            jd.setNiceToHaveSkills(new java.util.ArrayList<>(llm.preferredSkills()));
+            jd.setYoeMin(llm.yoeMin());
+            jd.setYoeMax(llm.yoeMax());
+            if (llm.yoeMin() != null) jd.setYoeRawStatement(llm.yoeMin().intValue() + "+ years");
+            jd.setIcLevel(llm.icLevel());
+            jd.setWellStructured(true);
+            jd.setParseConfidence(0.92);
+            log.info("JD skills extracted (LLM): {} must-haves, {} nice-to-haves",
+                jd.getMustHaveSkills().size(), jd.getNiceToHaveSkills().size());
+            log.info("Must-haves: {}", jd.getMustHaveSkills());
+            log.info("Nice-to-haves: {}", jd.getNiceToHaveSkills());
+        } else {
+            // ── Step 2: Regex/ontology fallback ──────────────────────────────
+            log.info("LLM JD extraction unavailable — falling back to regex parser");
+            extractTitle(rawText, jd);
+            extractYoeRequirement(rawText, jd);
+            extractSkillSpecificYoe(rawText, jd);
+            extractSkills(rawText, jd);
+            jd.setWellStructured(
+                MUST_HAVE_SECTION.matcher(rawText).find() || NICE_TO_HAVE_SECTION.matcher(rawText).find()
+            );
+            jd.setParseConfidence(computeConfidence(jd));
+            validateParse(jd);
+        }
+
+        // ── Step 3: Shared enrichment (always runs regardless of parse path) ──
         computeSkillWeights(rawText, jd);
         inferImpliedSkills(jd);
         estimateIcLevel(rawText, jd);
         detectContext(rawText, jd);
-        
-        // Compute initial confidence before validation
-        jd.setParseConfidence(computeConfidence(jd));
-        
-        // Validate and apply penalties
-        validateParse(jd);
-
         jd.setNormalisedTitle(normalise(jd.getRoleTitle() != null ? jd.getRoleTitle() : ""));
-        jd.setWellStructured(
-            MUST_HAVE_SECTION.matcher(rawText).find() || NICE_TO_HAVE_SECTION.matcher(rawText).find()
-        );
         jd.setJdClarity(computeJdClarity(rawText, jd));
         jd.setTrimmedText(buildTrimmedText(rawText, jd));
-
-        // Enrich with role pattern data from ontology
         enrichFromRolePatterns(rawText, jd);
 
         return jd;
@@ -393,6 +421,15 @@ public class JdParserService {
         }
 
         cleaned = cleaned.replaceAll("(?i)\\s+(to join our team|to join us|based in .+|remote|hybrid)$", "").trim();
+
+        // Strip leading adjective noise that the seeking pattern can capture
+        // e.g. "a talented and driven Senior Software Engineer" → "Senior Software Engineer"
+        cleaned = cleaned.replaceAll(
+            "(?i)^(?:a |an )?(?:(?:talented|driven|passionate|experienced|skilled|motivated|" +
+            "exceptional|outstanding|creative|innovative|dedicated|enthusiastic|dynamic|" +
+            "highly motivated|results-driven|detail-oriented)\\s+(?:and\\s+)?)*",
+            "").trim();
+
         return cleaned.isBlank() ? "Unknown Role" : cleaned;
     }
     
@@ -452,12 +489,50 @@ public class JdParserService {
             return;
         }
 
-        // Try "5+ years"
+        // Collect ALL "X+ years" matches — use the highest one from a required/qualifications context
+        // (avoids picking up "1+ years" from a minimum section when "5+ years" is in required)
+        List<double[]> allMatches = new ArrayList<>(); // [yoe, position]
         Matcher plusMatcher = YOE_MIN_PLUS.matcher(text);
-        if (plusMatcher.find()) {
-            jd.setYoeMin(Double.parseDouble(plusMatcher.group(1)));
-            jd.setYoeMax(null); // open-ended
-            jd.setYoeRawStatement(plusMatcher.group());
+        while (plusMatcher.find()) {
+            allMatches.add(new double[]{Double.parseDouble(plusMatcher.group(1)), plusMatcher.start()});
+        }
+
+        if (!allMatches.isEmpty()) {
+            // Prefer the match closest to a "Required Qualifications" section header
+            String lower = text.toLowerCase();
+            int requiredSectionPos = -1;
+            for (String marker : List.of("required qualifications", "requirements", "minimum qualifications")) {
+                int pos = lower.indexOf(marker);
+                if (pos >= 0 && (requiredSectionPos < 0 || pos < requiredSectionPos)) {
+                    requiredSectionPos = pos;
+                }
+            }
+
+            double[] best = allMatches.get(0);
+            if (requiredSectionPos >= 0) {
+                // Pick the match that appears after the required section header
+                for (double[] m : allMatches) {
+                    if (m[1] > requiredSectionPos && m[0] > best[0]) {
+                        best = m;
+                    }
+                }
+            } else {
+                // No section found — take the highest value
+                for (double[] m : allMatches) {
+                    if (m[0] > best[0]) best = m;
+                }
+            }
+
+            jd.setYoeMin(best[0]);
+            jd.setYoeMax(null);
+            // Re-find the raw statement for the chosen match
+            plusMatcher.reset();
+            while (plusMatcher.find()) {
+                if (Double.parseDouble(plusMatcher.group(1)) == best[0]) {
+                    jd.setYoeRawStatement(plusMatcher.group());
+                    break;
+                }
+            }
             return;
         }
 
@@ -616,31 +691,23 @@ public class JdParserService {
      * Detect section type using regex + semantic similarity.
      */
     private SectionContext detectSection(String line) {
-        // Try regex first (fast path)
-        if (MUST_HAVE_SECTION.matcher(line).matches()) {
-            return SectionContext.MUST_HAVE;
+        // Strip markdown bold/italic before matching — headers come as **Required Qualifications**
+        String stripped = line.replaceAll("\\*\\*([^*]+)\\*\\*", "$1")
+                              .replaceAll("\\*([^*]+)\\*", "$1")
+                              .replaceAll("^#{1,6}\\s+", "")
+                              .trim();
+
+        if (MUST_HAVE_SECTION.matcher(stripped).matches()) return SectionContext.MUST_HAVE;
+        if (NICE_TO_HAVE_SECTION.matcher(stripped).matches()) return SectionContext.NICE_TO_HAVE;
+
+        // Semantic similarity fallback for structural markers
+        if (stripped.matches("^[A-Z\\s]{10,}:?$") || stripped.matches("^\\d+\\.\\s+[A-Z].+")) {
+            double mustHaveSim = embeddingIndex.cosineSimilarity(stripped, "required qualifications essential skills must have mandatory");
+            double niceToHaveSim = embeddingIndex.cosineSimilarity(stripped, "preferred qualifications nice to have bonus optional");
+            if (mustHaveSim > 0.7 && mustHaveSim > niceToHaveSim) return SectionContext.MUST_HAVE;
+            if (niceToHaveSim > 0.7 && niceToHaveSim > mustHaveSim) return SectionContext.NICE_TO_HAVE;
         }
-        if (NICE_TO_HAVE_SECTION.matcher(line).matches()) {
-            return SectionContext.NICE_TO_HAVE;
-        }
-        
-        // Check for structural markers (markdown headers, all caps, numbered)
-        if (line.matches("^#{1,3}\\s+.+") || 
-            line.matches("^[A-Z\\s]{10,}:?$") ||
-            line.matches("^\\d+\\.\\s+[A-Z].+")) {
-            
-            // Use semantic similarity
-            double mustHaveSim = embeddingIndex.cosineSimilarity(line, "required qualifications essential skills must have mandatory");
-            double niceToHaveSim = embeddingIndex.cosineSimilarity(line, "preferred qualifications nice to have bonus optional");
-            
-            if (mustHaveSim > 0.7 && mustHaveSim > niceToHaveSim) {
-                return SectionContext.MUST_HAVE;
-            }
-            if (niceToHaveSim > 0.7 && niceToHaveSim > mustHaveSim) {
-                return SectionContext.NICE_TO_HAVE;
-            }
-        }
-        
+
         return SectionContext.UNKNOWN;
     }
     

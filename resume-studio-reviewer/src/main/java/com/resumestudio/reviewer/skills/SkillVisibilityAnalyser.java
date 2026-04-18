@@ -101,6 +101,8 @@ public class SkillVisibilityAnalyser {
                 if (containsSkill(bullet, skillLower, canonical)) {
                     skill.setMostRecentRoleIndex(i);
                     skill.setBulletOccurrences(skill.getBulletOccurrences() + 1);
+                    // Capture the first bullet where this skill appears (provenance)
+                    if (skill.getSourceBullet() == null) skill.setSourceBullet(bullet);
                     // MID = found in one of the 2 most recent roles
                     return i <= 1 ? SkillVisibility.MID : SkillVisibility.BURIED;
                 }

@@ -107,6 +107,11 @@ public class TitleMatchCalculator {
         if (cCanon != null && related.stream().anyMatch(r -> r.equalsIgnoreCase(cCanon)))
             return TitleMatch.ADJACENT;
 
+        // RELATED: candidate title is on a credible progression path to the JD title
+        // e.g. "Data Analyst" → canProgressTo → "Data Scientist" → canProgressTo → "ML Engineer"
+        if (cCanon != null && isOnProgressionPath(cCanon, jdTitle, 2))
+            return TitleMatch.RELATED;
+
         // RELATED: overlapping domains but seniority gap > 1
         if (domainsOverlap) return TitleMatch.RELATED;
 
@@ -140,6 +145,18 @@ public class TitleMatchCalculator {
         if (last > first) return TitleProgression.GROWING;
         if (last < first) return TitleProgression.REGRESSION;
         return TitleProgression.FLAT;
+    }
+
+    /** BFS up to `maxDepth` hops through canProgressTo chains. */
+    private boolean isOnProgressionPath(String fromCanon, String toTitle, int maxDepth) {
+        if (maxDepth <= 0) return false;
+        List<String> nextSteps = ontology.canProgressTo(fromCanon);
+        for (String next : nextSteps) {
+            String nextCanon = ontology.canonicalise(next);
+            if (nextCanon != null && nextCanon.equalsIgnoreCase(ontology.canonicalise(toTitle))) return true;
+            if (isOnProgressionPath(next, toTitle, maxDepth - 1)) return true;
+        }
+        return false;
     }
 
     private boolean sameDomain(String title1, String title2) {

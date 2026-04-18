@@ -72,8 +72,9 @@ public class HeaderExtractor {
         String headerText = rawDoc.getHeaderZoneText();
         if (headerText == null || headerText.isBlank()) {
             String fullText = rawDoc.getFullText();
+            // Use up to 1200 chars — long summaries push contact info below 600
             headerText = fullText != null
-                ? fullText.substring(0, Math.min(600, fullText.length()))
+                ? fullText.substring(0, Math.min(1200, fullText.length()))
                 : "";
         }
 
@@ -164,9 +165,9 @@ public class HeaderExtractor {
     // ── Title and company extraction ──────────────────────────────────────────
 
     private void extractTitleAndCompany(RawDocument rawDoc, Resume resume) {
-        // Use only the first 600 chars of text — strictly the header zone
         String fullText = rawDoc.getFullText() != null ? rawDoc.getFullText() : "";
-        String headerText = fullText.substring(0, Math.min(600, fullText.length()));
+        // Use 1200 chars — long summaries push title below 600
+        String headerText = fullText.substring(0, Math.min(1200, fullText.length()));
         String[] lines = headerText.split("\n");
 
         boolean nameFound = resume.getCandidateName() != null;

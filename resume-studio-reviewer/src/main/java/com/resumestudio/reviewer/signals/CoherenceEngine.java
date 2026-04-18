@@ -45,6 +45,7 @@ public class CoherenceEngine {
         }
 
         // 3. SKILLS_INFLATION: large skills section but few appear in bullets
+        // P15: threshold lowered from 20 to 12
         if (signals.getMustHaveResults() != null) {
             long foundInBullets = signals.getMustHaveResults().stream()
                 .filter(r -> r.getVisibility() == SkillVisibility.MID || r.getVisibility() == SkillVisibility.BURIED)
@@ -52,7 +53,7 @@ public class CoherenceEngine {
             long totalListed = signals.getMustHaveResults().stream()
                 .filter(r -> r.getVisibility() != SkillVisibility.MISSING)
                 .count();
-            if (totalListed >= 20 && foundInBullets < 5) {
+            if (totalListed >= 12 && foundInBullets < 3) {
                 flags.add(new CoherenceFlag("SKILLS_INFLATION",
                     "Large skills section (" + totalListed + " items) but few appear in experience bullets",
                     ImpactLevel.LOW));
@@ -87,12 +88,36 @@ public class CoherenceEngine {
                 ImpactLevel.MEDIUM));
         }
 
-        // 6. METRIC_CREDIBILITY: suspiciously high metric density for very low YOE — skip fresher roles
+        // 6. METRIC_CREDIBILITY: suspiciously high metric density for very low YOE
+        // P16: only fire if real work experience exists (not just projects)
         if (!isFresherRole && signals.getMetricDensity() > 0.9 && signals.getCalculatedYoe() != null
-                && signals.getCalculatedYoe() < 1.5) {
+                && signals.getCalculatedYoe() < 1.5
+                && signals.getYoeState() == com.resumestudio.reviewer.model.enums.YoeState.CALCULABLE
+                && !signals.isHasProjectsSection()) {
             flags.add(new CoherenceFlag("METRIC_CREDIBILITY",
                 "Very high metric density for early-career candidate — credibility check advised",
                 ImpactLevel.LOW));
+        }
+
+        // 7. STALE_SKILLS: skills section contains deprecated technologies
+        if (signals.isHasStaleSkills()) {
+            flags.add(new CoherenceFlag("SKILL_AGE_MISMATCH",
+                "Skills section includes deprecated or legacy technologies that may signal an outdated stack",
+                ImpactLevel.LOW));
+        }
+
+        // 8. NLU: TITLE_VS_DEMONSTRATED_SENIORITY
+        // Candidate's title claims Senior+ but bullet verbs demonstrate Junior-level work
+        int demonstrated = signals.getDemonstratedSeniorityLevel();
+        if (demonstrated > 0 && signals.getCandidateTitle() != null) {
+            String titleLower = signals.getCandidateTitle().toLowerCase();
+            boolean claimsSenior = titleLower.matches(".*\\b(senior|sr|lead|staff|principal|architect)\\b.*");
+            boolean demonstratesJunior = demonstrated <= 2;
+            if (claimsSenior && demonstratesJunior) {
+                flags.add(new CoherenceFlag("TITLE_VS_BULLETS",
+                    "Title claims senior seniority but bullet language (verb choice, scope, ownership) reflects junior-level work",
+                    ImpactLevel.MEDIUM));
+            }
         }
 
         // Coherence penalty

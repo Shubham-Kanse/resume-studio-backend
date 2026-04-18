@@ -141,13 +141,26 @@ public class SkillMatchEngine {
         }
 
         // ── Strategy 5: PARENT_FRAMEWORK ──────────────────────────────────
-        // JD asks for "Spring Boot", CV has "Spring" (parent) — higher confidence than semantic
+        // JD asks for "Spring Boot", CV has "Spring" (parent) — or JD has "React", CV has "React.js"
         for (Skill resumeSkill : resumeSkills) {
             String rawName = resumeSkill.getRawName();
             if (rawName == null || rawName.isBlank()) continue;
             String resumeNorm = normalise(rawName);
+            // CV has parent of JD skill: "Spring" matches "Spring Boot"
             if (resumeNorm.length() > 4 && jdNormalised.matches(".*\\b" + java.util.regex.Pattern.quote(resumeNorm) + "\\b.*")) {
                 log.debug("PARENT_FRAMEWORK match: '{}' → '{}'", jdSkill, rawName);
+                return buildResult(result, resumeSkill, SkillMatchType.PARENT_FRAMEWORK, jdCanonical);
+            }
+            // CV has child of JD skill: "React.js" matches JD "React"
+            if (jdNormalised.length() > 3 && resumeNorm.matches(".*\\b" + java.util.regex.Pattern.quote(jdNormalised) + "\\b.*")) {
+                log.debug("PARENT_FRAMEWORK match (child): '{}' → '{}'", jdSkill, rawName);
+                return buildResult(result, resumeSkill, SkillMatchType.PARENT_FRAMEWORK, jdCanonical);
+            }
+            // Dot-stripped match: "React.js" → "reactjs" vs "react" — strip dots and compare
+            String resumeNoDot = resumeNorm.replace(".", "");
+            String jdNoDot = jdNormalised.replace(".", "");
+            if (resumeNoDot.equals(jdNoDot) && !resumeNorm.equals(jdNormalised)) {
+                log.debug("DOT_VARIANT match: '{}' → '{}'", jdSkill, rawName);
                 return buildResult(result, resumeSkill, SkillMatchType.PARENT_FRAMEWORK, jdCanonical);
             }
         }
@@ -221,6 +234,12 @@ public class SkillMatchEngine {
         result.setResumeSkill(resumeSkill.getRawName());
         result.setCanonicalName(canonical);
         result.setVisibility(resumeSkill.getVisibility() != null ? resumeSkill.getVisibility() : SkillVisibility.SURFACE);
+
+        // Provenance: the first bullet where this skill appears (or the skill name itself)
+        if (resumeSkill.getSourceBullet() != null && !resumeSkill.getSourceBullet().isBlank()) {
+            String src = resumeSkill.getSourceBullet().trim();
+            result.setSourceText(src.length() > 120 ? src.substring(0, 120) + "…" : src);
+        }
 
         // Apply recency weight: finalConfidence = matchConfidence * recencyWeight
         float matchConfidence = switch (matchType) {

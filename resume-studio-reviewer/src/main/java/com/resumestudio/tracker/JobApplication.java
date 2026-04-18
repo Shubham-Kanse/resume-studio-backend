@@ -1,25 +1,34 @@
 package com.resumestudio.tracker;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "job_applications")
+@Table(name = "job_applications", indexes = {
+    @Index(name = "idx_job_applications_user_created", columnList = "user_id, created_at DESC")
+})
 public class JobApplication {
 
     @Id
     private String id = UUID.randomUUID().toString();
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false, length = 36)
+    @jakarta.validation.constraints.NotNull
     private String userId;
 
     @Column(nullable = false, length = 20)
     private String stage = "To Apply";
+
+    @Size(max = 255)
     private String company;
+
+    @Size(max = 255)
     private String position;
-    @Column(name = "job_url")
+
+    @Column(name = "job_url", columnDefinition = "TEXT")
     private String jobUrl;
 
     @Column(name = "resume_s3_key")
@@ -32,10 +41,20 @@ public class JobApplication {
     private LocalDate dateApplied;
 
     @Column(columnDefinition = "TEXT")
+    @Size(max = 5000)
     private String notes;
 
     @Column(name = "created_at", updatable = false)
     private Instant createdAt = Instant.now();
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt = Instant.now();
+
+    @PrePersist
+    public void prePersist() { this.updatedAt = Instant.now(); }
+
+    @PreUpdate
+    public void preUpdate() { this.updatedAt = Instant.now(); }
 
     public JobApplication() {}
 
@@ -59,4 +78,5 @@ public class JobApplication {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
     public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
 }

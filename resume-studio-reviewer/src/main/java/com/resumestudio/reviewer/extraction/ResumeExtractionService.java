@@ -72,6 +72,7 @@ public class ResumeExtractionService {
                 if (seen.add(key)) deduped.add(s);
             }
             resume.setSkills(deduped);
+            resume.setHasStaleSkills(skillResult.isHasStaleSkills());
         }
 
         return resume;
@@ -79,6 +80,10 @@ public class ResumeExtractionService {
 
     public SummaryExtractor.SummaryAnalysis analyseSummary(String summaryText, String roleTitle) {
         return summaryExtractor.analyse(summaryText, roleTitle);
+    }
+
+    public SummaryExtractor.SummaryAnalysis analyseSummary(String summaryText, String roleTitle, java.util.List<String> jdMustHaves) {
+        return summaryExtractor.analyse(summaryText, roleTitle, jdMustHaves);
     }
 
     public SkillsFormat detectInitialFormat(List<Skill> skills) {

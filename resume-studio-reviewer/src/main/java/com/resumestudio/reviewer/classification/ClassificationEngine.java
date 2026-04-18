@@ -3,20 +3,40 @@ package com.resumestudio.reviewer.classification;
 import com.resumestudio.reviewer.model.ResumeSignals;
 import com.resumestudio.reviewer.signals.CoherenceEngine;
 import com.resumestudio.reviewer.signals.CoherenceEngine.CoherenceResult;
+import com.resumestudio.reviewer.signals.SkillGroupUtils;
+import com.resumestudio.reviewer.skills.MindTechOntology;
 import com.resumestudio.reviewer.model.enums.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-/**
- * Pure deterministic weighted scoring engine per AI-integration.md Layer 6.
- * Inputs: ResumeSignals + CoherenceResult
- * Output: ClassificationResult with verdict, confidence, and all metadata fields.
- */
 @Component
 public class ClassificationEngine {
 
     private static final Logger log = LoggerFactory.getLogger(ClassificationEngine.class);
+
+    private final MindTechOntology ontology;
+    private final com.resumestudio.reviewer.ScoreCalibrationService calibration;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public ClassificationEngine(MindTechOntology ontology,
+                                 com.resumestudio.reviewer.ScoreCalibrationService calibration) {
+        this.ontology = ontology;
+        this.calibration = calibration;
+    }
+
+    // Test constructor — uses default thresholds
+    public ClassificationEngine(MindTechOntology ontology) {
+        this.ontology = ontology;
+        this.calibration = null;
+    }
+
+    private double strongFitThreshold() {
+        return calibration != null ? calibration.getStrongFitThreshold() : 0.75;
+    }
+    private double possibleFitThreshold() {
+        return calibration != null ? calibration.getPossibleFitThreshold() : 0.55;
+    }
 
     public ClassificationResult classify(ResumeSignals signals) {
         return classify(signals, null);
@@ -69,12 +89,12 @@ public class ClassificationEngine {
         else if (signals.isAllMustHavesFound()) skillsScore = 0.7;
         else if (signals.isHasBuriedMustHaves()) skillsScore = 0.5;
         else if (signals.isHasMissingMustHaves()) {
-            long total = signals.getMustHaveResults() == null ? 1 : signals.getMustHaveResults().size();
-            long missing = signals.getMustHaveResults() == null ? 1 :
-                signals.getMustHaveResults().stream()
-                    .filter(r -> r.getVisibility() == com.resumestudio.reviewer.model.enums.SkillVisibility.MISSING)
-                    .count();
-            skillsScore = Math.max(0.0, 1.0 - (double) missing / total);
+            if (signals.getMustHaveResults() == null || signals.getMustHaveResults().isEmpty()) {
+                skillsScore = 0.2; // hasMissingMustHaves=true but no detail → pessimistic
+            } else {
+                SkillGroupUtils.GroupedCounts counts = SkillGroupUtils.count(signals.getMustHaveResults(), ontology);
+                skillsScore = Math.max(0.0, 1.0 - counts.missingRatio());
+            }
         } else skillsScore = 0.5;
 
         double currentRoleScore = switch (signals.getTitleMatch() == null ? TitleMatch.MISS : signals.getTitleMatch()) {
@@ -91,7 +111,13 @@ public class ClassificationEngine {
         else if (ivr > 0 || md > 0) impactScore = 0.3;
         else impactScore = 0.5; // no bullet data — neutral
 
-        double domainScore = 0.5; // default — no domain signal yet (O*NET stub)
+        // NLU: blend in semantic intent alignment — how well bullets match JD responsibilities
+        double intentAlignment = signals.getIntentAlignmentScore();
+        if (intentAlignment > 0.5) {
+            impactScore = impactScore * 0.7 + intentAlignment * 0.3; // blend
+        }
+
+        double domainScore = 0.5; // stub — weight redistributed to skillsScore (P1)
 
         double yoeScore = switch (signals.getYoeFit() == null ? YoeFit.CANNOT_DETERMINE : signals.getYoeFit()) {
             case IN_RANGE -> 1.0;
@@ -99,23 +125,28 @@ public class ClassificationEngine {
             case UNDER_RANGE_MINOR -> 0.5;
             case UNDER_RANGE_SIGNIFICANT -> 0.1;
             case CANNOT_DETERMINE -> {
-                // If JD has no YOE requirement, treat as neutral
-                // If JD requires 0-2 years (fresher role), treat as neutral too
                 Double jdMin = signals.getJdYoeMin();
                 Double jdMax = signals.getJdYoeMax();
-                if (jdMin == null) yield 0.7; // no requirement — neutral-positive
-                if (jdMin <= 0 && (jdMax == null || jdMax <= 2)) yield 0.7; // fresher role — neutral
-                yield 0.4; // unknown YOE for a role with real requirements
+                if (jdMin == null) yield 0.7;
+                if (jdMin <= 0 && (jdMax == null || jdMax <= 2)) yield 0.7;
+                yield 0.4;
             }
         };
 
+        // Skills dominate — title is a proxy for skills, not a gate
         double signalScore =
-            titleScore    * 0.15 +
-            skillsScore   * 0.25 +
-            currentRoleScore * 0.20 +
-            impactScore   * 0.15 +
-            domainScore   * 0.15 +
-            yoeScore      * 0.10;
+            titleScore       * 0.12 +
+            skillsScore      * 0.45 +
+            currentRoleScore * 0.13 +
+            impactScore      * 0.20 +
+            yoeScore         * 0.10;
+
+        // NLU: skill credibility penalty — skills listed but not evidenced in bullets reduce score
+        double credibilityPenalty = 0.0;
+        if (signals.isHasUnevidencedSkills() && signals.getSkillCredibilityScore() < 0.4) {
+            credibilityPenalty = 0.05; // 5% penalty for skills inflation
+        }
+        signalScore = Math.max(0, signalScore - credibilityPenalty);
 
         // jdClarity=LOW caps signal score
         if (signals.getJdClarity() == JdClarity.LOW) {
@@ -126,19 +157,20 @@ public class ClassificationEngine {
         double finalScore = signalScore - coherencePenalty;
 
         // Hard cap: majority of must-haves missing → WEAK_FIT regardless of other signals
-        if (signals.isHasMissingMustHaves() && signals.getMustHaveResults() != null) {
-            long total = signals.getMustHaveResults().size();
-            long missing = signals.getMustHaveResults().stream()
-                .filter(r -> r.getVisibility() == com.resumestudio.reviewer.model.enums.SkillVisibility.MISSING)
-                .count();
-            double missingRatio = total > 0 ? (double) missing / total : 0;
-            if (missingRatio > 0.5) return Verdict.WEAK_FIT;
-            if (missingRatio > 0.25 && finalScore >= 0.75) finalScore = 0.65; // cap at POSSIBLE
+        if (signals.isHasMissingMustHaves()) {
+            if (signals.getMustHaveResults() == null || signals.getMustHaveResults().isEmpty()) {
+                if (finalScore >= 0.75) finalScore = 0.65; // pessimistic when no detail
+            } else {
+                SkillGroupUtils.GroupedCounts counts = SkillGroupUtils.count(signals.getMustHaveResults(), ontology);
+                double missingRatio = counts.missingRatio();
+                if (missingRatio > 0.5) return Verdict.WEAK_FIT;
+                if (missingRatio > 0.25 && finalScore >= 0.75) finalScore = 0.65;
+            }
         }
 
         Verdict verdict;
-        if (finalScore >= 0.75) verdict = Verdict.STRONG_FIT;
-        else if (finalScore >= 0.55) verdict = Verdict.POSSIBLE_FIT;
+        if (finalScore >= strongFitThreshold()) verdict = Verdict.STRONG_FIT;
+        else if (finalScore >= possibleFitThreshold()) verdict = Verdict.POSSIBLE_FIT;
         else if (finalScore >= 0.35) verdict = Verdict.WEAK_FIT;
         else verdict = Verdict.NO_FIT;
 
@@ -244,11 +276,15 @@ public class ClassificationEngine {
         return RecruiterType.HR_GENERALIST;
     }
 
-    /** Heuristic competitive context from required skill count and JD clarity. */
+    /** Competitive context from required skill count AND seniority level. */
     private CompetitiveContext inferCompetitiveContext(ResumeSignals signals) {
         int skillCount = signals.getMustHaveResults() != null ? signals.getMustHaveResults().size() : 0;
-        if (skillCount >= 10) return CompetitiveContext.HIGHLY_COMPETITIVE;
-        if (skillCount >= 5) return CompetitiveContext.MODERATE;
+        String title = signals.getJdTitle();
+        // Senior/staff/principal roles are inherently more competitive regardless of skill count
+        boolean isSeniorPlus = title != null && title.toLowerCase()
+            .matches(".*\\b(senior|sr|staff|principal|lead|architect|director|head)\\b.*");
+        if (isSeniorPlus || skillCount >= 8) return CompetitiveContext.HIGHLY_COMPETITIVE;
+        if (skillCount >= 4) return CompetitiveContext.MODERATE;
         if (skillCount > 0) return CompetitiveContext.NICHE;
         return CompetitiveContext.UNKNOWN;
     }

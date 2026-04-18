@@ -50,8 +50,8 @@ public class ResumeIngestService {
         if (fileBytes.length == 0) {
             throw new UnsupportedFileTypeException("Empty file uploaded");
         }
-        if (fileBytes.length > 50 * 1024 * 1024) { // 50MB limit
-            throw new UnsupportedFileTypeException("File too large. Maximum size is 50MB");
+        if (fileBytes.length > 5 * 1024 * 1024) { // 5MB limit
+            throw new UnsupportedFileTypeException("File too large. Maximum size is 5MB");
         }
 
         // Fix #6: Check cache first

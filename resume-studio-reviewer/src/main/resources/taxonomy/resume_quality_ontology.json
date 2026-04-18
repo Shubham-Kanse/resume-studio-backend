@@ -1,0 +1,889 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "resume-quality-ontology/v2.0.0",
+  "meta": {
+    "version": "2.0.0",
+    "created": "2026-04-18",
+    "description": "State-of-the-art ontology for resume format quality assessment. Covers ATS parse-ability, recruiter UX, language quality, structural integrity, and role-contextual scoring.",
+    "scoring_model": "weighted_composite",
+    "tier_labels": ["CRITICAL", "POOR", "FAIR", "GOOD", "EXCELLENT"],
+    "tier_scores": { "CRITICAL": 0, "POOR": 1, "FAIR": 2, "GOOD": 3, "EXCELLENT": 4 },
+    "domains": [
+      "ats_compatibility",
+      "language_quality",
+      "structural_integrity",
+      "content_density",
+      "professional_conventions",
+      "contextual_fit"
+    ]
+  },
+
+  "signal_registry": {
+
+    "ats_quantify_impact": {
+      "signal_id": "ats_quantify_impact",
+      "domain": "content_density",
+      "label": "Quantified Impact",
+      "weight": 0.12,
+      "description": "Proportion of experience bullets containing measurable, verifiable outcomes.",
+      "evaluation_inputs": ["bullet_texts", "experience_sections"],
+      "scoring_formula": "quantified_count / total_bullets",
+      "thresholds": {
+        "EXCELLENT": { "min": 0.70, "max": 1.00 },
+        "GOOD":      { "min": 0.50, "max": 0.69 },
+        "FAIR":      { "min": 0.30, "max": 0.49 },
+        "POOR":      { "min": 0.10, "max": 0.29 },
+        "CRITICAL":  { "min": 0.00, "max": 0.09 }
+      },
+      "metric_types": ["percentage", "headcount", "revenue", "time_delta", "error_rate", "user_count", "cost_savings", "throughput"],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["{{quantified_count}} of {{total_count}} bullets contain measurable outcomes — strong evidence density across all roles."],
+          "interpretation": ["Recruiters trust numbers. This resume demonstrates impact at scale, not just activity. ATS keyword density also benefits from numeric specificity."],
+          "action": [],
+          "exemplar": "Reduced deployment pipeline duration by 43% (18→10 min) across 12 microservices, unblocking 6 weekly releases."
+        },
+        "GOOD": {
+          "observation": ["{{quantified_count}} of {{total_count}} bullets contain metrics — solid coverage with minor gaps."],
+          "interpretation": ["Good evidence density. Filling the remaining gaps would push this into top-tier candidate territory."],
+          "action": ["Add a metric to the {{gap_count}} unquantified bullets — even directional estimates work ('~30% faster', 'reduced by roughly half')."],
+          "exemplar": "Streamlined onboarding process, cutting time-to-productivity for new engineers from 3 weeks to 9 days."
+        },
+        "FAIR": {
+          "observation": ["Fewer than half the bullets contain a measurable result — activity is described, not impact."],
+          "interpretation": ["Recruiters cannot gauge scale or outcome from duty descriptions alone. The resume blends in with every other applicant."],
+          "action": ["Target ≥60% of bullets with a number, percentage, or business unit. Begin with the most recent role, which carries the highest weight."],
+          "exemplar": "Managed data pipeline → Managed data pipeline processing 4M daily records with 99.98% uptime SLA."
+        },
+        "POOR": {
+          "observation": ["Fewer than 1 in 5 bullets contain quantified outcomes across all roles."],
+          "interpretation": ["Without numbers, all claims are unverifiable assertions. This is the highest-leverage improvement available on this resume."],
+          "action": ["Add at least one metric per role — headcount managed, revenue touched, time saved, error rate reduced, users served, systems scaled."],
+          "exemplar": "Led team → Led cross-functional team of 11 engineers delivering $2.4M product launch on schedule."
+        },
+        "CRITICAL": {
+          "observation": ["No bullets contain any measurable outcome across {{total_count}} total bullets."],
+          "interpretation": ["This resume reads as a job description, not an achievement record. Both ATS keyword parsers and human recruiters penalise the absence of specificity — the former misses context, the latter misses impact."],
+          "action": ["Rewrite every bullet using the formula: [Action Verb] + [Context] + [Measurable Result]. Even rough estimates ('~50 users', 'cut time by roughly 30%') are substantially better than no number at all."],
+          "exemplar": "Responsible for database → Redesigned PostgreSQL schema reducing query latency by 68% and eliminating 3 production outages per quarter."
+        }
+      }
+    },
+
+    "ats_action_verbs": {
+      "signal_id": "ats_action_verbs",
+      "domain": "language_quality",
+      "label": "Action Verb Strength",
+      "weight": 0.08,
+      "description": "Quality and directness of bullet-opening verbs; penalises weak, passive, or duty-framing openers.",
+      "evaluation_inputs": ["bullet_openers"],
+      "weak_patterns": ["responsible for", "helped with", "worked on", "assisted in", "participated in", "involved in", "tasked with", "duties included", "supported"],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["All bullets open with strong, ownership-signalling action verbs."],
+          "interpretation": ["Every bullet communicates agency from its first word. No recruiter has to decode what you actually did."],
+          "action": [],
+          "exemplar_verbs": ["Architected", "Negotiated", "Spearheaded", "Overhauled", "Synthesised", "Directed", "Launched", "Automated", "Forecasted", "Mentored"]
+        },
+        "GOOD": {
+          "observation": ["Most bullets use strong openers; {{weak_count}} use weak or passive phrasing."],
+          "interpretation": ["High baseline verb quality — targeted cleanup would make every bullet land."],
+          "action": ["Swap the {{weak_count}} weak openers. 'Helped build' → 'Built'. 'Worked on automating' → 'Automated'."],
+          "exemplar_verbs": ["Led", "Built", "Delivered", "Reduced", "Scaled", "Designed"]
+        },
+        "FAIR": {
+          "observation": ["Several bullets open with weak or responsibility-framing phrases."],
+          "interpretation": ["Weak openers dilute the impact of otherwise strong content. Recruiters read bullet openers first — this is the gateway to the rest of the line."],
+          "action": ["Swap 'Responsible for', 'Helped with', and 'Worked on' for direct verbs: Led, Built, Reduced, Delivered, Launched, Implemented."],
+          "exemplar_verbs": ["Implemented", "Coordinated", "Managed", "Improved", "Resolved"]
+        },
+        "POOR": {
+          "observation": ["The majority of bullets open with weak or responsibility-framing phrases."],
+          "interpretation": ["The resume signals participation rather than ownership. Experienced recruiters recognise this pattern immediately and discount accordingly."],
+          "action": ["Audit every bullet opener. Delete everything before the first real action verb and begin there."],
+          "exemplar_verbs": ["Executed", "Deployed", "Optimised", "Secured", "Facilitated"]
+        },
+        "CRITICAL": {
+          "observation": ["Nearly all bullets use weak openers or passive constructions. 'Responsible for' and 'Helped with' dominate."],
+          "interpretation": ["Passive and duty-framing openers are the strongest signal of a resume that describes a role rather than a person's contributions. ATS parsers extract weaker semantic signal from these phrases."],
+          "action": ["Replace every weak opener. Each swap takes under 10 seconds and has outsized impact on recruiter perception and ATS scoring. Use: Led, Engineered, Delivered, Reduced, Directed, Launched, Built, Negotiated, Scaled, Resolved."],
+          "exemplar_verbs": ["Led", "Engineered", "Delivered", "Reduced", "Directed", "Launched", "Built", "Negotiated", "Scaled", "Resolved"]
+        }
+      }
+    },
+
+    "ats_accomplishments": {
+      "signal_id": "ats_accomplishments",
+      "domain": "content_density",
+      "label": "Accomplishment vs. Duty Ratio",
+      "weight": 0.11,
+      "description": "Degree to which bullets describe personal achievements and outcomes rather than role responsibilities.",
+      "evaluation_inputs": ["bullet_texts"],
+      "frameworks": ["STAR-T", "CAR", "XYZ"],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["Bullets consistently describe outcomes and business impact — not job duties."],
+          "interpretation": ["The resume makes clear what changed because this person was in the role. This is the highest-signal content a recruiter can read."],
+          "action": [],
+          "exemplar": "Rebuilt CI/CD pipeline from scratch, cutting release cycle from 2 weeks to 3 days and eliminating 100% of manual deployment steps."
+        },
+        "GOOD": {
+          "observation": ["Most bullets show impact; {{duty_count}} still read as duty descriptions."],
+          "interpretation": ["Good accomplishment density — a few targeted rewrites would complete the transition from job description to achievement record."],
+          "action": ["For each remaining duty bullet, ask: what was the outcome of this work? What got faster, bigger, cheaper, or safer? That answer is the bullet."],
+          "exemplar": "Managed customer escalations → Resolved 98% of Tier-2 escalations within SLA, reducing churn risk on $1.2M ARR account portfolio."
+        },
+        "FAIR": {
+          "observation": ["Roughly half the bullets describe duties rather than accomplishments."],
+          "interpretation": ["The resume is split between what the role required and what this person actually delivered. Recruiters cannot differentiate this candidate from anyone else who held the same title."],
+          "action": ["Reframe duty bullets using STAR-T: what was the Situation, Task, Action taken, Result achieved, and Tools used?"],
+          "exemplar": "Handled data analysis → Analysed 18-month sales dataset (Python/SQL) identifying $340K in recoverable revenue from lapsed accounts."
+        },
+        "POOR": {
+          "observation": ["Most bullets describe job responsibilities, not individual achievements."],
+          "interpretation": ["This resume is a job posting disguised as a career history. Every candidate who held the same role could submit identical content."],
+          "action": ["For each bullet, ask: what got faster, cheaper, bigger, or better because of me specifically? Rewrite each bullet around that answer."],
+          "exemplar": "Responsible for product roadmap → Owned roadmap for 3 B2B SaaS products, prioritising 47 features over 6 quarters with 91% on-time delivery rate."
+        },
+        "CRITICAL": {
+          "observation": ["Bullets are almost entirely duty-based with no accomplishment framing across any role."],
+          "interpretation": ["There is no evidence of personal impact anywhere on this resume. Every bullet describes what the role required — none describes what this individual contributed."],
+          "action": ["Rewrite from scratch using the formula: [Strong Verb] + [What You Did] + [Measurable Result]. Remove all duty language. If you cannot measure it, describe the scale of the work instead."],
+          "exemplar": "Worked on software → Developed real-time anomaly detection module (Python, Kafka) processing 50K events/sec with <2ms latency."
+        }
+      }
+    },
+
+    "ats_repetition": {
+      "signal_id": "ats_repetition",
+      "domain": "language_quality",
+      "label": "Verb Variety",
+      "weight": 0.05,
+      "description": "Measures over-use of any single action verb or phrase across bullets within or across roles.",
+      "evaluation_inputs": ["bullet_openers", "full_bullet_texts"],
+      "scoring_formula": "1 - (max_single_verb_frequency / total_bullets)",
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["Strong verb variety throughout — no single verb appears more than twice across any role."],
+          "interpretation": ["Varied language signals a broad range of contribution types. Semantic diversity also improves ATS keyword matching."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Good variety with one verb appearing {{repeat_count}} times — minor repetition."],
+          "interpretation": ["Near-excellent verb discipline. One swap would complete the picture."],
+          "action": ["Replace one instance of the repeated verb with a category synonym."]
+        },
+        "FAIR": {
+          "observation": ["{{top_verb}} appears {{repeat_count}} times across bullets — noticeable repetition."],
+          "interpretation": ["Repetition suggests a narrow range of contribution types and reduces ATS semantic coverage."],
+          "action": ["Vary verbs by contribution category: building (Engineered, Developed, Architected), leading (Directed, Coached, Aligned), improving (Optimised, Reduced, Streamlined), delivering (Shipped, Launched, Deployed), analysing (Synthesised, Modelled, Benchmarked)."]
+        },
+        "POOR": {
+          "observation": ["{{top_verb}} appears {{repeat_count}} times — one verb dominates the resume."],
+          "interpretation": ["Heavy repetition makes the resume feel monotonous and signals limited range of work. Recruiter attention drops sharply when they see the same word repeatedly."],
+          "action": ["No verb should appear more than twice within the same role section. Audit all openers and substitute with category synonyms."]
+        },
+        "CRITICAL": {
+          "observation": ["One or two verbs (e.g. '{{top_verb}}') account for {{repeat_pct}}% of all bullet openers."],
+          "interpretation": ["If the same verb appears five times consecutively, recruiters assume that is the full range of what was done. ATS parsers also weight unique verb stems more heavily."],
+          "action": ["Replace repeated verbs with alternatives across five categories — Lead, Build, Improve, Deliver, Analyse — to demonstrate breadth of contribution."]
+        }
+      }
+    },
+
+    "ats_length": {
+      "signal_id": "ats_length",
+      "domain": "structural_integrity",
+      "label": "Resume Length",
+      "weight": 0.07,
+      "description": "Assesses total word count and page estimate relative to career stage and experience volume.",
+      "evaluation_inputs": ["word_count", "years_experience", "role_level"],
+      "thresholds": {
+        "junior":   { "EXCELLENT": [400, 650], "GOOD": [350, 750], "FAIR": [250, 900] },
+        "mid":      { "EXCELLENT": [550, 800], "GOOD": [450, 950], "FAIR": [350, 1100] },
+        "senior":   { "EXCELLENT": [650, 950], "GOOD": [550, 1100], "FAIR": [450, 1300] },
+        "executive":{ "EXCELLENT": [700, 1200], "GOOD": [600, 1400], "FAIR": [500, 1600] }
+      },
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["Word count ({{word_count}}) is optimal for the stated experience level ({{role_level}})."],
+          "interpretation": ["Concise and complete — every line earns its place. ATS parsers receive enough signal; recruiters are not overwhelmed."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Word count ({{word_count}}) is slightly outside the ideal range for {{role_level}}-level candidates."],
+          "interpretation": ["Minor length adjustment would optimise both ATS density and recruiter scan time."],
+          "action": ["Trim the oldest role bullets to 1–2 per position, or add a professional summary if the resume skews short."]
+        },
+        "FAIR": {
+          "observation": ["Word count ({{word_count}}) is noticeably outside the recommended range for this experience level."],
+          "interpretation": ["Length mismatch signals either thin experience (too short) or poor editing discipline (too long)."],
+          "action": ["Target 450–700 words for under 5 years experience; 600–900 for mid-level; 700–1100 for senior roles."]
+        },
+        "POOR": {
+          "observation": ["Word count ({{word_count}}) is significantly outside acceptable bounds for this career stage."],
+          "interpretation": ["A 3-page resume signals poor editorial judgement. A half-page resume signals thin experience or insufficient effort."],
+          "action": ["Remove roles older than 10 years or compress to a single line. Merge redundant bullets. Add a summary section if the resume is sparse."]
+        },
+        "CRITICAL": {
+          "observation": ["Word count ({{word_count}}) is far outside acceptable bounds — ATS parsing quality and recruiter attention are both impacted."],
+          "interpretation": ["Extreme length — in either direction — creates an immediate negative signal. Recruiters scan resumes in 6–10 seconds on first pass; ATS parsers truncate or misclassify excessively long documents."],
+          "action": ["Ruthlessly edit to 1–2 pages maximum. Every sentence must justify its presence. Use the test: 'Does removing this make me look weaker?' If no, cut it."]
+        }
+      }
+    },
+
+    "ats_filler_words": {
+      "signal_id": "ats_filler_words",
+      "domain": "language_quality",
+      "label": "Filler Phrase Elimination",
+      "weight": 0.06,
+      "description": "Detects duty-framing and filler phrases that dilute bullet impact and waste keyword space.",
+      "evaluation_inputs": ["bullet_texts"],
+      "filler_patterns": [
+        "responsible for", "tasked with", "duties included", "helped with",
+        "worked on", "assisted in", "participated in", "involved in",
+        "contributed to", "part of the team that", "collaborated on",
+        "was responsible", "had responsibility for", "role involved"
+      ],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["No filler phrases detected across {{total_bullets}} bullets."],
+          "interpretation": ["Clean, direct language throughout. Every word counts. Keyword density is maximised."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["{{filler_count}} filler phrase(s) present — overall language is direct."],
+          "interpretation": ["Minimal noise. Minor cleanup would make the resume uniformly direct."],
+          "action": ["Delete the remaining filler phrase(s) and open directly with the action verb. 'Responsible for managing' → 'Managed'."]
+        },
+        "FAIR": {
+          "observation": ["{{filler_count}} filler phrases weaken the bullet language across {{affected_roles}} role(s)."],
+          "interpretation": ["Filler phrases waste space and dilute keyword density — two things that directly harm both ATS scoring and recruiter impression."],
+          "action": ["Delete 'Responsible for', 'Tasked with', 'Helped with' — start every bullet directly with what you did."]
+        },
+        "POOR": {
+          "observation": ["Filler phrases appear in {{filler_pct}}% of bullets."],
+          "interpretation": ["These phrases consistently signal someone describing their role rather than their impact. Both ATS and human reviewers treat them as weak signal."],
+          "action": ["Audit every bullet. If it starts with a filler phrase, delete everything before the first real verb and start there. Time cost: under 1 minute per role."]
+        },
+        "CRITICAL": {
+          "observation": ["Filler phrases dominate — present in {{filler_pct}}% of all bullets."],
+          "interpretation": ["'Responsible for' is the single most common phrase on low-scoring resumes. It communicates the existence of a duty, not the performance of a person. ATS parsers extract near-zero semantic signal from these constructions."],
+          "action": ["Delete every instance of: 'Responsible for', 'Tasked with', 'Duties included', 'Worked on', 'Helped with'. In every case, start with the verb that follows."]
+        }
+      }
+    },
+
+    "ats_bullet_count": {
+      "signal_id": "ats_bullet_count",
+      "domain": "structural_integrity",
+      "label": "Bullet Count Balance",
+      "weight": 0.06,
+      "description": "Evaluates whether bullet count per role and total is appropriately calibrated to experience recency and role level.",
+      "evaluation_inputs": ["bullets_per_role", "role_recency", "total_experience_years"],
+      "recommended_distribution": {
+        "most_recent_role": { "min": 4, "max": 6 },
+        "previous_role":    { "min": 3, "max": 5 },
+        "older_role":       { "min": 1, "max": 3 },
+        "oldest_roles":     { "min": 0, "max": 2 }
+      },
+      "total_target": { "min": 10, "max": 20 },
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["Bullet distribution is well-calibrated — {{bullets_per_role_summary}} across roles."],
+          "interpretation": ["Focused and evidence-rich. Recruiter attention is directed toward the most recent and relevant contributions."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Bullet count is slightly above or below ideal in {{affected_role_count}} role(s)."],
+          "interpretation": ["Minor calibration would optimise scannability and reading flow."],
+          "action": ["Aim for 4–5 bullets for your most recent role, 2–3 for prior roles, and 1–2 for anything older than 6 years."]
+        },
+        "FAIR": {
+          "observation": ["Bullet count is noticeably imbalanced — {{issue_description}}."],
+          "interpretation": ["Too many bullets dilute the strongest achievements; too few leave critical evidence gaps."],
+          "action": ["Redistribute: most recent role 4–5, previous 2–3, older 1–2. Merge similar bullets; split compound bullets that contain two distinct achievements."]
+        },
+        "POOR": {
+          "observation": ["Bullet count is significantly outside recommended range across multiple roles."],
+          "interpretation": ["Either the resume is padded with low-value content, or key contributions are conspicuously absent. Both reduce recruiter trust."],
+          "action": ["Audit each bullet: does it demonstrate a distinct, verifiable contribution? If not, merge or remove. Quality outperforms quantity in every recruiter study."]
+        },
+        "CRITICAL": {
+          "observation": ["Total bullet count ({{total_bullets}}) is far outside the 10–20 target — ATS signal density and recruiter scanability are both impacted."],
+          "interpretation": ["ATS needs sufficient content to evaluate; recruiters need editorial focus. A resume of 3 bullets signals inexperience; a resume of 35 bullets signals poor judgement."],
+          "action": ["Target 10–18 total bullets across all roles. Apply the recency weighting: most recent role carries 40% of all bullets."]
+        }
+      }
+    },
+
+    "ats_bullet_length": {
+      "signal_id": "ats_bullet_length",
+      "domain": "structural_integrity",
+      "label": "Bullet Length Calibration",
+      "weight": 0.06,
+      "description": "Evaluates whether individual bullet word counts fall within the recruiter-scannable and ATS-optimal range.",
+      "evaluation_inputs": ["bullet_word_counts"],
+      "optimal_range": { "min_words": 12, "max_words": 28 },
+      "critical_thresholds": { "too_short": 7, "too_long": 40 },
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["{{pct_in_range}}% of bullets fall within the 12–28 word optimal range."],
+          "interpretation": ["Each bullet is scannable in under 2 seconds — exactly what both ATS parsers and recruiters require for efficient processing."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Most bullets are well-sized; {{outlier_count}} are outside the optimal range."],
+          "interpretation": ["Strong length discipline with minor outliers. Addressing them would make the document uniformly sharp."],
+          "action": ["Trim bullets over 30 words by removing hedging language and redundant context. Expand bullets under 8 words with a result or scale indicator."]
+        },
+        "FAIR": {
+          "observation": ["{{outlier_pct}}% of bullets fall outside the 12–28 word target range."],
+          "interpretation": ["Short bullets lack the context recruiters need to assess impact; long bullets lose attention mid-sentence."],
+          "action": ["Target 12–28 words per bullet: one punchy line with verb, context, and result. Test by reading each aloud — if you run out of breath, it's too long."]
+        },
+        "POOR": {
+          "observation": ["A majority of bullets are significantly outside the optimal length range."],
+          "interpretation": ["Systematic length issues reduce scannability and fragment ATS keyword extraction — particularly damaging in the highest-weight section of any resume."],
+          "action": ["Split long bullets into two distinct points. Expand thin bullets with the result ('reduced by 40%') or scale ('across 200K+ users')."]
+        },
+        "CRITICAL": {
+          "observation": ["Bullet lengths are highly inconsistent — ranging from {{min_words}} to {{max_words}} words. Most fall outside acceptable bounds."],
+          "interpretation": ["Recruiters process bullets in under 2 seconds. Bullets wrapping to 3+ lines are skipped; bullets under 6 words are assumed incomplete. Both failures harm candidacy."],
+          "action": ["Rewrite all bullets to one focused line: [Verb] + [what you did] + [measurable result]. Target 12–28 words as a hard constraint."]
+        }
+      }
+    },
+
+    "ats_sections": {
+      "signal_id": "ats_sections",
+      "domain": "ats_compatibility",
+      "label": "Section Structure",
+      "weight": 0.09,
+      "description": "Validates presence, naming, and ordering of required and recommended resume sections for ATS parse-ability.",
+      "evaluation_inputs": ["section_headers", "section_order"],
+      "required_sections": ["Professional Summary", "Work Experience", "Skills", "Education"],
+      "recommended_sections": ["Certifications", "Projects", "Languages", "Awards"],
+      "ats_safe_aliases": {
+        "Summary": "Professional Summary",
+        "Employment": "Work Experience",
+        "Employment History": "Work Experience",
+        "Career History": "Work Experience",
+        "Technical Skills": "Skills",
+        "Core Competencies": "Skills",
+        "Qualifications": "Skills",
+        "Academic Background": "Education"
+      },
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["All required sections present with ATS-standard headers in logical order."],
+          "interpretation": ["Every section will be correctly parsed and classified. No content will be misattributed or silently dropped."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Required sections present; {{missing_optional}} recommended section(s) absent."],
+          "interpretation": ["Solid structural foundation. The missing section is a minor gap that could strengthen role-specific applications."],
+          "action": ["Consider adding the missing section if it is relevant to the target role — particularly Certifications for technical roles and Projects for early-career candidates."]
+        },
+        "FAIR": {
+          "observation": ["One required section is missing or uses a non-standard header ('{{nonstandard_header}}')."],
+          "interpretation": ["ATS parsers match against known header strings. A non-standard header causes content beneath it to be misclassified or ignored entirely."],
+          "action": ["Rename '{{nonstandard_header}}' to its ATS-standard equivalent. Use exactly: 'Professional Summary', 'Work Experience', 'Skills', 'Education'."]
+        },
+        "POOR": {
+          "observation": ["{{missing_count}} required sections are missing or use unrecognisable headers."],
+          "interpretation": ["ATS parsers rely on standard headers to classify content. Non-standard headers cause critical misclassification, causing qualified candidates to fail automated screening."],
+          "action": ["Add missing sections and rename non-standard headers to ATS-safe equivalents. Check the standard alias list for approved alternatives."]
+        },
+        "CRITICAL": {
+          "observation": ["Critical resume sections are absent or undetectable by ATS parser."],
+          "interpretation": ["Without standard section headers, ATS cannot classify any content. A resume that fails structural parsing is functionally invisible — regardless of content quality."],
+          "action": ["Add all four required sections using exact standard headers: 'Professional Summary', 'Work Experience', 'Skills', 'Education'. Order them in this sequence."]
+        }
+      }
+    },
+
+    "ats_pronouns": {
+      "signal_id": "ats_pronouns",
+      "domain": "professional_conventions",
+      "label": "Pronoun Elimination",
+      "weight": 0.04,
+      "description": "Detects first-person pronouns (I, my, we, our) that violate professional resume convention and waste keyword space.",
+      "evaluation_inputs": ["full_resume_text"],
+      "pronoun_targets": ["I ", "my ", "we ", "our ", "I've", "I'd", "I'm", "myself"],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["No personal pronouns detected across {{word_count}} words."],
+          "interpretation": ["Implied first person used throughout — the standard for professional resumes. Every word contributes to content or keywords, not grammatical filler."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["{{pronoun_count}} pronoun(s) present — overall resume is clean."],
+          "interpretation": ["Isolated occurrences — easy to resolve without structural rewrites."],
+          "action": ["Remove the remaining {{pronoun_count}} pronoun(s). 'I led' → 'Led'. Shorter, stronger, and convention-compliant."]
+        },
+        "FAIR": {
+          "observation": ["{{pronoun_count}} personal pronouns detected across {{affected_sections}} section(s)."],
+          "interpretation": ["Pronouns waste space and read as informal to experienced recruiters. They also reduce the word budget available for skill keywords."],
+          "action": ["Find every 'I', 'my', 'we', 'our' and delete it. Restructure the sentence to begin with the action verb."]
+        },
+        "POOR": {
+          "observation": ["Personal pronouns appear frequently — {{pronoun_count}} instances across the resume."],
+          "interpretation": ["Every 'I' is a wasted word in a document with a strict space budget. Experienced recruiters also flag pronoun-heavy resumes as unfamiliar with professional conventions."],
+          "action": ["Run a global find-and-replace. Remove all first-person pronouns and begin every bullet with its action verb."]
+        },
+        "CRITICAL": {
+          "observation": ["The resume is written in first person throughout — {{pronoun_count}} pronoun instances detected."],
+          "interpretation": ["Professional resumes use implied first person. 'I managed a team of 8' vs 'Managed team of 8 engineers' — the latter is shorter, more direct, convention-compliant, and preserves space for keywords."],
+          "action": ["Rewrite all bullets to remove pronouns. Apply globally across every section including the Summary."]
+        }
+      }
+    },
+
+    "ats_buzzwords": {
+      "signal_id": "ats_buzzwords",
+      "domain": "language_quality",
+      "label": "Buzzword & Cliché Reduction",
+      "weight": 0.05,
+      "description": "Detects overused generic phrases and evaluates specificity of self-description claims.",
+      "evaluation_inputs": ["summary_text", "bullet_texts"],
+      "buzzword_list": [
+        "results-driven", "self-starter", "team player", "detail-oriented",
+        "passionate", "dynamic", "motivated", "hardworking", "go-getter",
+        "proactive", "synergy", "thought leader", "innovative", "leverage",
+        "strategic thinker", "excellent communicator", "fast-paced environment",
+        "track record of success", "proven ability", "strong work ethic"
+      ],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["No generic buzzwords or clichés detected — all claims are specific and evidence-backed."],
+          "interpretation": ["Every descriptor is verifiable. Recruiters can evaluate the evidence, not just accept an assertion."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["{{buzzword_count}} generic phrase(s) remain — mostly specific language."],
+          "interpretation": ["Near-excellent specificity — minor cleanup would make every claim verifiable."],
+          "action": ["Replace the remaining generic phrases with specific evidence or outcomes. 'Excellent communicator' → 'Presented quarterly roadmap to C-suite and 3 enterprise clients'."]
+        },
+        "FAIR": {
+          "observation": ["{{buzzword_count}} buzzwords or clichés present across the resume."],
+          "interpretation": ["Generic phrases signal lack of self-awareness and dilute the credibility of surrounding specific claims."],
+          "action": ["Replace 'results-driven' with a result. Replace 'team player' with a collaboration outcome. Each buzzword should be deleted and replaced with its proof."]
+        },
+        "POOR": {
+          "observation": ["{{buzzword_count}} buzzwords and clichés appear throughout — particularly in the Summary section."],
+          "interpretation": ["'Results-driven professional with a proven track record' tells a recruiter nothing. It is the most common opening line on the weakest resumes in any stack."],
+          "action": ["Audit every adjective and generic phrase. For each one, ask: what specific thing proves this? Write that instead. Delete the buzzword."]
+        },
+        "CRITICAL": {
+          "observation": ["The resume is dominated by generic buzzwords with minimal specific evidence — {{buzzword_count}} instances detected."],
+          "interpretation": ["Buzzword-heavy resumes are the easiest to reject and the hardest to defend in recruiter discussion. They signal someone who describes themselves in marketing language rather than demonstrating their work with evidence."],
+          "action": ["Delete all buzzwords and clichés. For each one removed, ask: what specific thing proves I have this quality? Write that instead. The proof is always stronger than the assertion."]
+        }
+      }
+    },
+
+    "ats_active_voice": {
+      "signal_id": "ats_active_voice",
+      "domain": "language_quality",
+      "label": "Active Voice Consistency",
+      "weight": 0.06,
+      "description": "Detects passive voice constructions that bury agency and weaken bullet impact.",
+      "evaluation_inputs": ["bullet_texts"],
+      "passive_patterns": ["was [verb]ed", "were [verb]ed", "is [verb]ed", "are [verb]ed", "has been [verb]ed", "had been [verb]ed"],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["Active voice used consistently — no passive constructions detected across {{total_bullets}} bullets."],
+          "interpretation": ["Direct, confident language throughout. Every bullet signals clear agency and personal ownership."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Mostly active voice with {{passive_count}} passive construction(s) remaining."],
+          "interpretation": ["Strong voice discipline — targeted fixes would make every bullet uniformly direct."],
+          "action": ["Rewrite the passive bullets: identify the real action verb and put it first. 'System was improved' → 'Improved system performance by 40%'."]
+        },
+        "FAIR": {
+          "observation": ["{{passive_count}} passive voice constructions weaken the bullet language."],
+          "interpretation": ["Passive voice buries the person behind the action — the opposite of what a strong resume needs. It transforms an achievement into an event."],
+          "action": ["Find all 'was/were + past participle' patterns and rewrite in active voice. The actor (you) comes first; the result comes second."]
+        },
+        "POOR": {
+          "observation": ["Passive voice appears in {{passive_pct}}% of bullets."],
+          "interpretation": ["Passive voice makes contributions sound accidental rather than intentional. It signals someone who was present during outcomes rather than someone who caused them."],
+          "action": ["Audit every bullet for 'was', 'were', 'is', 'are' followed by a past participle. Rewrite each one to lead with the action verb."]
+        },
+        "CRITICAL": {
+          "observation": ["Passive voice dominates — {{passive_count}} of {{total_bullets}} bullets use passive constructions."],
+          "interpretation": ["'The project was delivered on time by the team' vs 'Delivered project on time, achieving 98% client satisfaction.' The active version is shorter, clearer, and twice as strong. Passive voice at this frequency suggests the candidate does not own their narrative."],
+          "action": ["Rewrite all passive bullets. Delete 'was/were/is/are' constructions and replace with the direct action verb. The rewrite formula: [You] [Verb]ed [What] [Result]."]
+        }
+      }
+    },
+
+    "ats_consistency": {
+      "signal_id": "ats_consistency",
+      "domain": "professional_conventions",
+      "label": "Formatting Consistency",
+      "weight": 0.07,
+      "description": "Evaluates uniformity of date formats, bullet styles, punctuation, capitalisation, and tense across the resume.",
+      "evaluation_inputs": ["date_strings", "bullet_markers", "punctuation_patterns", "tense_usage", "capitalisation_patterns"],
+      "consistency_dimensions": ["dates", "bullets", "punctuation", "tense", "capitalisation", "spacing"],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["All formatting dimensions are consistent — dates, bullets, punctuation, tense, and capitalisation follow a single standard throughout."],
+          "interpretation": ["Consistency signals professional care and attention to detail. ATS parsers also handle uniform formatting significantly more reliably than mixed styles."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Minor inconsistency in {{inconsistent_dimension}} — all other dimensions are consistent."],
+          "interpretation": ["Nearly clean — one targeted fix would complete it."],
+          "action": ["Standardise {{inconsistent_dimension}} across all sections. Choose one style and apply it without exception."]
+        },
+        "FAIR": {
+          "observation": ["Inconsistencies detected in {{inconsistent_count}} dimensions: {{inconsistent_dimensions}}."],
+          "interpretation": ["Mixed formatting signals carelessness. ATS parsers also struggle with date format variation — potentially misclassifying role tenure calculations."],
+          "action": ["Pick one standard for each: date format (e.g. Jan 2022), bullet marker, punctuation end style, and tense (past for previous roles, present for current). Apply everywhere."]
+        },
+        "POOR": {
+          "observation": ["Multiple formatting inconsistencies across {{inconsistent_count}} dimensions."],
+          "interpretation": ["Inconsistent formatting is among the first things experienced recruiters notice on a resume scan. If formatting discipline is absent here, it raises questions about work-product quality more broadly."],
+          "action": ["Conduct a full formatting audit: dates, bullets, punctuation, tense, capitalisation, spacing. Create a style decision for each and apply it uniformly."]
+        },
+        "CRITICAL": {
+          "observation": ["Widespread formatting inconsistency throughout the resume — apparent multiple conflicting source styles."],
+          "interpretation": ["The resume appears assembled from different documents without a final editorial pass. Mixed formatting styles are an immediate signal of low polish, regardless of content quality."],
+          "action": ["Start from a clean, single-source template. Establish one style for every formatting dimension before resubmitting. A formatting pass takes 20 minutes and improves every recruiter interaction."]
+        }
+      }
+    },
+
+    "ats_spell_check": {
+      "signal_id": "ats_spell_check",
+      "domain": "professional_conventions",
+      "label": "Spelling & Terminology Accuracy",
+      "weight": 0.07,
+      "description": "Detects spelling errors with special attention to technology names, tool names, and company-specific terminology where ATS keyword matching is case-sensitive.",
+      "evaluation_inputs": ["full_resume_text", "skills_section", "technology_mentions"],
+      "high_risk_categories": ["programming_languages", "frameworks", "cloud_platforms", "tools", "certifications"],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["No spelling issues detected — all technology names, tool references, and terminology are correctly spelled."],
+          "interpretation": ["Misspelled skill names are invisible to ATS keyword matching. A clean spell check ensures every keyword lands correctly."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["{{error_count}} minor spelling issue(s) detected."],
+          "interpretation": ["Near-clean — one correction needed. Even a single misspelled technology name can cause ATS to miss a critical keyword match."],
+          "action": ["Correct: {{error_list}}. Verify all technology and tool names against their official spellings."]
+        },
+        "FAIR": {
+          "observation": ["{{error_count}} spelling issue(s) detected across the resume."],
+          "interpretation": ["Misspelled skill names are silently dropped by ATS parsers. 'Pyhton' will never match a search for 'Python'. Each error is a missed keyword match."],
+          "action": ["Run a full spell check and manually verify all technology names, framework names, and certification titles."]
+        },
+        "POOR": {
+          "observation": ["{{error_count}} spelling errors detected — including in high-risk keyword areas."],
+          "interpretation": ["Spelling errors in skill names and technology terms directly reduce ATS match scores. They also signal low attention to detail to human reviewers."],
+          "action": ["Fix all errors and manually verify all proper nouns. Pay particular attention to: {{high_risk_errors}}."]
+        },
+        "CRITICAL": {
+          "observation": ["{{error_count}} significant spelling errors throughout — concentrated in skills and technology sections."],
+          "interpretation": ["A single typo in a keyword skill name causes ATS to skip it entirely. At this error density, the candidate is losing matches on skills they actually have, simply because the name is misspelled."],
+          "action": ["Fix all errors before resubmitting. Manually verify every technology, framework, and certification name. Pay special attention to: 'JavaScript' (not 'Javascript'), 'Kubernetes' (not 'Kubernets'), 'PostgreSQL' (not 'PostGresQL')."]
+        }
+      }
+    },
+
+    "ats_date_order": {
+      "signal_id": "ats_date_order",
+      "domain": "structural_integrity",
+      "label": "Date Order & Continuity",
+      "weight": 0.07,
+      "description": "Validates reverse-chronological ordering, detects unexplained gaps, overlapping roles, and date format consistency.",
+      "evaluation_inputs": ["role_date_ranges", "section_ordering"],
+      "gap_threshold_months": 3,
+      "overlap_tolerance_days": 30,
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["Dates are in correct reverse-chronological order with no unexplained gaps or role overlaps."],
+          "interpretation": ["Clean, continuous, and credible timeline. ATS parsers and recruiters both verify date order — this passes immediately."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Date order is correct with a minor gap or formatting inconsistency."],
+          "interpretation": ["Solid timeline — one small issue to address before submission."],
+          "action": ["Standardise the date format across all roles. If there is a gap under 6 months, a brief parenthetical note is optional but not required."]
+        },
+        "FAIR": {
+          "observation": ["A notable gap or date inconsistency requires attention — {{gap_description}}."],
+          "interpretation": ["Recruiters check employment dates within the first 10 seconds of review. Unexplained gaps create suspicion that persists through the rest of the read."],
+          "action": ["Ensure strict reverse-chronological order. Add a brief note for any gap exceeding 3 months: e.g. '(Career Break — caring responsibilities)' or '(Sabbatical — postgraduate study)'."]
+        },
+        "POOR": {
+          "observation": ["Date order issues detected — {{issue_description}}."],
+          "interpretation": ["Most recent role should always appear first. Non-chronological ordering confuses ATS parsers and signals poor resume literacy to recruiters."],
+          "action": ["Reorder all roles into strict reverse-chronological sequence. Explain any gap over 6 months directly in the role entry or summary."]
+        },
+        "CRITICAL": {
+          "observation": ["Significant date problems detected: {{issues}} — overlapping full-time roles and/or reversed chronology."],
+          "interpretation": ["Date inconsistencies are an immediate credibility flag. Overlapping full-time roles suggest either a data error or misrepresentation — either of which ends consideration at most organisations."],
+          "action": ["Audit all dates carefully. Ensure no two full-time roles overlap by more than 30 days. Confirm that the most recent role appears first in every work section. Correct all inconsistencies before resubmitting."]
+        }
+      }
+    },
+
+    "ats_keyword_density": {
+      "signal_id": "ats_keyword_density",
+      "domain": "ats_compatibility",
+      "label": "Role-Relevant Keyword Coverage",
+      "weight": 0.10,
+      "description": "Assesses presence and natural integration of role-critical keywords (skills, tools, methodologies) that ATS systems use for match scoring.",
+      "evaluation_inputs": ["skills_section", "bullet_texts", "job_description_keywords"],
+      "keyword_categories": ["technical_skills", "soft_skills", "methodologies", "tools", "certifications", "domain_terms"],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["High density of role-relevant keywords integrated naturally throughout the resume — not just in the Skills section."],
+          "interpretation": ["ATS keyword matching is strongest when terms appear in multiple sections (skills + bullets + summary). This resume maximises match probability."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Good keyword coverage with {{missing_count}} role-critical terms underrepresented."],
+          "interpretation": ["Strong baseline — targeted keyword insertion in bullet context would improve ATS match rates."],
+          "action": ["Integrate the {{missing_count}} missing terms naturally into bullets: not just listed in skills, but demonstrated in context."]
+        },
+        "FAIR": {
+          "observation": ["Keywords are present but concentrated in the Skills section — sparse in the experience bullets."],
+          "interpretation": ["ATS systems weight contextual keyword usage (in experience bullets) more heavily than isolated skills lists. Skills-only placement underperforms."],
+          "action": ["Mirror key terms from the job description into experience bullets where they are genuinely applicable. ATS scores the same keyword appearing in multiple sections higher."]
+        },
+        "POOR": {
+          "observation": ["Several role-critical keywords are absent or mentioned only once, with no contextual backing."],
+          "interpretation": ["Low keyword density will cause this resume to underperform in ATS scoring regardless of actual fit. The candidate may be filtered out before human review."],
+          "action": ["Map the job description keywords against the current resume. For each gap, either add the term (if genuinely applicable) or note it as a skill development target."]
+        },
+        "CRITICAL": {
+          "observation": ["Significant keyword gaps — {{missing_count}} role-critical terms absent from the resume."],
+          "interpretation": ["ATS match scoring is the first gate for most applications. A resume missing primary job-description keywords will not reach a human reviewer, regardless of underlying candidate quality."],
+          "action": ["Customise this resume to the target job description before every application. Extract the top 10–15 keywords from the JD and verify each appears at least once — preferably in both a bullet and the skills section."]
+        }
+      }
+    },
+
+    "ats_contact_completeness": {
+      "signal_id": "ats_contact_completeness",
+      "domain": "structural_integrity",
+      "label": "Contact Information Completeness",
+      "weight": 0.04,
+      "description": "Validates presence and correct formatting of all required contact fields. Flags missing LinkedIn, incorrect email formats, or location vagueness.",
+      "evaluation_inputs": ["contact_section"],
+      "required_fields": ["full_name", "email", "phone", "location_city_country"],
+      "recommended_fields": ["linkedin_url", "portfolio_url", "github_url"],
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["All required and recommended contact fields are present and correctly formatted."],
+          "interpretation": ["Recruiters and ATS systems can route this resume without any manual follow-up. LinkedIn URL is a strong signal of professional presence."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Required fields are present; {{missing_optional}} recommended field(s) absent."],
+          "interpretation": ["Functional contact block — the missing field is role-specific. A LinkedIn URL is broadly beneficial; portfolio/GitHub are essential for technical roles."],
+          "action": ["Add a LinkedIn URL if not already included. For technical or design roles, add a portfolio or GitHub link."]
+        },
+        "FAIR": {
+          "observation": ["One required contact field is missing or incorrectly formatted."],
+          "interpretation": ["A missing or broken contact field creates immediate friction. If a recruiter can't quickly find an email or phone number, the application stalls."],
+          "action": ["Add the missing field: {{missing_field}}. Verify email format and phone number readability."]
+        },
+        "POOR": {
+          "observation": ["{{missing_count}} required contact fields are missing or malformed."],
+          "interpretation": ["Incomplete contact information is a disqualifying oversight. Recruiters cannot advance a candidate they cannot contact."],
+          "action": ["Add all missing fields: name, email, phone, and city/country. Verify each is correctly formatted."]
+        },
+        "CRITICAL": {
+          "observation": ["Critical contact information is absent — the resume cannot be actioned by a recruiter or ATS."],
+          "interpretation": ["A resume without contact information is unfollowable. This is the highest-priority fix before any submission."],
+          "action": ["Add immediately: Full Name, Professional Email, Phone Number, City/Country. These are non-negotiable before any application."]
+        }
+      }
+    },
+
+    "ats_tense_consistency": {
+      "signal_id": "ats_tense_consistency",
+      "domain": "professional_conventions",
+      "label": "Tense Consistency",
+      "weight": 0.04,
+      "description": "Validates that past roles use past tense and current role uses present tense, consistently throughout.",
+      "evaluation_inputs": ["bullet_texts", "role_dates"],
+      "rules": {
+        "current_role": "present_tense",
+        "past_roles": "past_tense"
+      },
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["Tense is correctly applied — present for current role, past for all previous roles."],
+          "interpretation": ["Tense consistency signals professional writing competence and careful document review."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Tense is mostly correct with {{error_count}} inconsistency/inconsistencies."],
+          "interpretation": ["Minor tense issue — easy to resolve in a final review pass."],
+          "action": ["Correct the tense inconsistency/inconsistencies: past tense for every previous role, present tense only for the current position."]
+        },
+        "FAIR": {
+          "observation": ["Tense inconsistencies present in {{affected_roles}} role(s)."],
+          "interpretation": ["Tense mixing signals that the resume was drafted at different times and not reviewed holistically. Recruiters notice this."],
+          "action": ["Apply the rule globally: past tense for every completed role (even one ended 1 month ago), present tense for active current role only."]
+        },
+        "POOR": {
+          "observation": ["Tense is inconsistent across multiple roles — mixing past and present unpredictably."],
+          "interpretation": ["Tense mixing is a reliable signal of a document assembled from parts without a final editorial pass. It erodes credibility proportional to its frequency."],
+          "action": ["Audit every bullet tense. Use the role's end date as the trigger: ended = past tense, current = present tense."]
+        },
+        "CRITICAL": {
+          "observation": ["Tense is used inconsistently throughout — present and past tense mixed within the same role in {{affected_roles}} roles."],
+          "interpretation": ["Tense errors within a single role section are the most jarring form of inconsistency. They suggest the candidate did not re-read their own resume before submitting."],
+          "action": ["Rewrite all bullets with tense as the primary check. Each role should be uniformly past or uniformly present — never both."]
+        }
+      }
+    },
+
+    "contextual_relevance": {
+      "signal_id": "contextual_relevance",
+      "domain": "contextual_fit",
+      "label": "Role-Contextual Relevance Score",
+      "weight": 0.09,
+      "description": "Measures the degree to which the resume content is tailored to the target role — skills, terminology, and bullet emphasis all calibrated to the job description.",
+      "evaluation_inputs": ["job_description", "skills_section", "bullet_texts", "summary_text"],
+      "requires_job_description": true,
+      "tiers": {
+        "EXCELLENT": {
+          "observation": ["Resume content is tightly aligned to the target role — keywords, skills, and bullet emphasis are all calibrated to the job description."],
+          "interpretation": ["This resume was clearly written for this role. ATS match score will be high; recruiter relevance perception will be immediate."],
+          "action": []
+        },
+        "GOOD": {
+          "observation": ["Strong general alignment with {{gap_count}} notable gaps between resume content and JD requirements."],
+          "interpretation": ["Good baseline fit — targeted additions would close the remaining gap."],
+          "action": ["Address the {{gap_count}} gap(s): {{gap_description}}. Integrate these naturally into bullets where genuinely applicable."]
+        },
+        "FAIR": {
+          "observation": ["Resume is moderately aligned — several role-specific terms and responsibilities are underrepresented."],
+          "interpretation": ["The resume reads as a general document not calibrated to this application. ATS match rate and recruiter relevance score will both suffer."],
+          "action": ["Mirror the top 8–10 keywords from the job description into the resume. Reorder bullet emphasis to front-load the most JD-relevant achievements."]
+        },
+        "POOR": {
+          "observation": ["Resume shows weak alignment to the target role — significant gaps between stated requirements and resume content."],
+          "interpretation": ["This resume was not customised for this application. ATS will assign a low match score; recruiters will see a general-purpose document, not a targeted one."],
+          "action": ["Customise this version for the target role: restructure the summary, reorder skills, and surface the most relevant bullets. A 20-minute customisation pass significantly improves pass rates."]
+        },
+        "CRITICAL": {
+          "observation": ["Resume content is misaligned with the target role — core JD requirements are absent or buried."],
+          "interpretation": ["Submitting a generic resume to a specific role is the most common and most costly application mistake. ATS filtering means this resume will not reach a human reviewer."],
+          "action": ["Do not submit this resume to this role without a customisation pass. Extract the top 15 JD keywords. Verify each appears in the resume. Rewrite the summary to speak directly to this role's requirements."]
+        }
+      }
+    }
+  },
+
+  "composite_scoring": {
+    "method": "weighted_average",
+    "score_range": { "min": 0, "max": 100 },
+    "grade_bands": {
+      "A": { "min": 85, "max": 100, "label": "Submission-Ready", "description": "Resume is optimised across all dimensions. Submit with confidence." },
+      "B": { "min": 70, "max": 84,  "label": "Near-Ready", "description": "Strong resume with minor gaps. Address FAIR-tier signals before submission." },
+      "C": { "min": 50, "max": 69,  "label": "Needs Work", "description": "Several meaningful gaps. Prioritise POOR-tier signals before applying to competitive roles." },
+      "D": { "min": 30, "max": 49,  "label": "Major Revision Required", "description": "Foundational issues across multiple dimensions. A significant rewrite is recommended." },
+      "F": { "min": 0,  "max": 29,  "label": "Do Not Submit", "description": "Critical failures in ATS compatibility and content quality. Full reconstruction required." }
+    },
+    "priority_order": [
+      "ats_sections",
+      "ats_contact_completeness",
+      "ats_keyword_density",
+      "contextual_relevance",
+      "ats_quantify_impact",
+      "ats_accomplishments",
+      "ats_action_verbs",
+      "ats_active_voice",
+      "ats_spell_check",
+      "ats_consistency",
+      "ats_tense_consistency",
+      "ats_date_order",
+      "ats_length",
+      "ats_bullet_count",
+      "ats_bullet_length",
+      "ats_filler_words",
+      "ats_buzzwords",
+      "ats_pronouns",
+      "ats_repetition"
+    ]
+  },
+
+  "role_level_modifiers": {
+    "description": "Some signals carry different weights depending on the seniority level of the target role.",
+    "junior": {
+      "upweighted": ["ats_keyword_density", "ats_spell_check", "ats_sections"],
+      "downweighted": ["ats_quantify_impact", "contextual_relevance"]
+    },
+    "mid": {
+      "upweighted": ["ats_quantify_impact", "ats_accomplishments"],
+      "downweighted": []
+    },
+    "senior": {
+      "upweighted": ["ats_accomplishments", "contextual_relevance", "ats_active_voice"],
+      "downweighted": ["ats_filler_words", "ats_pronouns"]
+    },
+    "executive": {
+      "upweighted": ["contextual_relevance", "ats_accomplishments", "ats_length"],
+      "downweighted": ["ats_bullet_count", "ats_bullet_length"]
+    }
+  },
+
+  "template_variables": {
+    "description": "Dynamic variables used in observation/interpretation/action strings. Must be resolved at evaluation time.",
+    "variables": [
+      { "key": "quantified_count",      "type": "integer", "description": "Number of bullets with at least one metric" },
+      { "key": "total_count",           "type": "integer", "description": "Total number of experience bullets" },
+      { "key": "gap_count",             "type": "integer", "description": "Number of bullets without any quantified outcome" },
+      { "key": "weak_count",            "type": "integer", "description": "Number of bullets with weak or passive openers" },
+      { "key": "duty_count",            "type": "integer", "description": "Number of duty-framing bullets" },
+      { "key": "filler_count",          "type": "integer", "description": "Number of bullets containing filler phrases" },
+      { "key": "filler_pct",            "type": "float",   "description": "Percentage of bullets containing filler phrases" },
+      { "key": "affected_roles",        "type": "integer", "description": "Number of roles affected by the flagged issue" },
+      { "key": "passive_count",         "type": "integer", "description": "Number of passive voice constructions detected" },
+      { "key": "passive_pct",           "type": "float",   "description": "Percentage of bullets using passive voice" },
+      { "key": "total_bullets",         "type": "integer", "description": "Total number of bullets across all roles" },
+      { "key": "word_count",            "type": "integer", "description": "Total resume word count" },
+      { "key": "role_level",            "type": "string",  "description": "Detected or specified role level: junior | mid | senior | executive" },
+      { "key": "outlier_count",         "type": "integer", "description": "Number of bullets outside optimal length range" },
+      { "key": "outlier_pct",           "type": "float",   "description": "Percentage of bullets outside optimal length range" },
+      { "key": "min_words",             "type": "integer", "description": "Minimum bullet word count detected" },
+      { "key": "max_words",             "type": "integer", "description": "Maximum bullet word count detected" },
+      { "key": "pct_in_range",          "type": "float",   "description": "Percentage of bullets within optimal word count range" },
+      { "key": "top_verb",              "type": "string",  "description": "Most frequently repeated action verb" },
+      { "key": "repeat_count",          "type": "integer", "description": "Number of times the most repeated verb appears" },
+      { "key": "repeat_pct",            "type": "float",   "description": "Percentage of all bullets using the most repeated verb" },
+      { "key": "buzzword_count",        "type": "integer", "description": "Number of generic buzzword instances detected" },
+      { "key": "pronoun_count",         "type": "integer", "description": "Number of personal pronouns detected" },
+      { "key": "affected_sections",     "type": "integer", "description": "Number of sections containing pronouns" },
+      { "key": "missing_optional",      "type": "integer", "description": "Number of missing optional/recommended sections" },
+      { "key": "nonstandard_header",    "type": "string",  "description": "Non-standard section header detected" },
+      { "key": "missing_count",         "type": "integer", "description": "Number of missing required items" },
+      { "key": "inconsistent_dimension","type": "string",  "description": "Name of the inconsistent formatting dimension" },
+      { "key": "inconsistent_count",    "type": "integer", "description": "Number of inconsistent formatting dimensions" },
+      { "key": "inconsistent_dimensions","type": "array",  "description": "List of inconsistent formatting dimensions" },
+      { "key": "error_count",           "type": "integer", "description": "Number of spelling errors detected" },
+      { "key": "error_list",            "type": "array",   "description": "List of detected spelling errors" },
+      { "key": "high_risk_errors",      "type": "array",   "description": "Spelling errors in high-risk keyword categories" },
+      { "key": "gap_description",       "type": "string",  "description": "Human-readable description of the date gap" },
+      { "key": "issue_description",     "type": "string",  "description": "Human-readable description of the date order issue" },
+      { "key": "issues",                "type": "array",   "description": "List of critical date issues detected" },
+      { "key": "missing_field",         "type": "string",  "description": "Name of missing contact field" },
+      { "key": "missing_keywords",      "type": "array",   "description": "List of missing role-critical keywords" },
+      { "key": "missing_keyword_count", "type": "integer", "description": "Number of missing role-critical keywords" },
+      { "key": "bullets_per_role_summary","type":"string", "description": "Human-readable summary of bullet distribution per role" },
+      { "key": "affected_role_count",   "type": "integer", "description": "Number of roles with bullet count issues" },
+      { "key": "issue_description",     "type": "string",  "description": "Human-readable description of the bullet count issue" }
+    ]
+  }
+}

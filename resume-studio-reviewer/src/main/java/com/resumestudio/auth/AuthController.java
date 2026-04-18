@@ -27,10 +27,10 @@ public class AuthController {
         try {
             String jwt = authHeader.substring(7);
             SupabaseJwtVerifier.UserClaims claims = verifier.verify(jwt);
-            User user = userService.getOrCreate(claims.userId(), claims.email());
+            User user = userService.getOrCreate(claims.userId());
             return ResponseEntity.ok(Map.of(
                 "userId", user.getId(),
-                "email", user.getEmail(),
+                "email", claims.email(),
                 "plan", user.getPlan().name()
             ));
         } catch (IllegalArgumentException e) {

@@ -4,27 +4,56 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "analysis_snapshots")
+@Table(name = "analysis_snapshots", indexes = {
+    @Index(name = "idx_snapshots_user_id",       columnList = "user_id"),
+    @Index(name = "idx_snapshots_tracked_at",    columnList = "tracked_at"),
+    @Index(name = "idx_snapshots_jd_resume_hash", columnList = "jd_hash, resume_hash")
+})
 public class AnalysisSnapshotEntity {
 
     @Id
+    @Column(length = 36)
     private String analysisId;
+
+    @Column(length = 16)
     private String verdict;
+
+    @Column(length = 8)
     private String confidence;
+
     private int requiredSkillCount;
     private boolean hasMissingMustHaves;
     private Double calculatedYoe;
+
+    @Column(name = "tracked_at")
     private Instant trackedAt;
 
-    // Richer fields for feedback loop / model training
+    @Column(name = "user_id", length = 36)
     private String userId;
+
+    @Column(name = "role_title", length = 255)
     private String roleTitle;
+
+    @Column(name = "role_domain", length = 128)
     private String roleDomain;
+
+    @Column(name = "composite_score")
     private Integer compositeScore;
+
+    @Column(name = "skill_match_score")
     private Integer skillMatchScore;
-    private String jdHash;       // SHA-256 of JD text — for deduplication
-    private String resumeHash;   // SHA-256 of resume bytes — for deduplication
-    private Boolean userAccepted; // outcome label — set later via feedback API (null = unknown)
+
+    /** SHA-256 hex of JD text — 64 chars exactly */
+    @Column(name = "jd_hash", length = 64)
+    private String jdHash;
+
+    /** SHA-256 hex of resume bytes — 64 chars exactly */
+    @Column(name = "resume_hash", length = 64)
+    private String resumeHash;
+
+    /** Outcome label set later via feedback API (null = unknown) */
+    @Column(name = "user_accepted")
+    private Boolean userAccepted;
 
     public AnalysisSnapshotEntity() {}
 

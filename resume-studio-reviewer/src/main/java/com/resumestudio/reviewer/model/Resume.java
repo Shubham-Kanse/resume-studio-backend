@@ -50,6 +50,9 @@ public class Resume {
     private List<String> topBullets = new ArrayList<>(); // top 5 scored bullets for AI prompt
     private List<com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet> enrichedBullets = new ArrayList<>();
 
+    // ── Skills metadata ───────────────────────────────────────
+    private boolean hasStaleSkills;
+
     // ── Getters & Setters ────────────────────────────────────
 
     public String getRawFilename() { return rawFilename; }
@@ -138,4 +141,7 @@ public class Resume {
 
     public List<com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet> getEnrichedBullets() { return enrichedBullets; }
     public void setEnrichedBullets(List<com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet> enrichedBullets) { this.enrichedBullets = enrichedBullets; }
+
+    public boolean isHasStaleSkills() { return hasStaleSkills; }
+    public void setHasStaleSkills(boolean hasStaleSkills) { this.hasStaleSkills = hasStaleSkills; }
 }

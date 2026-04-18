@@ -30,6 +30,7 @@ class AiReviewServiceEdgeCaseTest {
         FeedbackGenerator.FeedbackOutput fb = new FeedbackGenerator.FeedbackOutput(
             List.of(), List.of(), "Fallback summary.");
         when(fallback.generate(any(), any())).thenReturn(fb);
+        when(fallback.generate(any(), any(), any())).thenReturn(fb);
 
         service = new AiReviewService(aiProps, fallback);
     }

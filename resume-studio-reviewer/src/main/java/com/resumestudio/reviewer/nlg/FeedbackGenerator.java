@@ -55,12 +55,16 @@ public class FeedbackGenerator {
     }
 
     public FeedbackOutput generate(ResumeSignals signals, Verdict verdict) {
+        return generate(signals, verdict, null);
+    }
+
+    public FeedbackOutput generate(ResumeSignals signals, Verdict verdict, com.resumestudio.reviewer.model.Resume resume) {
         if (signals == null || verdict == null) {
             log.warn("Null signals or verdict provided to generate()");
             return new FeedbackOutput(List.of(), List.of(), "Unable to generate feedback due to missing data.");
         }
         
-        List<Signal> signalList = buildSignals(signals);
+        List<Signal> signalList = buildSignals(signals, resume);
         List<Fix> fixes = buildFixes(signals);
         String summary = buildSummary(signals, verdict, fixes);
 
@@ -74,18 +78,16 @@ public class FeedbackGenerator {
     // We produce 3-4 insights that combine related signals into a coherent story.
 
     private List<Signal> buildSignals(ResumeSignals signals) {
+        return buildSignals(signals, null);
+    }
+
+    private List<Signal> buildSignals(ResumeSignals signals, com.resumestudio.reviewer.model.Resume resume) {
         List<Signal> list = new ArrayList<>();
 
-        // ── Insight 1: Candidate fit (title + YOE + company tier) ─────────────
         list.add(buildFitInsight(signals));
+        list.add(buildSkillInsight(signals, resume));
+        list.add(buildPresentationInsight(signals, resume));
 
-        // ── Insight 2: Skill coverage (the make-or-break signal) ──────────────
-        list.add(buildSkillInsight(signals));
-
-        // ── Insight 3: Resume presentation (summary + format + visibility) ────
-        list.add(buildPresentationInsight(signals));
-
-        // ── Insight 4: Trust & chronology (only if there's an issue) ──────────
         Signal trustInsight = buildTrustInsight(signals);
         if (trustInsight != null) list.add(trustInsight);
 
@@ -170,7 +172,7 @@ public class FeedbackGenerator {
      * Insight 2 — Skill coverage.
      * The single most important signal. Specific about what's missing and what's buried.
      */
-    private Signal buildSkillInsight(ResumeSignals signals) {
+    private Signal buildSkillInsight(ResumeSignals signals, com.resumestudio.reviewer.model.Resume resume) {
         boolean hasJdSkills = signals.getMustHaveResults() != null && !signals.getMustHaveResults().isEmpty();
 
         if (!hasJdSkills) {
@@ -194,15 +196,23 @@ public class FeedbackGenerator {
             .filter(r -> r.getVisibility() == SkillVisibility.BURIED)
             .map(SkillMatchResult::getJdSkill).findFirst().orElse("a required skill");
 
+        // Evidence: first matched skill location or first missing skill name
+        String evidence = buildSkillEvidence(signals, resume);
+
         Map<String, String> tokens = Map.of("skill_name", firstMissing);
 
         if (missing == 0 && buried == 0) {
             String o = obs("skills_visibility", "EXCELLENT", tokens);
             String i = interp("skills_visibility", "EXCELLENT", tokens);
+            // NLU: check if skills are evidenced deeply or just listed
+            String nluNote = "";
+            if (!signals.getShallowSkills().isEmpty()) {
+                nluNote = " However, " + signals.getShallowSkills().get(0) + " appears only once — depth of expertise is unclear.";
+            }
             return signal("skill_coverage", "Skill coverage", SignalStatus.PASS, SignalFriction.NONE,
-                o != null ? o : "All " + total + " required skills are present and visible.",
+                (o != null ? o : "All " + total + " required skills are present and visible.") + nluNote,
                 i != null ? i : "A recruiter scanning for the core stack will find everything they need.",
-                ImpactLevel.HIGH);
+                ImpactLevel.HIGH, evidence);
         }
 
         if (missing == 0) {
@@ -213,7 +223,7 @@ public class FeedbackGenerator {
                 ? firstBuried + " is only visible in an older role — not in your skills section."
                 : buried + " required skills (including " + firstBuried + ") are buried in older roles.");
             String interpText = i != null ? i : "You have the skills — the problem is visibility. A recruiter scanning in 10 seconds won't reach old bullet points.";
-            return signal("skill_coverage", "Skill coverage", SignalStatus.WARN, SignalFriction.MEDIUM, obsText, interpText, ImpactLevel.HIGH);
+            return signal("skill_coverage", "Skill coverage", SignalStatus.WARN, SignalFriction.MEDIUM, obsText, interpText, ImpactLevel.HIGH, evidence);
         }
 
         SignalStatus status = missing > total / 2 ? SignalStatus.FAIL : SignalStatus.WARN;
@@ -234,7 +244,17 @@ public class FeedbackGenerator {
 
         return signal("skill_coverage", "Skill coverage", status,
             status == SignalStatus.FAIL ? SignalFriction.HIGH : SignalFriction.MEDIUM,
-            obsText, interpText, ImpactLevel.HIGH);
+            obsText, interpText, ImpactLevel.HIGH, evidence);
+    }
+
+    /** Extracts a short verbatim evidence snippet for the skill signal. */
+    private String buildSkillEvidence(ResumeSignals signals, com.resumestudio.reviewer.model.Resume resume) {
+        if (resume == null || signals.getMustHaveResults() == null) return null;
+        // Show where the first found skill appears
+        return signals.getMustHaveResults().stream()
+            .filter(r -> r.getVisibility() != SkillVisibility.MISSING && r.getSourceText() != null && !r.getSourceText().isBlank())
+            .map(r -> r.getSourceText().length() > 80 ? r.getSourceText().substring(0, 80) + "…" : r.getSourceText())
+            .findFirst().orElse(null);
     }
 
     /**
@@ -242,7 +262,7 @@ public class FeedbackGenerator {
      * Combines summary quality + skills format + bullet quality into one verdict.
      * Only surfaces what's actually wrong — doesn't praise the obvious.
      */
-    private Signal buildPresentationInsight(ResumeSignals signals) {
+    private Signal buildPresentationInsight(ResumeSignals signals, com.resumestudio.reviewer.model.Resume resume) {
         boolean summaryMissing = !signals.isSummaryPresent();
         boolean summaryGeneric = signals.isSummaryIsGeneric();
         boolean summaryWeak = summaryMissing || summaryGeneric
@@ -296,7 +316,23 @@ public class FeedbackGenerator {
             interp = "Weak verbs signal a supporting role, not ownership. Replace with action verbs that show you drove the outcome.";
         }
 
-        return signal("presentation", "Resume presentation", status, SignalFriction.MEDIUM, obs, interp, ImpactLevel.MEDIUM);
+        // Evidence: first weak bullet as a concrete example
+        String presentationEvidence = null;
+        if (resume != null && resume.getEnrichedBullets() != null) {
+            presentationEvidence = resume.getEnrichedBullets().stream()
+                .filter(b -> !b.metricDetected() && b.specificityScore() < 4.0)
+                .map(com.resumestudio.reviewer.nlp.BulletEnricher.EnrichedBullet::text)
+                .filter(t -> t != null && !t.isBlank())
+                .map(t -> t.length() > 100 ? t.substring(0, 100) + "…" : t)
+                .findFirst().orElse(null);
+        }
+        if (presentationEvidence == null && resume != null && resume.getSummaryText() != null
+                && !resume.getSummaryText().isBlank() && summaryGeneric) {
+            String s = resume.getSummaryText().trim();
+            presentationEvidence = s.length() > 100 ? s.substring(0, 100) + "…" : s;
+        }
+
+        return signal("presentation", "Resume presentation", status, SignalFriction.MEDIUM, obs, interp, ImpactLevel.MEDIUM, presentationEvidence);
     }
 
     /**
@@ -346,7 +382,7 @@ public class FeedbackGenerator {
             if (!missing.isEmpty()) {
                 String skillList = missing.stream().map(SkillMatchResult::getJdSkill)
                     .reduce((a, b) -> a + ", " + b).orElse("required skills");
-                fixes.add(fix(rank++, "must_haves_visible", "Add these missing must-have skills: " + skillList, "These are the primary technical requirements for this role. Their absence is typically a decisive rejection signal.", "Only add skills you genuinely have. If these are gaps, consider targeting roles that match your current stack.", ImpactLevel.HIGH));
+                fixes.add(fix(rank++, "skill_match", "Add these missing must-have skills: " + skillList, "These are the primary technical requirements for this role. Their absence is typically a decisive rejection signal.", "Only add skills you genuinely have. If these are gaps, consider targeting roles that match your current stack.", ImpactLevel.HIGH));
             }
         }
 
@@ -357,7 +393,7 @@ public class FeedbackGenerator {
             if (!buried.isEmpty()) {
                 String skillList = buried.stream().map(SkillMatchResult::getJdSkill)
                     .reduce((a, b) -> a + ", " + b).orElse("key skills");
-                fixes.add(fix(rank++, "must_haves_visible", "Move these skills to your skills section: " + skillList, bank.skillVisibilityInterpretation(buried.get(0)), "Add them to your skills section. Example: 'Programming: " + buried.get(0).getJdSkill() + ", ...'", ImpactLevel.HIGH));
+                fixes.add(fix(rank++, "skill_match", "Move these skills to your skills section: " + skillList, bank.skillVisibilityInterpretation(buried.get(0)), "Add them to your skills section. Example: 'Programming: " + buried.get(0).getJdSkill() + ", ...'", ImpactLevel.HIGH));
             }
         }
 
@@ -368,7 +404,7 @@ public class FeedbackGenerator {
         if (summaryActionText != null) {
             String summaryInterpText = interp("summary", summaryTier, Map.of());
             if (summaryInterpText == null) summaryInterpText = bank.summaryInterpretation(signals);
-            fixes.add(fix(rank++, "summary_quality",
+            fixes.add(fix(rank++, "summary",  // Issue 3: was "summary_quality"
                 !signals.isSummaryPresent() ? "Add a professional summary at the top of your resume" : "Rewrite your summary with technical specifics",
                 summaryInterpText, summaryActionText, ImpactLevel.HIGH));
         }
@@ -376,7 +412,7 @@ public class FeedbackGenerator {
         // Skills format
         String formatAction = bank.skillsFormatAction(signals);
         if (formatAction != null) {
-            fixes.add(fix(rank++, "must_haves_visible", "Restructure your skills section", bank.skillsFormatInterpretation(signals), formatAction, ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "skill_match", "Restructure your skills section", bank.skillsFormatInterpretation(signals), formatAction, ImpactLevel.MEDIUM));
         }
 
         // Company no context
@@ -426,7 +462,7 @@ public class FeedbackGenerator {
             String bulletTier = signals.getImpactVerbRatio() < 0.2 ? "CRITICAL" : "POOR";
             String bulletObs = obs("bullet_quality", bulletTier, Map.of("bullet_count", String.valueOf((int)(signals.getImpactVerbRatio() * 100))));
             String bulletAct = act("bullet_quality", bulletTier, Map.of());
-            fixes.add(fix(rank++, "bullet_quality",
+            fixes.add(fix(rank++, "bullets",  // Issue 3: was "bullet_quality"
                 bulletObs != null ? bulletObs : String.format("Only %.0f%% of your bullets start with impact verbs", signals.getImpactVerbRatio() * 100),
                 "Weak verbs like 'responsible for' or 'worked on' don't convey ownership or results.",
                 bulletAct != null ? bulletAct : "Rewrite bullets to start with strong verbs: Built, Designed, Led, Reduced, Increased, Automated.",
@@ -436,7 +472,7 @@ public class FeedbackGenerator {
         // Bullet quality - no metrics
         if (signals.getMetricDensity() < 0.3) {
             String metricAct = act("bullet_quality", "POOR", Map.of());
-            fixes.add(fix(rank++, "bullet_quality",
+            fixes.add(fix(rank++, "bullets",  // Issue 3: was "bullet_quality"
                 String.format("Only %.0f%% of your bullets include quantified results", signals.getMetricDensity() * 100),
                 "Unquantified claims are vague. Numbers make impact concrete and memorable.",
                 metricAct != null ? metricAct : "Add metrics: '...reduced latency by 75%', '...serving 5M daily transactions'.",
@@ -552,6 +588,37 @@ public class FeedbackGenerator {
                     if (!titleOk) sb.append(" The title mismatch is the biggest barrier.");
                 }
             }
+            case NO_FIT -> {
+                // Honest, non-discouraging summary for resumes that don't match the role's
+                // core requirements. We name the dominant barrier(s) so the candidate knows
+                // exactly why and can either reposition or target a different role.
+                List<String> missingSkills = signals.getMustHaveResults() != null
+                    ? signals.getMustHaveResults().stream()
+                        .filter(r -> r.getVisibility() == SkillVisibility.MISSING)
+                        .map(SkillMatchResult::getJdSkill)
+                        .toList()
+                    : List.of();
+                int missingCount = missingSkills.size();
+                int totalCount = signals.getMustHaveResults() != null ? signals.getMustHaveResults().size() : 0;
+
+                sb.append("This resume does not match the core requirements for ").append(jdTitle).append(".");
+                if (missingCount > 0 && totalCount > 0) {
+                    int limit = Math.min(missingCount, 4);
+                    String skillList = missingSkills.stream().limit(limit)
+                        .reduce((a, b) -> a + ", " + b).orElse("");
+                    if (missingCount > limit) skillList += ", and " + (missingCount - limit) + " more";
+                    sb.append(" ").append(missingCount).append(" of ").append(totalCount)
+                      .append(" must-have skills are absent (").append(skillList).append(").");
+                }
+                if (signals.getYoeFit() == YoeFit.UNDER_RANGE_SIGNIFICANT && yoe != null && jdRange != null) {
+                    sb.append(" Experience is also significantly short: ").append(yoe)
+                      .append(" years against a ").append(jdRange).append(" requirement.");
+                }
+                if (!titleOk) {
+                    sb.append(" The title direction is different from what this role calls for.");
+                }
+                sb.append(" This is a fit problem, not a presentation problem — applying as-is is unlikely to convert. Consider a closer-fit role or repositioning toward the missing requirements.");
+            }
         }
 
         return sb.toString().trim();
@@ -568,7 +635,8 @@ public class FeedbackGenerator {
         f.setSignalId(signalId);
         f.setAction(action);
         f.setReason(reason);
-        f.setBeforeAfter(new Fix.BeforeAfter(example, null));
+        // Issue 4: don't store generic example text as beforeAfter.before — it's not the candidate's text
+        // beforeAfter is only set by AiReviewService when it has real resume text to inject
         f.setImpact(impact);
         return f;
     }
@@ -576,6 +644,11 @@ public class FeedbackGenerator {
     /** Convenience factory — mirrors the old positional Signal constructor signature. */
     private static Signal signal(String id, String label, SignalStatus status, SignalFriction friction,
                                   String observation, String interpretation, ImpactLevel impact) {
+        return signal(id, label, status, friction, observation, interpretation, impact, null);
+    }
+
+    private static Signal signal(String id, String label, SignalStatus status, SignalFriction friction,
+                                  String observation, String interpretation, ImpactLevel impact, String evidence) {
         Signal s = new Signal();
         s.setId(id);
         s.setLabel(label);
@@ -584,6 +657,7 @@ public class FeedbackGenerator {
         s.setObservation(observation);
         s.setInterpretation(interpretation);
         s.setImpact(impact);
+        s.setEvidence(evidence);
         // Confidence: PASS signals are HIGH, WARN are MEDIUM, FAIL are HIGH (we're confident it's a problem)
         s.setConfidence(status == SignalStatus.WARN ? Confidence.MEDIUM : Confidence.HIGH);
         return s;

@@ -85,6 +85,24 @@ public class RawDocument {
     public boolean hasPhoto() { return hasPhoto; }
     public void setHasPhoto(boolean hasPhoto) { this.hasPhoto = hasPhoto; }
 
+    /**
+     * Creates a RawDocument directly from plain text (no file parsing needed).
+     * Used by the /api/ats/score-text and /api/ats/nlp-analysis endpoints.
+     */
+    public static RawDocument fromText(String text) {
+        RawDocument doc = new RawDocument();
+        doc.setFullText(text != null ? text : "");
+        doc.setFilename("text-input");
+        doc.setParseConfidence(0.9);
+        doc.setScanned(false);
+        doc.setSource(com.resumestudio.reviewer.model.enums.ParseSource.PDF_TEXT);
+        RawPage page = new RawPage();
+        page.setPageNumber(1);
+        page.setText(text != null ? text : "");
+        doc.setPages(List.of(page));
+        return doc;
+    }
+
     /** Returns text from the top 20% of page 1 — the header zone. */
     public String getHeaderZoneText() {
         if (pages == null || pages.isEmpty()) return "";
