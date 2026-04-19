@@ -58,9 +58,9 @@ class AuthControllerTest {
     void validToken_returnsUserPlan() {
         var claims = new SupabaseJwtVerifier.UserClaims("uid-1", "user@example.com");
         when(verifier.verify("good-token")).thenReturn(claims);
-        var user = new User("uid-1", "user@example.com");
+        var user = new User("uid-1");
         user.setPlan(Plan.PRO);
-        when(userService.getOrCreate("uid-1", "user@example.com")).thenReturn(user);
+        when(userService.getOrCreate("uid-1")).thenReturn(user);
 
         var r = controller.validate("Bearer good-token");
         assertEquals(HttpStatus.OK, r.getStatusCode());
@@ -76,7 +76,7 @@ class AuthControllerTest {
     void validToken_newUser_returnsFreeplan() {
         var claims = new SupabaseJwtVerifier.UserClaims("uid-new", "new@example.com");
         when(verifier.verify("new-token")).thenReturn(claims);
-        when(userService.getOrCreate("uid-new", "new@example.com")).thenReturn(new User("uid-new", "new@example.com"));
+        when(userService.getOrCreate("uid-new")).thenReturn(new User("uid-new"));
 
         var r = controller.validate("Bearer new-token");
         assertEquals(HttpStatus.OK, r.getStatusCode());

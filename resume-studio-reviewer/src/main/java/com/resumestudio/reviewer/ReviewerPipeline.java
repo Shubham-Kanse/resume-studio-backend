@@ -120,11 +120,16 @@ public class ReviewerPipeline {
             log.warn("Resume appears to be non-English — signal quality may be reduced");
         }
 
+        boolean nonEnglish = isLikelyNonEnglish(raw.getFullText());
         boolean jdIncomplete = jdFromUrl && (resolvedJd == null || resolvedJd.trim().length() < 200);
-        FeedbackReport report = buildReport(resume, jd, raw, jdIncomplete, userId);
-        // Retrieve signals from the last buildReport call via a thread-local
-        ResumeSignals signals = lastSignals.get();
-        lastSignals.remove();
+        FeedbackReport report;
+        ResumeSignals signals;
+        try {
+            report = buildReport(resume, jd, raw, jdIncomplete, userId, nonEnglish);
+            signals = lastSignals.get();
+        } finally {
+            lastSignals.remove();
+        }
         return new ReviewResult(report, resume, signals);
     }
 
@@ -142,14 +147,18 @@ public class ReviewerPipeline {
     }
 
     private FeedbackReport buildReport(Resume resume, JobDescription jd, RawDocument raw) {
-        return buildReport(resume, jd, raw, false, null);
+        return buildReport(resume, jd, raw, false, null, false);
     }
 
     private FeedbackReport buildReport(Resume resume, JobDescription jd, RawDocument raw, boolean jdIncomplete) {
-        return buildReport(resume, jd, raw, jdIncomplete, null);
+        return buildReport(resume, jd, raw, jdIncomplete, null, false);
     }
 
     private FeedbackReport buildReport(Resume resume, JobDescription jd, RawDocument raw, boolean jdIncomplete, String userId) {
+        return buildReport(resume, jd, raw, jdIncomplete, userId, false);
+    }
+
+    private FeedbackReport buildReport(Resume resume, JobDescription jd, RawDocument raw, boolean jdIncomplete, String userId, boolean nonEnglish) {
         ResumeSignals signals = signalService.compute(resume, jd, raw);
         lastSignals.set(signals); // expose for reviewFull()
         CoherenceEngine.CoherenceResult coherence = coherenceEngine.check(signals);
@@ -207,6 +216,10 @@ public class ReviewerPipeline {
         if (jdIncomplete) {
             redFlags.add(new FeedbackReport.RedFlag("JD_FETCH_INCOMPLETE", ImpactLevel.HIGH,
                 "The job description fetched from the URL appears incomplete. For a more accurate review, paste the full JD text directly."));
+        }
+        if (nonEnglish) {
+            redFlags.add(new FeedbackReport.RedFlag("NON_ENGLISH_RESUME", ImpactLevel.MEDIUM,
+                "This resume contains significant non-English content. Signal accuracy may be reduced — results are most reliable for English-language resumes."));
         }
 
         ResumeScore resumeScore = scoreCalculator.calculate(signals);

@@ -28,6 +28,7 @@ public class GeneratedResumeContent {
     private List<GeneratedSkillCategory> skills = new ArrayList<>();
     private List<GeneratedEducation> education = new ArrayList<>();
     private List<GeneratedProject> projects = new ArrayList<>();
+    private List<String> achievements = new ArrayList<>();  // "Award Name – Company (Year): description"
 
     // ── Generation provenance ─────────────────────────────────────────────────
     // "optimized" when the LLM produced the content; "passthrough" when the LLM
@@ -81,7 +82,19 @@ public class GeneratedResumeContent {
     public List<GeneratedProject> getProjects() { return projects; }
     public void setProjects(List<GeneratedProject> projects) { this.projects = projects; }
 
+    public List<String> getAchievements() { return achievements; }
+    public void setAchievements(List<String> achievements) { this.achievements = achievements; }
+
     // ── Inner types ───────────────────────────────────────────────────────────
+
+    public static class BulletGroup {
+        private String heading;           // e.g. "DevOps & SRE Operations" — null = no sub-heading
+        private List<String> bullets = new ArrayList<>();
+        public String getHeading() { return heading; }
+        public void setHeading(String heading) { this.heading = heading; }
+        public List<String> getBullets() { return bullets; }
+        public void setBullets(List<String> bullets) { this.bullets = bullets; }
+    }
 
     public static class GeneratedExperience {
         private String title;
@@ -89,7 +102,8 @@ public class GeneratedResumeContent {
         private String companyDescriptor;  // "Series C fintech, 300 engineers" — shown in parens
         private String startDate;          // MM/YYYY
         private String endDate;            // MM/YYYY or "Present"
-        private List<String> bullets = new ArrayList<>();  // 3-5 per role, STAR-T formatted
+        private List<String> bullets = new ArrayList<>();          // flat bullets (passthrough / simple roles)
+        private List<BulletGroup> bulletGroups = new ArrayList<>(); // grouped bullets with sub-headings (preferred)
 
         public String getTitle() { return title; }
         public void setTitle(String title) { this.title = title; }
@@ -103,6 +117,8 @@ public class GeneratedResumeContent {
         public void setEndDate(String endDate) { this.endDate = endDate; }
         public List<String> getBullets() { return bullets; }
         public void setBullets(List<String> bullets) { this.bullets = bullets; }
+        public List<BulletGroup> getBulletGroups() { return bulletGroups; }
+        public void setBulletGroups(List<BulletGroup> bulletGroups) { this.bulletGroups = bulletGroups; }
     }
 
     public static class GeneratedSkillCategory {

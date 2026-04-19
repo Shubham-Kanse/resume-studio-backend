@@ -4,13 +4,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -39,8 +41,11 @@ public class JdFetchService {
         .connectTimeout(Duration.ofSeconds(10))
         .build();
 
-    // Cache: URL → resolved text. Bounded implicitly by distinct URLs seen per JVM lifetime.
-    private final ConcurrentHashMap<String, String> cache = new ConcurrentHashMap<>();
+    // Cache: URL → resolved text. Bounded to 500 entries, 1 hour TTL.
+    private final Cache<String, String> cache = Caffeine.newBuilder()
+        .maximumSize(500)
+        .expireAfterWrite(1, TimeUnit.HOURS)
+        .build();
 
     public String resolve(String input) {
         if (input == null || input.isBlank()) return input;
@@ -50,7 +55,7 @@ public class JdFetchService {
             return trimmed;
         }
 
-        String cached = cache.get(trimmed);
+        String cached = cache.getIfPresent(trimmed);
         if (cached != null) {
             log.debug("JD URL cache hit: {}", trimmed);
             return cached;

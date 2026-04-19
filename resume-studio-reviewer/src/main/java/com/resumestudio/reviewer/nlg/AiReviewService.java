@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  * Calls Groq to fill the text fields of FeedbackReport.
  *
  * The rule engine owns all structural decisions (verdict, status, impact).
- * AI only fills: narrative, summaryLine, momentOfDecision, narrativeTone,
+ * AI only fills: narrative, summaryLine, narrativeTone,
  * signal observation/interpretation, fix action/reason/beforeAfter,
  * recruiterGutFeel, differentiators.
  *

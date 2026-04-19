@@ -15,6 +15,12 @@ public interface ReviewJobRepository extends JpaRepository<ReviewJobEntity, Stri
 
     List<ReviewJobEntity> findByUserIdOrderByCreatedAtDesc(String userId);
 
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT j FROM ReviewJobEntity j WHERE j.userId = :userId ORDER BY j.createdAt DESC")
+    org.springframework.data.domain.Page<ReviewJobEntity> findByUserIdPaged(
+        @Param("userId") String userId,
+        org.springframework.data.domain.Pageable pageable);
+
     @Transactional
     @Modifying
     @Query("DELETE FROM ReviewJobEntity j WHERE j.status <> 'PROCESSING' AND j.createdAt < :cutoff")

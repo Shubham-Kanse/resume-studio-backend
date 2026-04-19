@@ -113,7 +113,10 @@ public class SupabaseJwtVerifier {
 
     private void refreshKeys() {
         try {
-            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(jwksUrl)).GET().build();
+            HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(jwksUrl))
+                .timeout(java.time.Duration.ofSeconds(15))
+                .GET().build();
             HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
             if (res.statusCode() != 200) throw new RuntimeException("JWKS fetch failed: " + res.statusCode());
 

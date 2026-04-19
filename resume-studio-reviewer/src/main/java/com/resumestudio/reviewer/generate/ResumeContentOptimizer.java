@@ -261,13 +261,33 @@ public class ResumeContentOptimizer {
                 exp.setCompanyDescriptor(e.path("companyDescriptor").asText(null));
                 exp.setStartDate(e.path("startDate").asText(null));
                 exp.setEndDate(e.path("endDate").asText(null));
-                List<String> bullets = new ArrayList<>();
-                for (JsonNode b : e.path("bullets")) {
-                    if (bullets.size() >= 5) break;
-                    String t = b.asText();
-                    if (t != null && !t.isBlank()) bullets.add(t);
+
+                // Prefer bulletGroups if present
+                JsonNode groups = e.path("bulletGroups");
+                if (groups.isArray() && groups.size() > 0) {
+                    List<GeneratedResumeContent.BulletGroup> groupList = new ArrayList<>();
+                    for (JsonNode g : groups) {
+                        GeneratedResumeContent.BulletGroup bg = new GeneratedResumeContent.BulletGroup();
+                        bg.setHeading(g.path("heading").asText(null));
+                        List<String> gbullets = new ArrayList<>();
+                        for (JsonNode b : g.path("bullets")) {
+                            String t = b.asText();
+                            if (t != null && !t.isBlank()) gbullets.add(t);
+                        }
+                        bg.setBullets(gbullets);
+                        if (!gbullets.isEmpty()) groupList.add(bg);
+                    }
+                    exp.setBulletGroups(groupList);
+                } else {
+                    // Fall back to flat bullets
+                    List<String> bullets = new ArrayList<>();
+                    for (JsonNode b : e.path("bullets")) {
+                        if (bullets.size() >= 6) break;
+                        String t = b.asText();
+                        if (t != null && !t.isBlank()) bullets.add(t);
+                    }
+                    exp.setBullets(bullets);
                 }
-                exp.setBullets(bullets);
                 if (exp.getCompany() != null) list.add(exp);
             }
             c.setExperience(list);
@@ -333,6 +353,17 @@ public class ResumeContentOptimizer {
                 if (proj.getName() != null) list.add(proj);
             }
             c.setProjects(list);
+        }
+
+        // Achievements
+        JsonNode achArray = root.path("achievements");
+        if (achArray.isArray()) {
+            List<String> achievements = new ArrayList<>();
+            for (JsonNode a : achArray) {
+                String t = a.asText();
+                if (t != null && !t.isBlank()) achievements.add(t);
+            }
+            c.setAchievements(achievements);
         }
 
         return c;
@@ -480,12 +511,14 @@ public class ResumeContentOptimizer {
         - Job title: must appear in summary opening line AND match experience titles
         - Acronym rule: on FIRST use, spell out then abbreviate: "Kubernetes (K8s)" — then just "K8s" after
 
-        PROFESSIONAL SUMMARY (100-150 words):
-        Use this exact formula:
+        PROFESSIONAL SUMMARY (EXACTLY 100-150 words — count them):
+        You MUST write ALL FIVE sentences below. Do not collapse or skip any:
         - Sentence 1 (OPENING): "[X]+ year [role level] [exact JD title] with proven track record in [primary domain]"
-        - Sentence 2 (TECHNICAL DEPTH): "Expert in [top 4-5 JD must-have skills, comma-separated]"
-        - Sentence 3-4 (QUANTIFIED WINS): 2-3 specific achievements that DIRECTLY MATCH the JD requirements, each with a metric
-        - Sentence 5 (VALUE PROP + CULTURAL FIT): "[Unique strength relevant to this JD role]"
+        - Sentence 2 (TECHNICAL DEPTH): "Expert in [top 4-5 JD must-have skills, comma-separated] with proven ability to [key capability from JD]"
+        - Sentence 3 (QUANTIFIED WIN 1): One specific achievement with a metric that directly matches a JD requirement
+        - Sentence 4 (QUANTIFIED WIN 2): A second specific achievement with a metric from a different area of the JD
+        - Sentence 5 (VALUE PROP): "[Unique strength relevant to this JD role] in [work environment type]"
+        The summary MUST be between 100 and 150 words. Count the words before outputting.
 
         EXPERIENCE BULLETS (3-5 bullets per role — no fewer, no more):
         Use the STAR-T formula for EVERY bullet:
@@ -513,11 +546,13 @@ public class ResumeContentOptimizer {
         - A bullet WITHOUT a metric is acceptable; a bullet with a FABRICATED metric is not.
         - When in doubt, choose truthful relative language over a guessed number.
 
-        SKILLS SECTION (15-25 skills total):
-        - Start with JD must-have skills (they must appear FIRST in their category)
-        - Group into 3-5 role-relevant categories
+        SKILLS SECTION (15-25 skills total — STRICT ORDERING):
+        - The FIRST skills category MUST be named after the JD role domain (e.g. "Core Technologies" or "Backend Engineering")
+          and MUST contain ALL JD must-have skills listed first, followed by closely related skills
+        - Remaining categories group the rest of the candidate's skills by domain
         - Use EXACT terminology from the JD (e.g., if JD says "AWS", list "AWS" not "Amazon Web Services")
-        - Total count: between 15 and 25 skills maximum
+        - Total count across ALL categories: between 15 and 25 skills maximum
+        - JD must-have skills MUST appear in the skills section — do not omit them
 
         DATE FORMAT: All dates must be MM/YYYY (e.g., "06/2021" not "June 2021" or "2021-06")
 
@@ -534,14 +569,15 @@ public class ResumeContentOptimizer {
         Using the JD data and candidate data above, generate a fully optimized resume JSON.
 
         Requirements:
-        1. The summary must naturally contain the job title and top 4-5 JD must-have keywords in the first 50 words
-        2. Bullets should be quantified WHENEVER the source data supports it; otherwise use scope or relative-impact language. Never invent numbers.
-        3. Skills section must list JD must-haves first, total 15-25 skills
-        4. All dates must be in MM/YYYY format
-        5. Experience is ordered newest-first (as provided)
-        6. The targetTitle should closely match the JD role title
-        7. Do NOT fabricate experience, skills, companies, dates, or metrics
-        8. Output ONLY the JSON object — no markdown, no preamble, no postscript""";
+        1. Summary MUST be 100-150 words and contain ALL FIVE sentences from the formula. Count the words.
+        2. Summary must naturally contain the job title and top 4-5 JD must-have keywords in the first 50 words
+        3. Bullets should be quantified WHENEVER the source data supports it; otherwise use scope or relative-impact language. Never invent numbers.
+        4. Skills: first category MUST contain ALL JD must-have skills listed first. Total 15-25 skills across all categories.
+        5. All dates must be in MM/YYYY format
+        6. Experience is ordered newest-first (as provided)
+        7. The targetTitle should closely match the JD role title
+        8. Do NOT fabricate experience, skills, companies, dates, or metrics
+        9. Output ONLY the JSON object — no markdown, no preamble, no postscript""";
 
     private static final String JSON_SCHEMA = """
         Output this exact JSON schema (replace all placeholder values):
@@ -553,7 +589,7 @@ public class ResumeContentOptimizer {
           "linkedIn": "linkedin.com/in/handle",
           "gitHub": "github.com/handle",
           "targetTitle": "JD-matched role title",
-          "summary": "100-150 word professional summary following the formula above",
+          "summary": "100-150 word professional summary — ALL FIVE sentences from the formula",
           "experience": [
             {
               "title": "Job Title",
@@ -561,16 +597,26 @@ public class ResumeContentOptimizer {
               "companyDescriptor": "brief context e.g. Series B fintech or null",
               "startDate": "MM/YYYY",
               "endDate": "MM/YYYY or Present",
-              "bullets": [
-                "TIER-verb + technical implementation + quantified result + technology",
-                "TIER-verb + technical implementation + quantified result + technology",
-                "TIER-verb + technical implementation + quantified result + technology"
+              "bulletGroups": [
+                {
+                  "heading": "Domain Area (e.g. DevOps & Automation, API Development, Security)",
+                  "bullets": [
+                    "TIER-verb + technical implementation + quantified result + technology",
+                    "TIER-verb + technical implementation + quantified result + technology"
+                  ]
+                },
+                {
+                  "heading": "Second Domain Area",
+                  "bullets": [
+                    "TIER-verb + technical implementation + quantified result + technology"
+                  ]
+                }
               ]
             }
           ],
           "skills": [
             {
-              "category": "Category Name",
+              "category": "Category Name (first category MUST contain all JD must-haves first)",
               "items": ["Skill1", "Skill2", "Skill3"]
             }
           ],
@@ -582,7 +628,7 @@ public class ResumeContentOptimizer {
               "location": "City, ST",
               "graduationYear": "MM/YYYY or YYYY",
               "gpa": "3.8 or null",
-              "honors": ["Dean's List"]
+              "honors": ["Dean's List", "Thesis: title if applicable"]
             }
           ],
           "projects": [
@@ -592,6 +638,14 @@ public class ResumeContentOptimizer {
               "url": "github.com/user/project or null",
               "description": "Problem solved, approach, and quantified impact in 1-2 sentences"
             }
+          ],
+          "achievements": [
+            "Award Name – Company (Year): one-line description of what was achieved"
           ]
-        }""";
+        }
+
+        IMPORTANT: Use bulletGroups (not a flat bullets array) for experience entries.
+        Group bullets by functional domain (e.g. 'Infrastructure Automation', 'API Development', 'Security & Compliance').
+        Each group should have 2-3 bullets. A role with 6 bullets should have 2-3 groups of 2 bullets each.
+        Only include achievements if the candidate's source data contains awards, recognition, or notable mentions.""";
 }

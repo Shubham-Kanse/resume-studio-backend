@@ -1,6 +1,8 @@
 package com.resumestudio.reviewer.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.resumestudio.auth.SupabaseJwtVerifier;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,7 @@ public class ReviewHistoryController {
 
     private final ReviewJobRepository repo;
     private final SupabaseJwtVerifier verifier;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public ReviewHistoryController(ReviewJobRepository repo, SupabaseJwtVerifier verifier) {
         this.repo = repo;
@@ -39,10 +42,11 @@ public class ReviewHistoryController {
         }
 
         int PAGE = 20;
-        List<Map<String, Object>> items = repo.findByUserIdOrderByCreatedAtDesc(claims.userId())
+        var pageResult = repo.findByUserIdPaged(claims.userId(), PageRequest.of(0, PAGE + 1 + Math.max(0, offset)));
+        List<Map<String, Object>> items = pageResult.getContent()
             .stream()
             .skip(Math.max(0, offset))
-            .limit(PAGE + 1) // fetch one extra to know if there's a next page
+            .limit(PAGE + 1)
             .map(j -> {
                 java.util.LinkedHashMap<String, Object> m = new java.util.LinkedHashMap<>();
                 m.put("id", j.getId());
@@ -50,11 +54,9 @@ public class ReviewHistoryController {
                 m.put("createdAt", j.getCreatedAt().toString());
                 m.put("completedAt", j.getCompletedAt() != null ? j.getCompletedAt().toString() : "");
                 m.put("outcome", j.getOutcome() != null ? j.getOutcome() : "");
-                // Extract key metadata from stored result JSON — avoids sending the full report
                 if ("DONE".equals(j.getStatus()) && j.getResultJson() != null) {
                     try {
-                        com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-                        com.fasterxml.jackson.databind.JsonNode r = om.readTree(j.getResultJson());
+                        com.fasterxml.jackson.databind.JsonNode r = mapper.readTree(j.getResultJson());
                         m.put("verdict", r.path("verdict").asText(""));
                         m.put("score", r.path("score").path("composite").asInt(0));
                         m.put("roleTitle", r.path("roleContext").path("title").asText(""));
@@ -90,8 +92,7 @@ public class ReviewHistoryController {
             if (!"DONE".equals(j.getStatus()) || j.getResultJson() == null)
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).<Object>body(Map.of("error", "Result not found."));
             try {
-                com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-                return ResponseEntity.<Object>ok(om.readTree(j.getResultJson()));
+                return ResponseEntity.<Object>ok(mapper.readTree(j.getResultJson()));
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).<Object>body(Map.of("error", "Could not read result."));
             }

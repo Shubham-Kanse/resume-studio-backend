@@ -2,8 +2,7 @@ package com.resumestudio.reviewer.generate;
 
 import org.apache.poi.xwpf.usermodel.*;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
-import org.slf4j.Logger;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
@@ -13,184 +12,357 @@ import java.math.BigInteger;
 import java.util.List;
 
 /**
- * Builds an ATS-perfect .docx resume from GeneratedResumeContent.
- *
- * ATS compliance checklist enforced here:
- *  ✓ Letter size (8.5" x 11"), 0.75" margins on all sides
- *  ✓ Single-column layout (no tables, no text boxes, no columns)
- *  ✓ Calibri font throughout (ATS-safe standard font)
- *  ✓ 14pt name, 12pt section headers (BOLD ALL-CAPS), 11pt body
- *  ✓ Left-aligned text (no center or justify)
- *  ✓ Standard section headers: PROFESSIONAL SUMMARY, WORK EXPERIENCE, SKILLS, EDUCATION, PROJECTS
- *  ✓ Bullet character: • (U+2022) — only via plain text, NOT Word list styles
- *  ✓ All contact info in main body (NOT headers/footers)
- *  ✓ Dates in MM/YYYY format
- *  ✓ No images, no colors, no special characters
- *  ✓ No watermarks, no borders, no horizontal lines, no shapes
- *  ✓ ASCII-only separators (hyphen) — no em/en-dash, no pipe
- *  ✓ GPA shown only when numeric and >= 3.5
- *  ✓ Single line spacing (1.0)
+ * Builds a .docx resume matching the sample resume formatting exactly:
+ *  - Name: 14pt bold, center-aligned
+ *  - Title + contact: 10pt, center-aligned, line-break separated in same paragraph
+ *  - Section headers: 12pt bold, left-aligned
+ *  - Body text: 10pt, justified (both)
+ *  - Bullets: 10pt, justified, indent left=720 hanging=360
+ *  - Margins: 0.5" all sides (720 twips)
+ *  - Font: Calibri throughout
+ *  - No explicit spacing overrides — compact like the sample
  */
 @Component
 public class DocxBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(DocxBuilder.class);
 
-    // ── Typography constants ──────────────────────────────────────────────────
-    private static final String FONT = "Calibri";
-    private static final int SIZE_NAME      = 14;   // pt
-    private static final int SIZE_CONTACT   = 10;   // pt
-    private static final int SIZE_SECTION   = 12;   // pt
-    private static final int SIZE_BODY      = 11;   // pt
+    private static final String FONT        = "Calibri";
+    private static final int    SZ_NAME     = 28;  // half-points = 14pt
+    private static final int    SZ_SECTION  = 24;  // half-points = 12pt
+    private static final int    SZ_BODY     = 20;  // half-points = 10pt
 
-    // ── Spacing (in twips: 1pt = 20 twips) ───────────────────────────────────
-    private static final BigInteger MARGIN          = BigInteger.valueOf(1080); // 0.75" = 1080 twips
-    private static final BigInteger SP_BEFORE_SEC   = BigInteger.valueOf(200); // 10pt before section header
-    private static final BigInteger SP_AFTER_SEC    = BigInteger.valueOf(60);  // 3pt after section header
-    private static final BigInteger SP_AFTER_BODY   = BigInteger.valueOf(60);  // 3pt after body para
-    private static final BigInteger SP_AFTER_BULLET = BigInteger.valueOf(40);  // 2pt after bullet
-    private static final BigInteger SP_AFTER_ROLE   = BigInteger.valueOf(100); // 5pt between roles
-    private static final BigInteger SP_ZERO         = BigInteger.ZERO;
-    private static final BigInteger LINE_SPACING    = BigInteger.valueOf(240); // 1.0 single
+    private static final BigInteger MARGIN       = BigInteger.valueOf(720);  // 0.5"
+    private static final BigInteger PAGE_W       = BigInteger.valueOf(12240);
+    private static final BigInteger PAGE_H       = BigInteger.valueOf(15840);
+    // Bullet indent matching sample: left=720, hanging=360
+    private static final BigInteger BULLET_LEFT  = BigInteger.valueOf(720);
+    private static final BigInteger BULLET_HANG  = BigInteger.valueOf(360);
+    // Compact spacing — matches sample's no-explicit-spacing style
+    private static final BigInteger SP_ZERO      = BigInteger.ZERO;
+    private static final BigInteger SP_SMALL     = BigInteger.valueOf(40);   // 2pt
+    private static final BigInteger SP_SEC_AFTER = BigInteger.valueOf(40);
+    private static final BigInteger SP_SEC_BEFORE= BigInteger.valueOf(120);  // 6pt before section
+    private static final BigInteger LINE_SINGLE  = BigInteger.valueOf(240);  // 1.0
 
-    // ── Bullet indent (hanging) ───────────────────────────────────────────────
-    private static final BigInteger BULLET_LEFT     = BigInteger.valueOf(360); // 0.25"
-    private static final BigInteger BULLET_HANGING  = BigInteger.valueOf(360); // 0.25"
-
-    // ── Page size (Letter: 8.5" x 11") ───────────────────────────────────────
-    private static final BigInteger PAGE_W = BigInteger.valueOf(12240); // 8.5 * 1440
-    private static final BigInteger PAGE_H = BigInteger.valueOf(15840); // 11.0 * 1440
-
-    /**
-     * Builds the ATS-compliant .docx and returns the raw bytes.
-     * The returned bytes can be streamed directly as the HTTP response body.
-     */
-    public byte[] build(GeneratedResumeContent content) throws Exception {
+    public byte[] build(GeneratedResumeContent c) throws Exception {
         XWPFDocument doc = new XWPFDocument();
-
         applyPageLayout(doc);
 
-        // ── 1. Name ──────────────────────────────────────────────────────────
-        if (content.getCandidateName() != null) {
-            addNameLine(doc, content.getCandidateName());
-        }
+        // ── Header block: name + title + contact (all center-aligned) ─────────
+        addHeader(doc, c);
 
-        // ── 2. Target title (role-matched, shown under name) ─────────────────
-        if (content.getTargetTitle() != null) {
-            addTitleLine(doc, content.getTargetTitle());
-        }
-
-        // ── 3. Contact info (all in body — never in header/footer) ───────────
-        addContactLine(doc, content);
-
-        // ── 4. Professional Summary ───────────────────────────────────────────
-        if (content.getSummary() != null && !content.getSummary().isBlank()) {
+        // ── Professional Summary ──────────────────────────────────────────────
+        if (c.getSummary() != null && !c.getSummary().isBlank()) {
             addSectionHeader(doc, "PROFESSIONAL SUMMARY");
-            addBodyParagraph(doc, content.getSummary().trim(), false);
+            addJustifiedPara(doc, c.getSummary().trim());
         }
 
-        // ── 5. Work Experience ────────────────────────────────────────────────
-        if (content.getExperience() != null && !content.getExperience().isEmpty()) {
-            addSectionHeader(doc, "WORK EXPERIENCE");
-            List<GeneratedResumeContent.GeneratedExperience> exp = content.getExperience();
-            for (int i = 0; i < exp.size(); i++) {
-                addExperienceEntry(doc, exp.get(i));
-                if (i < exp.size() - 1) {
-                    spacer(doc, SP_AFTER_ROLE);
-                }
+        // ── Technical Skills ──────────────────────────────────────────────────
+        if (c.getSkills() != null && !c.getSkills().isEmpty()) {
+            addSectionHeader(doc, "TECHNICAL SKILLS");
+            for (GeneratedResumeContent.GeneratedSkillCategory cat : c.getSkills()) {
+                addSkillLine(doc, cat);
             }
         }
 
-        // ── 6. Skills ────────────────────────────────────────────────────────
-        if (content.getSkills() != null && !content.getSkills().isEmpty()) {
-            addSectionHeader(doc, "SKILLS");
-            for (GeneratedResumeContent.GeneratedSkillCategory cat : content.getSkills()) {
-                addSkillCategoryLine(doc, cat);
+        // ── Professional Experience ───────────────────────────────────────────
+        if (c.getExperience() != null && !c.getExperience().isEmpty()) {
+            addSectionHeader(doc, "PROFESSIONAL EXPERIENCE");
+            for (GeneratedResumeContent.GeneratedExperience exp : c.getExperience()) {
+                addExperience(doc, exp);
             }
         }
 
-        // ── 7. Education ─────────────────────────────────────────────────────
-        if (content.getEducation() != null && !content.getEducation().isEmpty()) {
+        // ── Education ─────────────────────────────────────────────────────────
+        if (c.getEducation() != null && !c.getEducation().isEmpty()) {
             addSectionHeader(doc, "EDUCATION");
-            for (GeneratedResumeContent.GeneratedEducation edu : content.getEducation()) {
-                addEducationEntry(doc, edu);
+            for (GeneratedResumeContent.GeneratedEducation edu : c.getEducation()) {
+                addEducation(doc, edu);
             }
         }
 
-        // ── 8. Projects (optional) ────────────────────────────────────────────
-        if (content.getProjects() != null && !content.getProjects().isEmpty()) {
+        // ── Projects ──────────────────────────────────────────────────────────
+        if (c.getProjects() != null && !c.getProjects().isEmpty()) {
             addSectionHeader(doc, "PROJECTS");
-            for (GeneratedResumeContent.GeneratedProject proj : content.getProjects()) {
-                addProjectEntry(doc, proj);
+            for (GeneratedResumeContent.GeneratedProject proj : c.getProjects()) {
+                addProject(doc, proj);
+            }
+        }
+
+        // ── Achievements ──────────────────────────────────────────────────────
+        if (c.getAchievements() != null && !c.getAchievements().isEmpty()) {
+            addSectionHeader(doc, "ACHIEVEMENTS");
+            for (String a : c.getAchievements()) {
+                if (a != null && !a.isBlank()) addBullet(doc, a.trim());
             }
         }
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         doc.write(baos);
         doc.close();
-
         byte[] bytes = baos.toByteArray();
-        validateAtsParseable(bytes, content);
-
-        log.info("Built ATS-compliant DOCX ({} bytes) for: {}",
-            bytes.length, content.getCandidateName());
+        validateAtsParseable(bytes, c);
+        log.info("Built DOCX ({} bytes) for: {}", bytes.length, c.getCandidateName());
         return bytes;
     }
 
-    /**
-     * Re-opens the produced DOCX with Apache POI's text extractor and verifies
-     * the critical fields are recoverable as plain text — the same operation
-     * an ATS parser performs first. If extraction fails or the candidate name /
-     * required section headers are missing, we log a warning so the issue is
-     * caught in production telemetry rather than surfacing only to the recruiter.
-     */
-    private void validateAtsParseable(byte[] docxBytes, GeneratedResumeContent content) {
-        try (XWPFDocument reopened = new XWPFDocument(new ByteArrayInputStream(docxBytes));
-             XWPFWordExtractor extractor = new XWPFWordExtractor(reopened)) {
+    // ── Header ────────────────────────────────────────────────────────────────
 
-            String text = extractor.getText();
-            if (text == null || text.isBlank()) {
-                log.warn("ATS validation: extracted text is empty");
-                return;
-            }
+    private void addHeader(XWPFDocument doc, GeneratedResumeContent c) {
+        // Single paragraph: name (bold 14pt) + line break + title (10pt) + line break + contact (10pt)
+        XWPFParagraph para = doc.createParagraph();
+        para.setAlignment(ParagraphAlignment.CENTER);
+        setSpacing(para, SP_ZERO, BigInteger.valueOf(80));
 
-            String name = content.getCandidateName();
-            if (name != null && !text.contains(name)) {
-                log.warn("ATS validation: candidate name '{}' not extractable", name);
-            }
-            String[] required = {"PROFESSIONAL SUMMARY", "WORK EXPERIENCE", "SKILLS", "EDUCATION"};
-            for (String header : required) {
-                if (isSectionPresent(content, header) && !text.contains(header)) {
-                    log.warn("ATS validation: section header '{}' not extractable", header);
-                }
-            }
-            String email = content.getEmail();
-            if (email != null && !email.isBlank() && !text.contains(email)) {
-                log.warn("ATS validation: email not extractable");
-            }
-        } catch (Exception e) {
-            log.warn("ATS validation: re-parse failed ({})", e.getMessage());
+        // Name
+        XWPFRun nameRun = para.createRun();
+        nameRun.setText(safe(c.getCandidateName()));
+        nameRun.setFontFamily(FONT);
+        nameRun.setFontSize(0); // use half-point
+        setHalfPointSize(nameRun, SZ_NAME);
+        nameRun.setBold(true);
+
+        // Title on next line
+        if (c.getTargetTitle() != null && !c.getTargetTitle().isBlank()) {
+            nameRun.addBreak();
+            XWPFRun titleRun = para.createRun();
+            titleRun.setText(c.getTargetTitle());
+            titleRun.setFontFamily(FONT);
+            setHalfPointSize(titleRun, SZ_BODY);
+        }
+
+        // Contact line: location • phone • email • LinkedIn • GitHub
+        String contact = buildContactLine(c);
+        if (!contact.isBlank()) {
+            XWPFRun prevRun = para.getRuns().get(para.getRuns().size() - 1);
+            prevRun.addBreak();
+            XWPFRun contactRun = para.createRun();
+            contactRun.setText(contact);
+            contactRun.setFontFamily(FONT);
+            setHalfPointSize(contactRun, SZ_BODY);
         }
     }
 
-    private boolean isSectionPresent(GeneratedResumeContent c, String header) {
-        return switch (header) {
-            case "PROFESSIONAL SUMMARY" -> c.getSummary() != null && !c.getSummary().isBlank();
-            case "WORK EXPERIENCE"      -> c.getExperience() != null && !c.getExperience().isEmpty();
-            case "SKILLS"               -> c.getSkills() != null && !c.getSkills().isEmpty();
-            case "EDUCATION"            -> c.getEducation() != null && !c.getEducation().isEmpty();
-            default -> false;
-        };
+    private String buildContactLine(GeneratedResumeContent c) {
+        StringBuilder sb = new StringBuilder();
+        append(sb, c.getLocation());
+        append(sb, c.getPhone());
+        append(sb, c.getEmail());
+        if (c.getLinkedIn() != null && !c.getLinkedIn().isBlank()) append(sb, c.getLinkedIn());
+        if (c.getGitHub() != null && !c.getGitHub().isBlank()) append(sb, c.getGitHub());
+        return sb.toString();
     }
 
-    /**
-     * Derives the download filename: "FirstName_LastName_Resume.docx"
-     */
-    public String buildFilename(String candidateName) {
-        if (candidateName == null || candidateName.isBlank()) return "Resume.docx";
-        String[] parts = candidateName.trim().split("\\s+");
-        if (parts.length == 1) return parts[0] + "_Resume.docx";
-        return parts[0] + "_" + parts[parts.length - 1] + "_Resume.docx";
+    private void append(StringBuilder sb, String val) {
+        if (val == null || val.isBlank()) return;
+        if (sb.length() > 0) sb.append(" \u2022 ");
+        sb.append(val.trim());
+    }
+
+    // ── Section header ────────────────────────────────────────────────────────
+
+    private void addSectionHeader(XWPFDocument doc, String title) {
+        XWPFParagraph para = doc.createParagraph();
+        para.setAlignment(ParagraphAlignment.LEFT);
+        setSpacing(para, SP_SEC_BEFORE, SP_SEC_AFTER);
+
+        XWPFRun run = para.createRun();
+        run.setText(title.toUpperCase());
+        run.setFontFamily(FONT);
+        setHalfPointSize(run, SZ_SECTION);
+        run.setBold(true);
+
+        // Bottom border under section header (like the sample's horizontal rule)
+        CTPPr pPr = getPPr(para);
+        CTPBdr pBdr = pPr.isSetPBdr() ? pPr.getPBdr() : pPr.addNewPBdr();
+        CTBorder bottom = pBdr.isSetBottom() ? pBdr.getBottom() : pBdr.addNewBottom();
+        bottom.setVal(STBorder.SINGLE);
+        bottom.setSz(BigInteger.valueOf(4));
+        bottom.setSpace(BigInteger.valueOf(1));
+        bottom.setColor("000000");
+    }
+
+    // ── Skills ────────────────────────────────────────────────────────────────
+
+    private void addSkillLine(XWPFDocument doc, GeneratedResumeContent.GeneratedSkillCategory cat) {
+        if (cat.getItems() == null || cat.getItems().isEmpty()) return;
+        XWPFParagraph para = doc.createParagraph();
+        para.setAlignment(ParagraphAlignment.BOTH);
+        setSpacing(para, SP_ZERO, SP_SMALL);
+
+        XWPFRun label = para.createRun();
+        label.setText(safe(cat.getCategory()) + ": ");
+        label.setFontFamily(FONT);
+        setHalfPointSize(label, SZ_BODY);
+        label.setBold(true);
+
+        XWPFRun items = para.createRun();
+        items.setText(String.join(", ", cat.getItems()));
+        items.setFontFamily(FONT);
+        setHalfPointSize(items, SZ_BODY);
+    }
+
+    // ── Experience ────────────────────────────────────────────────────────────
+
+    private void addExperience(XWPFDocument doc, GeneratedResumeContent.GeneratedExperience exp) {
+        // Company line: "Company • Title • MM/YYYY – MM/YYYY"
+        XWPFParagraph header = doc.createParagraph();
+        header.setAlignment(ParagraphAlignment.BOTH);
+        setSpacing(header, BigInteger.valueOf(80), SP_SMALL);
+
+        XWPFRun compRun = header.createRun();
+        compRun.setText(safe(exp.getCompany()));
+        compRun.setFontFamily(FONT);
+        setHalfPointSize(compRun, SZ_BODY);
+        compRun.setBold(true);
+
+        String descriptor = exp.getCompanyDescriptor();
+        String title = safe(exp.getTitle());
+        String dates = buildDates(exp.getStartDate(), exp.getEndDate());
+        String rest = (descriptor != null && !descriptor.isBlank() ? " (" + descriptor + ")" : "")
+            + " \u2022 " + title + " \u2022 " + dates;
+
+        XWPFRun restRun = header.createRun();
+        restRun.setText(rest);
+        restRun.setFontFamily(FONT);
+        setHalfPointSize(restRun, SZ_BODY);
+        restRun.setBold(false);
+
+        // Bullet groups (with sub-headings) or flat bullets
+        if (exp.getBulletGroups() != null && !exp.getBulletGroups().isEmpty()) {
+            for (GeneratedResumeContent.BulletGroup group : exp.getBulletGroups()) {
+                if (group.getHeading() != null && !group.getHeading().isBlank()) {
+                    XWPFParagraph subHead = doc.createParagraph();
+                    subHead.setAlignment(ParagraphAlignment.LEFT);
+                    setSpacing(subHead, BigInteger.valueOf(60), BigInteger.valueOf(20));
+                    XWPFRun sh = subHead.createRun();
+                    sh.setText(group.getHeading());
+                    sh.setFontFamily(FONT);
+                    setHalfPointSize(sh, SZ_BODY);
+                    sh.setItalic(true);
+                }
+                if (group.getBullets() != null) {
+                    for (String b : group.getBullets()) {
+                        if (b != null && !b.isBlank()) addBullet(doc, b.trim());
+                    }
+                }
+            }
+        } else if (exp.getBullets() != null) {
+            for (String b : exp.getBullets()) {
+                if (b != null && !b.isBlank()) addBullet(doc, b.trim());
+            }
+        }
+    }
+
+    // ── Bullet ────────────────────────────────────────────────────────────────
+
+    private void addBullet(XWPFDocument doc, String text) {
+        XWPFParagraph para = doc.createParagraph();
+        para.setAlignment(ParagraphAlignment.BOTH);
+        setSpacing(para, SP_ZERO, SP_SMALL);
+
+        CTPPr pPr = getPPr(para);
+        CTInd ind = pPr.isSetInd() ? pPr.getInd() : pPr.addNewInd();
+        ind.setLeft(BULLET_LEFT);
+        ind.setHanging(BULLET_HANG);
+
+        XWPFRun run = para.createRun();
+        run.setText("\u2022  " + text);
+        run.setFontFamily(FONT);
+        setHalfPointSize(run, SZ_BODY);
+    }
+
+    // ── Education ─────────────────────────────────────────────────────────────
+
+    private void addEducation(XWPFDocument doc, GeneratedResumeContent.GeneratedEducation edu) {
+        XWPFParagraph para = doc.createParagraph();
+        para.setAlignment(ParagraphAlignment.BOTH);
+        setSpacing(para, SP_ZERO, SP_SMALL);
+
+        // "MSc in Computer Science – Artificial Intelligence"
+        String degree = buildDegree(edu);
+        XWPFRun degRun = para.createRun();
+        degRun.setText(degree);
+        degRun.setFontFamily(FONT);
+        setHalfPointSize(degRun, SZ_BODY);
+        degRun.setBold(true);
+
+        // " - University of Galway, Ireland - 2025"
+        String inst = buildInst(edu);
+        if (!inst.isBlank()) {
+            XWPFRun instRun = para.createRun();
+            instRun.setText(" \u2022 " + inst);
+            instRun.setFontFamily(FONT);
+            setHalfPointSize(instRun, SZ_BODY);
+        }
+
+        if (shouldShowGpa(edu.getGpa())) {
+            XWPFRun gpaRun = para.createRun();
+            gpaRun.setText(" \u2022 GPA: " + edu.getGpa().trim());
+            gpaRun.setFontFamily(FONT);
+            setHalfPointSize(gpaRun, SZ_BODY);
+        }
+
+        // Honors / thesis on next line
+        if (edu.getHonors() != null && !edu.getHonors().isEmpty()) {
+            for (String honor : edu.getHonors()) {
+                if (honor == null || honor.isBlank()) continue;
+                XWPFParagraph hp = doc.createParagraph();
+                hp.setAlignment(ParagraphAlignment.BOTH);
+                setSpacing(hp, SP_ZERO, SP_SMALL);
+                XWPFRun hr = hp.createRun();
+                hr.setText(honor);
+                hr.setFontFamily(FONT);
+                setHalfPointSize(hr, SZ_BODY);
+                hr.setItalic(true);
+            }
+        }
+    }
+
+    // ── Projects ──────────────────────────────────────────────────────────────
+
+    private void addProject(XWPFDocument doc, GeneratedResumeContent.GeneratedProject proj) {
+        XWPFParagraph header = doc.createParagraph();
+        header.setAlignment(ParagraphAlignment.BOTH);
+        setSpacing(header, BigInteger.valueOf(60), SP_SMALL);
+
+        XWPFRun nameRun = header.createRun();
+        nameRun.setText(safe(proj.getName()));
+        nameRun.setFontFamily(FONT);
+        setHalfPointSize(nameRun, SZ_BODY);
+        nameRun.setBold(true);
+
+        if (proj.getTechnologies() != null && !proj.getTechnologies().isEmpty()) {
+            XWPFRun techRun = header.createRun();
+            techRun.setText(" | " + String.join(", ", proj.getTechnologies()));
+            techRun.setFontFamily(FONT);
+            setHalfPointSize(techRun, SZ_BODY);
+            techRun.setItalic(true);
+        }
+
+        if (proj.getUrl() != null && !proj.getUrl().isBlank()) {
+            XWPFRun urlRun = header.createRun();
+            urlRun.setText(" | " + proj.getUrl());
+            urlRun.setFontFamily(FONT);
+            setHalfPointSize(urlRun, SZ_BODY);
+        }
+
+        if (proj.getDescription() != null && !proj.getDescription().isBlank()) {
+            addBullet(doc, proj.getDescription().trim());
+        }
+    }
+
+    // ── Justified paragraph (summary) ─────────────────────────────────────────
+
+    private void addJustifiedPara(XWPFDocument doc, String text) {
+        XWPFParagraph para = doc.createParagraph();
+        para.setAlignment(ParagraphAlignment.BOTH);
+        setSpacing(para, SP_ZERO, SP_SMALL);
+        XWPFRun run = para.createRun();
+        run.setText(text);
+        run.setFontFamily(FONT);
+        setHalfPointSize(run, SZ_BODY);
     }
 
     // ── Page layout ───────────────────────────────────────────────────────────
@@ -200,13 +372,11 @@ public class DocxBuilder {
         CTBody body = ctDoc.getBody();
         CTSectPr sectPr = body.isSetSectPr() ? body.getSectPr() : body.addNewSectPr();
 
-        // Letter size portrait
         CTPageSz pgSz = sectPr.isSetPgSz() ? sectPr.getPgSz() : sectPr.addNewPgSz();
         pgSz.setW(PAGE_W);
         pgSz.setH(PAGE_H);
         pgSz.setOrient(STPageOrientation.PORTRAIT);
 
-        // 0.75" margins all around
         CTPageMar pgMar = sectPr.isSetPgMar() ? sectPr.getPgMar() : sectPr.addNewPgMar();
         pgMar.setTop(MARGIN);
         pgMar.setBottom(MARGIN);
@@ -214,349 +384,79 @@ public class DocxBuilder {
         pgMar.setRight(MARGIN);
     }
 
-    // ── Header section (name + title + contact) ───────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void addNameLine(XWPFDocument doc, String name) {
-        XWPFParagraph para = doc.createParagraph();
-        para.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(para, SP_ZERO, BigInteger.valueOf(40));
-
-        XWPFRun run = para.createRun();
-        run.setText(name);
-        run.setFontFamily(FONT);
-        run.setFontSize(SIZE_NAME);
-        run.setBold(true);
-        run.setColor("000000");
-    }
-
-    private void addTitleLine(XWPFDocument doc, String title) {
-        XWPFParagraph para = doc.createParagraph();
-        para.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(para, SP_ZERO, BigInteger.valueOf(40));
-
-        XWPFRun run = para.createRun();
-        run.setText(title);
-        run.setFontFamily(FONT);
-        run.setFontSize(SIZE_BODY);
-        run.setItalic(true);
-        run.setColor("000000");
-    }
-
-    private void addContactLine(XWPFDocument doc, GeneratedResumeContent c) {
-        // Build a single contact info line: email  |  phone  |  location  |  LinkedIn  |  GitHub
-        StringBuilder sb = new StringBuilder();
-        appendContact(sb, c.getEmail());
-        appendContact(sb, c.getPhone());
-        appendContact(sb, c.getLocation());
-        if (c.getLinkedIn() != null && !c.getLinkedIn().isBlank()) appendContact(sb, c.getLinkedIn());
-        if (c.getGitHub() != null && !c.getGitHub().isBlank()) appendContact(sb, c.getGitHub());
-        if (c.getPortfolioUrl() != null && !c.getPortfolioUrl().isBlank()) appendContact(sb, c.getPortfolioUrl());
-
-        if (sb.length() == 0) return;
-
-        XWPFParagraph para = doc.createParagraph();
-        para.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(para, SP_ZERO, BigInteger.valueOf(120)); // 6pt after contact
-
-        XWPFRun run = para.createRun();
-        run.setText(sb.toString());
-        run.setFontFamily(FONT);
-        run.setFontSize(SIZE_CONTACT);
-        run.setColor("000000");
-    }
-
-    private void appendContact(StringBuilder sb, String value) {
-        if (value == null || value.isBlank()) return;
-        if (sb.length() > 0) sb.append(" - ");
-        sb.append(value.trim());
-    }
-
-    // ── Section header ────────────────────────────────────────────────────────
-
-    private void addSectionHeader(XWPFDocument doc, String title) {
-        XWPFParagraph para = doc.createParagraph();
-        para.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(para, SP_BEFORE_SEC, SP_AFTER_SEC);
-
-        XWPFRun run = para.createRun();
-        run.setText(title.toUpperCase());
-        run.setFontFamily(FONT);
-        run.setFontSize(SIZE_SECTION);
-        run.setBold(true);
-        run.setColor("000000");
-    }
-
-    // ── Experience ────────────────────────────────────────────────────────────
-
-    private void addExperienceEntry(XWPFDocument doc,
-                                    GeneratedResumeContent.GeneratedExperience exp) {
-        // Role header line: COMPANY  |  Title  |  MM/YYYY – MM/YYYY
-        XWPFParagraph header = doc.createParagraph();
-        header.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(header, SP_ZERO, BigInteger.valueOf(20));
-
-        // Company (bold)
-        XWPFRun companyRun = header.createRun();
-        companyRun.setText(exp.getCompany() != null ? exp.getCompany() : "");
-        companyRun.setFontFamily(FONT);
-        companyRun.setFontSize(SIZE_BODY);
-        companyRun.setBold(true);
-        companyRun.setColor("000000");
-
-        // Optional company descriptor: " (Series C fintech)"
-        if (exp.getCompanyDescriptor() != null && !exp.getCompanyDescriptor().isBlank()) {
-            XWPFRun descRun = header.createRun();
-            descRun.setText(" (" + exp.getCompanyDescriptor() + ")");
-            descRun.setFontFamily(FONT);
-            descRun.setFontSize(SIZE_CONTACT);
-            descRun.setItalic(true);
-            descRun.setColor("000000");
-        }
-
-        // Title + dates (regular weight) — ATS-safe hyphen separators
-        String dateRange = buildDateRange(exp.getStartDate(), exp.getEndDate());
-        String titleAndDates = " - " + safe(exp.getTitle()) + " - " + dateRange;
-        XWPFRun titleRun = header.createRun();
-        titleRun.setText(titleAndDates);
-        titleRun.setFontFamily(FONT);
-        titleRun.setFontSize(SIZE_BODY);
-        titleRun.setColor("000000");
-
-        // Bullets (3-5 per role, each starting with •)
-        if (exp.getBullets() != null) {
-            for (String bullet : exp.getBullets()) {
-                if (bullet == null || bullet.isBlank()) continue;
-                addBullet(doc, bullet.trim());
-            }
-        }
-    }
-
-    private void addBullet(XWPFDocument doc, String text) {
-        XWPFParagraph para = doc.createParagraph();
-        para.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(para, SP_ZERO, SP_AFTER_BULLET);
-
-        // Hanging indent for wrapped bullets
+    private void setSpacing(XWPFParagraph para, BigInteger before, BigInteger after) {
         CTPPr pPr = getPPr(para);
-        CTInd ind = pPr.isSetInd() ? pPr.getInd() : pPr.addNewInd();
-        ind.setLeft(BULLET_LEFT);
-        ind.setHanging(BULLET_HANGING);
-
-        XWPFRun run = para.createRun();
-        run.setText("\u2022  " + text);   // • + two spaces + text
-        run.setFontFamily(FONT);
-        run.setFontSize(SIZE_BODY);
-        run.setColor("000000");
+        CTSpacing sp = pPr.isSetSpacing() ? pPr.getSpacing() : pPr.addNewSpacing();
+        sp.setBefore(before);
+        sp.setAfter(after);
+        sp.setLine(LINE_SINGLE);
+        sp.setLineRule(STLineSpacingRule.AUTO);
     }
-
-    // ── Skills ────────────────────────────────────────────────────────────────
-
-    private void addSkillCategoryLine(XWPFDocument doc,
-                                      GeneratedResumeContent.GeneratedSkillCategory cat) {
-        if (cat.getItems() == null || cat.getItems().isEmpty()) return;
-
-        XWPFParagraph para = doc.createParagraph();
-        para.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(para, SP_ZERO, SP_AFTER_BULLET);
-
-        // Category label (bold)
-        if (cat.getCategory() != null && !cat.getCategory().isBlank()) {
-            XWPFRun label = para.createRun();
-            label.setText(cat.getCategory() + ": ");
-            label.setFontFamily(FONT);
-            label.setFontSize(SIZE_BODY);
-            label.setBold(true);
-            label.setColor("000000");
-        }
-
-        // Skill items (regular weight, comma-separated)
-        XWPFRun items = para.createRun();
-        items.setText(String.join(", ", cat.getItems()));
-        items.setFontFamily(FONT);
-        items.setFontSize(SIZE_BODY);
-        items.setColor("000000");
-    }
-
-    // ── Education ─────────────────────────────────────────────────────────────
-
-    private void addEducationEntry(XWPFDocument doc,
-                                   GeneratedResumeContent.GeneratedEducation edu) {
-        // Line 1: Degree in Field  |  Institution, Location  |  Year
-        XWPFParagraph line1 = doc.createParagraph();
-        line1.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(line1, SP_ZERO, BigInteger.valueOf(20));
-
-        // Degree + field (bold)
-        String degreeField = buildDegreeField(edu);
-        XWPFRun degRun = line1.createRun();
-        degRun.setText(degreeField);
-        degRun.setFontFamily(FONT);
-        degRun.setFontSize(SIZE_BODY);
-        degRun.setBold(true);
-        degRun.setColor("000000");
-
-        // Institution + year
-        String instYear = buildInstYear(edu);
-        if (!instYear.isBlank()) {
-            XWPFRun instRun = line1.createRun();
-            instRun.setText(" - " + instYear);
-            instRun.setFontFamily(FONT);
-            instRun.setFontSize(SIZE_BODY);
-            instRun.setColor("000000");
-        }
-
-        // GPA (only show if numeric and >= 3.5)
-        if (shouldShowGpa(edu.getGpa())) {
-            XWPFRun gpaRun = line1.createRun();
-            gpaRun.setText(" - GPA: " + edu.getGpa().trim());
-            gpaRun.setFontFamily(FONT);
-            gpaRun.setFontSize(SIZE_BODY);
-            gpaRun.setColor("000000");
-        }
-
-        // Honors (if any)
-        if (edu.getHonors() != null && !edu.getHonors().isEmpty()) {
-            XWPFParagraph honorsLine = doc.createParagraph();
-            honorsLine.setAlignment(ParagraphAlignment.LEFT);
-            applyParaSpacing(honorsLine, SP_ZERO, SP_AFTER_BODY);
-            XWPFRun hRun = honorsLine.createRun();
-            hRun.setText("Honors: " + String.join(", ", edu.getHonors()));
-            hRun.setFontFamily(FONT);
-            hRun.setFontSize(SIZE_CONTACT);
-            hRun.setItalic(true);
-            hRun.setColor("000000");
-        }
-    }
-
-    // ── Projects ──────────────────────────────────────────────────────────────
-
-    private void addProjectEntry(XWPFDocument doc,
-                                  GeneratedResumeContent.GeneratedProject proj) {
-        // Header: ProjectName  |  Tech1, Tech2, Tech3
-        XWPFParagraph header = doc.createParagraph();
-        header.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(header, SP_ZERO, BigInteger.valueOf(20));
-
-        XWPFRun nameRun = header.createRun();
-        nameRun.setText(safe(proj.getName()));
-        nameRun.setFontFamily(FONT);
-        nameRun.setFontSize(SIZE_BODY);
-        nameRun.setBold(true);
-        nameRun.setColor("000000");
-
-        if (proj.getTechnologies() != null && !proj.getTechnologies().isEmpty()) {
-            XWPFRun techRun = header.createRun();
-            techRun.setText(" - " + String.join(", ", proj.getTechnologies()));
-            techRun.setFontFamily(FONT);
-            techRun.setFontSize(SIZE_BODY);
-            techRun.setItalic(true);
-            techRun.setColor("000000");
-        }
-
-        // URL (plain text — no hyperlink to stay ATS-safe)
-        if (proj.getUrl() != null && !proj.getUrl().isBlank()) {
-            XWPFRun urlRun = header.createRun();
-            urlRun.setText(" - " + proj.getUrl());
-            urlRun.setFontFamily(FONT);
-            urlRun.setFontSize(SIZE_CONTACT);
-            urlRun.setColor("000000");
-        }
-
-        // Description (2-3 bullet lines or plain text)
-        if (proj.getDescription() != null && !proj.getDescription().isBlank()) {
-            addBullet(doc, proj.getDescription().trim());
-        }
-    }
-
-    // ── Body paragraph (for summary) ──────────────────────────────────────────
-
-    private void addBodyParagraph(XWPFDocument doc, String text, boolean italic) {
-        XWPFParagraph para = doc.createParagraph();
-        para.setAlignment(ParagraphAlignment.LEFT);
-        applyParaSpacing(para, SP_ZERO, SP_AFTER_BODY);
-
-        XWPFRun run = para.createRun();
-        run.setText(text);
-        run.setFontFamily(FONT);
-        run.setFontSize(SIZE_BODY);
-        run.setItalic(italic);
-        run.setColor("000000");
-    }
-
-    // ── Spacing helpers ───────────────────────────────────────────────────────
-
-    private void spacer(XWPFDocument doc, BigInteger spaceBefore) {
-        XWPFParagraph para = doc.createParagraph();
-        applyParaSpacing(para, SP_ZERO, spaceBefore);
-    }
-
-    private void applyParaSpacing(XWPFParagraph para, BigInteger spaceBefore, BigInteger spaceAfter) {
-        CTPPr pPr = getPPr(para);
-        CTSpacing spacing = pPr.isSetSpacing() ? pPr.getSpacing() : pPr.addNewSpacing();
-        spacing.setBefore(spaceBefore);
-        spacing.setAfter(spaceAfter);
-        spacing.setLine(LINE_SPACING);
-        spacing.setLineRule(STLineSpacingRule.AUTO);
-    }
-
-    // ── XML property helpers ──────────────────────────────────────────────────
 
     private CTPPr getPPr(XWPFParagraph para) {
-        return para.getCTP().isSetPPr()
-            ? para.getCTP().getPPr()
-            : para.getCTP().addNewPPr();
+        return para.getCTP().isSetPPr() ? para.getCTP().getPPr() : para.getCTP().addNewPPr();
     }
 
-    // ── Text formatting helpers ───────────────────────────────────────────────
-
-    private String safe(String s) {
-        return s != null ? s : "";
+    private void setHalfPointSize(XWPFRun run, int halfPoints) {
+        run.setFontSize(halfPoints / 2);
     }
 
-    private String buildDateRange(String start, String end) {
+    private String safe(String s) { return s != null ? s : ""; }
+
+    private String buildDates(String start, String end) {
         String s = start != null && !start.isBlank() ? start : "";
         String e = end != null && !end.isBlank() ? end : "Present";
-        if (s.isBlank()) return e;
-        return s + " to " + e;   // ATS-safe — no en-dash
+        return s.isBlank() ? e : s + " \u2013 " + e;
     }
 
-    private String buildDegreeField(GeneratedResumeContent.GeneratedEducation edu) {
+    private String buildDegree(GeneratedResumeContent.GeneratedEducation edu) {
         StringBuilder sb = new StringBuilder();
         if (edu.getDegree() != null) sb.append(edu.getDegree());
         if (edu.getField() != null && !edu.getField().isBlank()) {
-            if (sb.length() > 0) sb.append(" in ");
-            sb.append(edu.getField());
+            sb.append(sb.length() > 0 ? " in " : "").append(edu.getField());
         }
         return sb.toString();
     }
 
-    private String buildInstYear(GeneratedResumeContent.GeneratedEducation edu) {
+    private String buildInst(GeneratedResumeContent.GeneratedEducation edu) {
         StringBuilder sb = new StringBuilder();
         if (edu.getInstitution() != null) sb.append(edu.getInstitution());
         if (edu.getLocation() != null && !edu.getLocation().isBlank()) {
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(edu.getLocation());
+            sb.append(sb.length() > 0 ? ", " : "").append(edu.getLocation());
         }
         if (edu.getGraduationYear() != null && !edu.getGraduationYear().isBlank()) {
-            if (sb.length() > 0) sb.append(" - ");
-            sb.append(edu.getGraduationYear());
+            sb.append(sb.length() > 0 ? " \u2013 " : "").append(edu.getGraduationYear());
         }
         return sb.toString();
     }
 
-    /**
-     * Spec rule: only display GPA when it is 3.5 or higher (out of 4.0 scale).
-     * Accepts strings like "3.8", "3.85/4.0", "3.5". Returns false for unparseable
-     * values so we never print a low or non-numeric GPA.
-     */
     private boolean shouldShowGpa(String gpa) {
         if (gpa == null || gpa.isBlank()) return false;
-        String cleaned = gpa.trim().split("/")[0].trim();
-        try {
-            double value = Double.parseDouble(cleaned);
-            return value >= 3.5;
-        } catch (NumberFormatException e) {
-            return false;
+        try { return Double.parseDouble(gpa.trim().split("/")[0].trim()) >= 3.5; }
+        catch (NumberFormatException e) { return false; }
+    }
+
+    // ── ATS validation ────────────────────────────────────────────────────────
+
+    private void validateAtsParseable(byte[] bytes, GeneratedResumeContent c) {
+        try (XWPFDocument reopened = new XWPFDocument(new ByteArrayInputStream(bytes));
+             XWPFWordExtractor extractor = new XWPFWordExtractor(reopened)) {
+            String text = extractor.getText();
+            if (text == null || text.isBlank()) { log.warn("ATS validation: empty text"); return; }
+            if (c.getCandidateName() != null && !text.contains(c.getCandidateName()))
+                log.warn("ATS validation: name not extractable");
+            if (c.getEmail() != null && !c.getEmail().isBlank() && !text.contains(c.getEmail()))
+                log.warn("ATS validation: email not extractable");
+        } catch (Exception e) {
+            log.warn("ATS validation failed: {}", e.getMessage());
         }
+    }
+
+    public String buildFilename(String candidateName) {
+        if (candidateName == null || candidateName.isBlank()) return "Resume.docx";
+        String[] parts = candidateName.trim().split("\\s+");
+        return (parts.length == 1 ? parts[0] : parts[0] + "_" + parts[parts.length - 1]) + "_Resume.docx";
     }
 }

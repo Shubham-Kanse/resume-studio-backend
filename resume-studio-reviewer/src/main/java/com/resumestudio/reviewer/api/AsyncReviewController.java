@@ -102,12 +102,11 @@ public class AsyncReviewController {
         @RequestHeader(value = "Authorization", required = false) String authHeader,
         @PathVariable String jobId
     ) {
-        // Auth optional here — jobId acts as a secret; but if provided, verify
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            try { verifier.verify(authHeader.substring(7)); }
-            catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired token."));
-            }
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required."));
+        try { verifier.verify(authHeader.substring(7)); }
+        catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired token."));
         }
 
         JobResult job = readJob(jobId);
@@ -121,6 +120,8 @@ public class AsyncReviewController {
                 nullifyResultJson(jobId);
                 yield ResponseEntity.ok(job.result());
             }
+            case "EXPIRED" -> ResponseEntity.status(HttpStatus.GONE)
+                .body(Map.of("error", job.error() != null ? job.error() : "Result already retrieved. Please run a new review."));
             default -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body(Map.of("error", job.error() != null ? job.error() : "Processing failed."));
         };
@@ -159,6 +160,10 @@ public class AsyncReviewController {
         try {
             return jobRepo.findById(jobId).map(entity -> {
                 try {
+                    if ("DONE".equals(entity.getStatus()) && entity.getResultJson() == null) {
+                        // Already fetched and nulled — client retried after result was consumed
+                        return new JobResult("EXPIRED", null, "Result already retrieved. Please run a new review.");
+                    }
                     FeedbackReport report = null;
                     if ("DONE".equals(entity.getStatus()) && entity.getResultJson() != null) {
                         report = mapper.readValue(entity.getResultJson(), FeedbackReport.class);

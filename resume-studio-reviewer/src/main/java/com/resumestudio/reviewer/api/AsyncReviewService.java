@@ -3,7 +3,6 @@ package com.resumestudio.reviewer.api;
 import com.resumestudio.reviewer.ReviewCache;
 import com.resumestudio.reviewer.ReviewerPipeline;
 import com.resumestudio.reviewer.ingest.ResumeIngestService.UnsupportedFileTypeException;
-import com.resumestudio.reviewer.model.FeedbackReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -29,21 +28,7 @@ public class AsyncReviewService {
     @Async("taskExecutor")
     public void run(String jobId, byte[] resumeBytes, String jobDescription,
                     AsyncReviewController controller) {
-        org.slf4j.MDC.put("jobId", jobId);
-        try {
-            MultipartFile resume = new ByteArrayMultipartFile(resumeBytes, "resume.pdf", "application/pdf");
-            FeedbackReport report = pipeline.review(resume, jobDescription);
-            reviewCache.put(resumeBytes, jobDescription, report);
-            controller.writeJob(jobId, null, new AsyncReviewController.JobResult("DONE", report, null));
-            log.info("[{}] Async review complete", jobId);
-        } catch (UnsupportedFileTypeException e) {
-            controller.writeJob(jobId, null, new AsyncReviewController.JobResult("ERROR", null, e.getMessage()));
-        } catch (Exception e) {
-            log.error("[{}] Async review failed", jobId, e);
-            controller.writeJob(jobId, null, new AsyncReviewController.JobResult("ERROR", null, "Processing failed. Please try again."));
-        } finally {
-            org.slf4j.MDC.clear();
-        }
+        run(jobId, resumeBytes, "resume.pdf", "application/pdf", jobDescription, controller);
     }
 
     @Async("taskExecutor")
