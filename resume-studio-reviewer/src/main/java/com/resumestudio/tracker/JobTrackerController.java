@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +28,9 @@ public class JobTrackerController {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     );
     private static final long MAX_RESUME_BYTES = 5 * 1024 * 1024; // 5 MB
+    private static final int MIN_REMINDER_FREQUENCY_DAYS = 1;
+    private static final int MAX_REMINDER_FREQUENCY_DAYS = 14;
+    private static final Set<String> TERMINAL_STAGES = Set.of("Offer", "Rejected", "Ghosted");
 
     private final JobApplicationRepository repo;
     private final ResumeStorageService storage;
@@ -45,6 +49,10 @@ public class JobTrackerController {
         return userService.getPlan(userId);
     }
 
+    private com.resumestudio.auth.model.User userProfile(String userId) {
+        return userService.getOrCreate(userId);
+    }
+
     @GetMapping
     public ResponseEntity<?> list(@RequestHeader(value = "Authorization", required = false) String auth) {
         var claims = verify(auth);
@@ -54,12 +62,10 @@ public class JobTrackerController {
 
     @PostMapping
     public ResponseEntity<?> create(@RequestHeader(value = "Authorization", required = false) String auth,
-                                    @RequestBody Map<String, String> body) {
+                                    @RequestBody Map<String, ?> body) {
         var claims = verify(auth);
         if (claims == null) return unauthorized();
-        if (body.containsKey("stage") && !VALID_STAGES.contains(body.get("stage"))) {
-            return badRequest("Invalid stage value");
-        }
+        if (hasInvalidStage(body)) return badRequest("Invalid stage value");
 
         // Free plan: max 10 tracker jobs
         com.resumestudio.auth.model.Plan plan = verifier != null ? userPlan(claims.userId()) : com.resumestudio.auth.model.Plan.FREE;
@@ -72,8 +78,14 @@ public class JobTrackerController {
         }
 
         try {
+            com.resumestudio.auth.model.User profile = userProfile(claims.userId());
             JobApplication job = new JobApplication();
             job.setUserId(claims.userId());
+            if (claims.email() != null && !claims.email().isBlank()) {
+                job.setUserEmail(claims.email());
+            }
+            job.setReminderEnabled(profile.isReminderEmailsEnabled());
+            job.setReminderFrequencyDays(profile.getReminderFrequencyDays());
             applyFields(job, body);
             return ResponseEntity.ok(repo.save(job));
         } catch (IllegalArgumentException e) {
@@ -84,16 +96,18 @@ public class JobTrackerController {
     @PatchMapping("/{id}")
     public ResponseEntity<?> update(@RequestHeader(value = "Authorization", required = false) String auth,
                                     @PathVariable String id,
-                                    @RequestBody Map<String, String> body) {
+                                    @RequestBody Map<String, ?> body) {
         var claims = verify(auth);
         if (claims == null) return unauthorized();
-        if (body.containsKey("stage") && !VALID_STAGES.contains(body.get("stage"))) {
-            return badRequest("Invalid stage value");
-        }
+        if (hasInvalidStage(body)) return badRequest("Invalid stage value");
         var jobOpt = repo.findById(id).filter(j -> j.getUserId().equals(claims.userId()));
         if (jobOpt.isEmpty()) return ResponseEntity.notFound().build();
         try {
             JobApplication job = jobOpt.get();
+            if ((job.getUserEmail() == null || job.getUserEmail().isBlank())
+                && claims.email() != null && !claims.email().isBlank()) {
+                job.setUserEmail(claims.email());
+            }
             applyFields(job, body);
             return ResponseEntity.ok(repo.save(job));
         } catch (IllegalArgumentException e) {
@@ -153,19 +167,95 @@ public class JobTrackerController {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void applyFields(JobApplication job, Map<String, String> body) {
-        if (body.containsKey("stage"))       job.setStage(body.get("stage"));
-        if (body.containsKey("company"))     job.setCompany(body.get("company"));
-        if (body.containsKey("position"))    job.setPosition(body.get("position"));
-        if (body.containsKey("jobUrl"))      job.setJobUrl(body.get("jobUrl"));
-        if (body.containsKey("notes"))       job.setNotes(body.get("notes"));
-        if (body.containsKey("dateApplied") && body.get("dateApplied") != null && !body.get("dateApplied").isBlank()) {
-            try {
-                job.setDateApplied(LocalDate.parse(body.get("dateApplied")));
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Invalid dateApplied format, expected YYYY-MM-DD");
+    private void applyFields(JobApplication job, Map<String, ?> body) {
+        if (body.containsKey("stage")) {
+            String stage = asString(body.get("stage"));
+            if (stage == null || !VALID_STAGES.contains(stage)) throw new IllegalArgumentException("Invalid stage value");
+            job.setStage(stage);
+        }
+        if (body.containsKey("company"))     job.setCompany(asString(body.get("company")));
+        if (body.containsKey("position"))    job.setPosition(asString(body.get("position")));
+        if (body.containsKey("jobUrl"))      job.setJobUrl(asString(body.get("jobUrl")));
+        if (body.containsKey("notes"))       job.setNotes(asString(body.get("notes")));
+        if (body.containsKey("dateApplied")) {
+            String dateApplied = asString(body.get("dateApplied"));
+            if (dateApplied == null || dateApplied.isBlank()) {
+                job.setDateApplied(null);
+            } else {
+                try {
+                    job.setDateApplied(LocalDate.parse(dateApplied));
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Invalid dateApplied format, expected YYYY-MM-DD");
+                }
             }
         }
+        if (body.containsKey("reminderEnabled")) {
+            job.setReminderEnabled(asBoolean(body.get("reminderEnabled"), "reminderEnabled"));
+        }
+        if (body.containsKey("reminderFrequencyDays")) {
+            int days = asInt(body.get("reminderFrequencyDays"), "reminderFrequencyDays");
+            if (days < MIN_REMINDER_FREQUENCY_DAYS || days > MAX_REMINDER_FREQUENCY_DAYS) {
+                throw new IllegalArgumentException("reminderFrequencyDays must be between 1 and 14");
+            }
+            job.setReminderFrequencyDays(days);
+        }
+        if (body.containsKey("nextReminderAt")) {
+            String nextReminderAt = asString(body.get("nextReminderAt"));
+            if (nextReminderAt == null || nextReminderAt.isBlank()) {
+                job.setNextReminderAt(null);
+            } else {
+                try {
+                    job.setNextReminderAt(Instant.parse(nextReminderAt));
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Invalid nextReminderAt format, expected ISO-8601 instant");
+                }
+            }
+        }
+
+        if (TERMINAL_STAGES.contains(job.getStage())) {
+            job.setReminderEnabled(false);
+            job.setNextReminderAt(null);
+            return;
+        }
+
+        if (job.isReminderEnabled() && job.getNextReminderAt() == null) {
+            job.setNextReminderAt(Instant.now().plusSeconds((long) job.getReminderFrequencyDays() * 86400));
+        }
+        if (!job.isReminderEnabled()) {
+            job.setNextReminderAt(null);
+        }
+    }
+
+    private String asString(Object value) {
+        if (value == null) return null;
+        return String.valueOf(value);
+    }
+
+    private boolean asBoolean(Object value, String fieldName) {
+        if (value instanceof Boolean b) return b;
+        if (value instanceof String s) {
+            if ("true".equalsIgnoreCase(s)) return true;
+            if ("false".equalsIgnoreCase(s)) return false;
+        }
+        throw new IllegalArgumentException("Invalid boolean value for " + fieldName);
+    }
+
+    private int asInt(Object value, String fieldName) {
+        if (value instanceof Number n) return n.intValue();
+        if (value instanceof String s) {
+            try {
+                return Integer.parseInt(s);
+            } catch (NumberFormatException ignored) {
+                // fall through
+            }
+        }
+        throw new IllegalArgumentException("Invalid number value for " + fieldName);
+    }
+
+    private boolean hasInvalidStage(Map<String, ?> body) {
+        if (!body.containsKey("stage")) return false;
+        String stage = asString(body.get("stage"));
+        return stage == null || !VALID_STAGES.contains(stage);
     }
 
     private SupabaseJwtVerifier.UserClaims verify(String authHeader) {

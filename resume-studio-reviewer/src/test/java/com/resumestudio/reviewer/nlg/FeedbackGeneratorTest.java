@@ -137,6 +137,17 @@ class FeedbackGeneratorTest {
     }
 
     @Test
+    void fixes_skillsFormatUsesSkillsFormatSignalId() {
+        ResumeSignals s = strongSignals();
+        s.setSkillsFormat(SkillsFormat.PROSE);
+        FeedbackGenerator.FeedbackOutput out = generator.generate(s, Verdict.POSSIBLE_FIT);
+        assertTrue(out.fixes().stream().anyMatch(f ->
+            "skills_format".equals(f.getSignalId()) &&
+            f.getAction() != null &&
+            f.getAction().toLowerCase().contains("skills section")));
+    }
+
+    @Test
     void fixes_unprofessionalFilename_addsLowImpactFix() {
         ResumeSignals s = strongSignals();
         s.setFilenameProfessional(false);

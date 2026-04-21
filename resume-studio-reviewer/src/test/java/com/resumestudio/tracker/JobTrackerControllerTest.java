@@ -34,6 +34,7 @@ class JobTrackerControllerTest {
         userService = mock(com.resumestudio.auth.UserService.class);
         // Default: PRO plan so no quota enforcement in most tests
         when(userService.getPlan(any())).thenReturn(com.resumestudio.auth.model.Plan.PRO);
+        when(userService.getOrCreate(any())).thenAnswer(invocation -> new com.resumestudio.auth.model.User(invocation.getArgument(0)));
         controller = new JobTrackerController(repo, storage, verifier, userService);
         when(verifier.verify("valid-token")).thenReturn(CLAIMS);
     }
@@ -72,6 +73,21 @@ class JobTrackerControllerTest {
         assertEquals(HttpStatus.BAD_REQUEST, r.getStatusCode());
     }
 
+    @Test void create_acceptsReminderFields() {
+        when(repo.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        var r = controller.create(BEARER, Map.of(
+            "stage", "To Apply",
+            "reminderEnabled", true,
+            "reminderFrequencyDays", 5
+        ));
+        assertEquals(HttpStatus.OK, r.getStatusCode());
+        JobApplication saved = (JobApplication) r.getBody();
+        assertNotNull(saved);
+        assertTrue(saved.isReminderEnabled());
+        assertEquals(5, saved.getReminderFrequencyDays());
+        assertNotNull(saved.getNextReminderAt());
+    }
+
     // ── Update ────────────────────────────────────────────────────────────────
 
     @Test void update_ownJob_succeeds() {
@@ -105,6 +121,29 @@ class JobTrackerControllerTest {
         when(repo.findById("job-1")).thenReturn(Optional.of(job));
         var r = controller.update(BEARER, "job-1", Map.of("dateApplied", "not-a-date"));
         assertEquals(HttpStatus.BAD_REQUEST, r.getStatusCode());
+    }
+
+    @Test void update_invalidReminderFrequency_returns400() {
+        var job = job("user-1");
+        when(repo.findById("job-1")).thenReturn(Optional.of(job));
+        var r = controller.update(BEARER, "job-1", Map.of("reminderFrequencyDays", 20));
+        assertEquals(HttpStatus.BAD_REQUEST, r.getStatusCode());
+    }
+
+    @Test void update_terminalStage_disablesReminder() {
+        var job = job("user-1");
+        job.setReminderEnabled(true);
+        job.setReminderFrequencyDays(3);
+        job.setNextReminderAt(java.time.Instant.now().plusSeconds(3600));
+        when(repo.findById("job-1")).thenReturn(Optional.of(job));
+        when(repo.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var r = controller.update(BEARER, "job-1", Map.of("stage", "Rejected"));
+        assertEquals(HttpStatus.OK, r.getStatusCode());
+        JobApplication saved = (JobApplication) r.getBody();
+        assertNotNull(saved);
+        assertFalse(saved.isReminderEnabled());
+        assertNull(saved.getNextReminderAt());
     }
 
     // ── Delete ────────────────────────────────────────────────────────────────

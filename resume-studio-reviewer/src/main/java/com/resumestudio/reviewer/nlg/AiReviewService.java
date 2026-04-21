@@ -38,8 +38,23 @@ public class AiReviewService {
     private static final Logger log = LoggerFactory.getLogger(AiReviewService.class);
 
     private static final java.util.Set<String> VALID_SIGNAL_IDS = java.util.Set.of(
-        "skill_match", "yoe_fit", "title_match", "summary", "bullets",
-        "format", "tailoring", "chronology"
+        "skill_match",
+        "skills_format",
+        "yoe_fit",
+        "title_match",
+        "summary",
+        "bullets",
+        "format",
+        "format_quality",
+        "tailoring",
+        "chronology",
+        "company_context",
+        "filename",
+        "skill_age_mismatch",
+        "candidate_fit",
+        "skill_coverage",
+        "presentation",
+        "trust"
     );
 
     private final AiProperties ai;
@@ -622,7 +637,7 @@ public class AiReviewService {
           ],
           "fixes": [
             {
-              "signalId": "skill_match | yoe_fit | title_match | summary | bullets | format | tailoring | chronology",
+              "signalId": "skill_match | skills_format | yoe_fit | title_match | summary | bullets | format | format_quality | tailoring | chronology | company_context | filename | skill_age_mismatch",
               "fixType": "MISSING_SKILL | REFRAME | DOMAIN_GAP | PRESENTATION",
               "fixScope": "BEFORE_SUBMIT | RESUME_REBUILD | LONG_TERM",
               "action": "string",

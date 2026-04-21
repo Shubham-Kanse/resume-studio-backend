@@ -22,6 +22,7 @@ class AuthControllerTest {
         verifier = mock(SupabaseJwtVerifier.class);
         userService = mock(UserService.class);
         controller = new AuthController(verifier, userService);
+        when(userService.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
@@ -83,5 +84,60 @@ class AuthControllerTest {
         @SuppressWarnings("unchecked")
         var body = (Map<String, Object>) r.getBody();
         assertEquals("FREE", body.get("plan"));
+    }
+
+    @Test
+    void settings_validToken_returnsReminderSettings() {
+        var claims = new SupabaseJwtVerifier.UserClaims("uid-1", "user@example.com");
+        when(verifier.verify("good-token")).thenReturn(claims);
+        var user = new User("uid-1");
+        user.setPlan(Plan.BASIC);
+        user.setReminderFrequencyDays(5);
+        user.setReminderTimezone("Europe/Dublin");
+        user.setQuietHoursEnabled(true);
+        user.setQuietHoursStart(23);
+        user.setQuietHoursEnd(7);
+        when(userService.getOrCreate("uid-1")).thenReturn(user);
+
+        var r = controller.settings("Bearer good-token");
+        assertEquals(HttpStatus.OK, r.getStatusCode());
+        @SuppressWarnings("unchecked")
+        var body = (Map<String, Object>) r.getBody();
+        assertEquals("BASIC", body.get("plan"));
+        assertEquals(true, body.get("quietHoursEnabled"));
+        assertEquals(5, body.get("reminderFrequencyDays"));
+    }
+
+    @Test
+    void updateSettings_invalidTimezone_returns400() {
+        var claims = new SupabaseJwtVerifier.UserClaims("uid-1", "user@example.com");
+        when(verifier.verify("good-token")).thenReturn(claims);
+        when(userService.getOrCreate("uid-1")).thenReturn(new User("uid-1"));
+
+        var r = controller.updateSettings("Bearer good-token", Map.of("reminderTimezone", "Mars/Olympus"));
+        assertEquals(HttpStatus.BAD_REQUEST, r.getStatusCode());
+    }
+
+    @Test
+    void updateSettings_validPatch_updatesAndReturnsPayload() {
+        var claims = new SupabaseJwtVerifier.UserClaims("uid-1", "user@example.com");
+        when(verifier.verify("good-token")).thenReturn(claims);
+        var user = new User("uid-1");
+        when(userService.getOrCreate("uid-1")).thenReturn(user);
+
+        var r = controller.updateSettings("Bearer good-token", Map.of(
+            "reminderEmailsEnabled", false,
+            "reminderFrequencyDays", 7,
+            "reminderTimezone", "UTC",
+            "quietHoursEnabled", true,
+            "quietHoursStart", 22,
+            "quietHoursEnd", 8
+        ));
+        assertEquals(HttpStatus.OK, r.getStatusCode());
+        verify(userService).save(user);
+        @SuppressWarnings("unchecked")
+        var body = (Map<String, Object>) r.getBody();
+        assertEquals(false, body.get("reminderEmailsEnabled"));
+        assertEquals(7, body.get("reminderFrequencyDays"));
     }
 }

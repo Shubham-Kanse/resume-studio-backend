@@ -63,6 +63,11 @@ public class UserService {
         });
     }
 
+    @Transactional
+    public User save(User user) {
+        return repo.save(user);
+    }
+
     /** Deletes all user data — job applications then the user record itself. */
     @Transactional
     public void deleteUser(String userId) {

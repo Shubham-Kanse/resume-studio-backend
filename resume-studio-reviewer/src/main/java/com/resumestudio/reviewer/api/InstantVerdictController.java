@@ -3,19 +3,34 @@ package com.resumestudio.reviewer.api;
 import com.resumestudio.reviewer.extraction.JdParserService;
 import com.resumestudio.reviewer.model.JobDescription;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Instant verdict - 5-second signal without login or file upload.
- * The product's front door.
+ * Instant verdict - fast signal without login or file upload.
+ * Delivers directional fit only; full review endpoint remains the source of truth.
  */
 @RestController
 @RequestMapping("/api/check")
 public class InstantVerdictController {
+
+    private static final Pattern YEAR_RANGE_PATTERN = Pattern.compile(
+        "\\b(19\\d{2}|20\\d{2})\\s*[-–—]\\s*(19\\d{2}|20\\d{2}|present|current|now)\\b",
+        Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern EXPLICIT_YEARS_PATTERN = Pattern.compile(
+        "\\b(\\d{1,2})(?:\\+)?\\s+years?\\b",
+        Pattern.CASE_INSENSITIVE);
 
     private final JdParserService jdParser;
 
@@ -24,30 +39,30 @@ public class InstantVerdictController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> instantCheck(
-        @RequestBody Map<String, String> request
-    ) {
+    public ResponseEntity<Map<String, Object>> instantCheck(@RequestBody Map<String, String> request) {
         String jdText = request.get("jobDescription");
-        String resumeText = request.get("resumeText"); // Optional - can be LinkedIn URL or pasted text
-        
+        String resumeText = request.get("resumeText");
+
         if (jdText == null || jdText.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Job description required"));
         }
 
-        // Parse JD quickly
         JobDescription jd = jdParser.parse(jdText);
-        
-        // Quick analysis without full pipeline
         String verdict = determineQuickVerdict(resumeText, jd);
         List<String> keyPoints = extractKeyPoints(resumeText, jd);
         String recommendation = getRecommendation(verdict);
-        
+
+        String roleTitle = jd.getRoleTitle() != null && !jd.getRoleTitle().isBlank()
+            ? jd.getRoleTitle()
+            : "Unknown Role";
+        int requiredYoe = jd.getYoeMin() != null ? (int) Math.round(jd.getYoeMin()) : 0;
+
         return ResponseEntity.ok(Map.of(
             "verdict", verdict,
             "keyPoints", keyPoints,
             "recommendation", recommendation,
-            "roleTitle", jd.getTitle() != null ? jd.getTitle() : "Unknown Role",
-            "requiredYoe", jd.getYoeMin() != null ? jd.getYoeMin() : 0
+            "roleTitle", roleTitle,
+            "requiredYoe", Math.max(0, requiredYoe)
         ));
     }
 
@@ -55,107 +70,158 @@ public class InstantVerdictController {
         if (resumeText == null || resumeText.isBlank()) {
             return "UNKNOWN";
         }
-        
-        // Quick skill overlap check
-        int mustHaveCount = 0;
-        int mustHaveTotal = jd.getMustHaveSkills().size();
-        
-        String resumeLower = resumeText.toLowerCase();
-        for (var skill : jd.getMustHaveSkills()) {
-            if (resumeLower.contains(skill.getName().toLowerCase())) {
-                mustHaveCount++;
-            }
-        }
-        
-        double matchRatio = mustHaveTotal > 0 ? (double) mustHaveCount / mustHaveTotal : 0;
-        
-        // Quick YOE check (simple heuristic)
+
+        List<String> mustHaveSkills = jd.getMustHaveSkills() != null ? jd.getMustHaveSkills() : List.of();
+        long mustHaveTotal = mustHaveSkills.size();
+        long matchedSkills = mustHaveSkills.stream().filter(skill -> matchesSkill(resumeText, skill)).count();
+
+        double matchRatio = mustHaveTotal > 0 ? (double) matchedSkills / mustHaveTotal : 0.5;
         int estimatedYoe = estimateYoeFromText(resumeText);
-        int requiredYoe = jd.getYoeMin() != null ? jd.getYoeMin() : 0;
-        int yoeGap = requiredYoe - estimatedYoe;
-        
-        // Determine verdict
-        if (matchRatio >= 0.8 && yoeGap <= 0) {
-            return "STRONG_FIT";
-        } else if (matchRatio >= 0.6 && yoeGap <= 1) {
-            return "POSSIBLE_FIT";
-        } else if (matchRatio >= 0.4 || yoeGap <= 2) {
-            return "REACH";
-        } else {
-            return "SKIP";
+        double requiredYoe = jd.getYoeMin() != null ? jd.getYoeMin() : 0.0;
+        double yoeGap = requiredYoe - estimatedYoe;
+
+        if (mustHaveTotal == 0) {
+            return yoeGap <= 0.5 ? "POSSIBLE_FIT" : "REACH";
         }
+
+        if (matchRatio >= 0.75 && yoeGap <= 0.5) {
+            return "STRONG_FIT";
+        }
+        if (matchRatio >= 0.55 && yoeGap <= 1.5) {
+            return "POSSIBLE_FIT";
+        }
+        if (matchRatio >= 0.35 || yoeGap <= 2.5) {
+            return "REACH";
+        }
+        return "SKIP";
     }
 
     private List<String> extractKeyPoints(String resumeText, JobDescription jd) {
         List<String> points = new ArrayList<>();
-        
+
         if (resumeText == null || resumeText.isBlank()) {
-            points.add("Upload your resume for detailed analysis");
+            points.add("Add your resume text to unlock personalized fit signals.");
+            points.add("Without resume evidence, this is only a JD-level directional check.");
             return points;
         }
-        
-        // YOE gap
-        int estimatedYoe = estimateYoeFromText(resumeText);
-        int requiredYoe = jd.getYoeMin() != null ? jd.getYoeMin() : 0;
-        int yoeGap = requiredYoe - estimatedYoe;
-        
-        if (yoeGap > 0) {
-            points.add(String.format("You're %d year%s short on experience. Reviewers may skim past.", 
-                yoeGap, yoeGap == 1 ? "" : "s"));
-        } else if (yoeGap == 0) {
-            points.add("Your experience level matches perfectly.");
+
+        List<String> mustHaveSkills = jd.getMustHaveSkills() != null ? jd.getMustHaveSkills() : List.of();
+        List<String> missingSkills = mustHaveSkills.stream()
+            .filter(skill -> !matchesSkill(resumeText, skill))
+            .toList();
+
+        if (!mustHaveSkills.isEmpty()) {
+            int matched = mustHaveSkills.size() - missingSkills.size();
+            points.add("Matched " + matched + " of " + mustHaveSkills.size() + " required skills.");
         }
-        
-        // Skill gaps
-        List<String> missingSkills = new ArrayList<>();
-        String resumeLower = resumeText.toLowerCase();
-        for (var skill : jd.getMustHaveSkills()) {
-            if (!resumeLower.contains(skill.getName().toLowerCase())) {
-                missingSkills.add(skill.getName());
+
+        if (!missingSkills.isEmpty()) {
+            int limit = Math.min(3, missingSkills.size());
+            String topMissing = String.join(", ", missingSkills.subList(0, limit));
+            if (missingSkills.size() > limit) {
+                topMissing += ", and " + (missingSkills.size() - limit) + " more";
+            }
+            points.add("Missing core skills: " + topMissing + ".");
+        }
+
+        int estimatedYoe = estimateYoeFromText(resumeText);
+        double requiredYoe = jd.getYoeMin() != null ? jd.getYoeMin() : 0.0;
+        double yoeGap = requiredYoe - estimatedYoe;
+
+        if (requiredYoe > 0) {
+            if (yoeGap > 0.5) {
+                int roundedGap = (int) Math.ceil(yoeGap);
+                points.add("Experience gap: about " + roundedGap + " year" + (roundedGap == 1 ? "" : "s") + " short versus the JD minimum.");
+            } else {
+                points.add("Experience level is broadly aligned with the JD minimum.");
             }
         }
-        
-        if (!missingSkills.isEmpty() && missingSkills.size() <= 3) {
-            points.add("Missing key skills: " + String.join(", ", missingSkills));
-        } else if (missingSkills.size() > 3) {
-            points.add(String.format("Missing %d key skills - this is a significant gap.", missingSkills.size()));
+
+        String roleTitle = jd.getRoleTitle();
+        if (roleTitle != null && !roleTitle.isBlank() && !matchesSkill(resumeText, roleTitle)) {
+            points.add("Your resume does not explicitly mirror the target role title.");
         }
-        
-        // Domain check (simple keyword matching)
-        if (jd.getTitle() != null && !resumeLower.contains(jd.getTitle().toLowerCase())) {
-            points.add("Your resume doesn't mention this exact role title.");
-        }
-        
+
         if (points.isEmpty()) {
-            points.add("Strong alignment with job requirements.");
+            points.add("Strong alignment detected on skills and experience.");
         }
-        
+
         return points;
     }
 
     private String getRecommendation(String verdict) {
         return switch (verdict) {
-            case "STRONG_FIT" -> "Definitely apply. You're a strong match.";
-            case "POSSIBLE_FIT" -> "Worth applying if you're interested in the role.";
-            case "REACH" -> "Worth applying if you'd take this 3x out of 10. Skip if you have 10+ other roles to apply to today.";
-            case "SKIP" -> "Consider focusing on roles that better match your profile.";
-            default -> "Upload your resume for a detailed verdict.";
+            case "STRONG_FIT" -> "Definitely apply. Your profile aligns strongly with this role.";
+            case "POSSIBLE_FIT" -> "Worth applying. Improve skills visibility and role-specific wording before submitting.";
+            case "REACH" -> "Apply selectively. Tailor heavily toward missing core requirements first.";
+            case "SKIP" -> "Likely low-conversion as-is. Target closer-fit roles or close the key gaps first.";
+            default -> "Add resume text for a personalized verdict.";
         };
     }
 
     private int estimateYoeFromText(String text) {
-        // Simple heuristic: count year ranges
-        // This is a rough estimate - full pipeline does better
-        int maxYears = 0;
-        String[] lines = text.split("\n");
-        
-        for (String line : lines) {
-            // Look for patterns like "2020-2023" or "2020-Present"
-            if (line.matches(".*\\d{4}\\s*[-–—]\\s*(\\d{4}|Present|Current).*")) {
-                maxYears += 2; // Rough estimate
-            }
+        if (text == null || text.isBlank()) {
+            return 0;
         }
-        
-        return Math.min(maxYears, 15); // Cap at 15 years
+
+        int explicitYears = 0;
+        Matcher explicitMatcher = EXPLICIT_YEARS_PATTERN.matcher(text);
+        while (explicitMatcher.find()) {
+            int years = Integer.parseInt(explicitMatcher.group(1));
+            explicitYears = Math.max(explicitYears, years);
+        }
+
+        int currentYear = Year.now().getValue();
+        Integer minStart = null;
+        Integer maxEnd = null;
+
+        Matcher rangeMatcher = YEAR_RANGE_PATTERN.matcher(text);
+        while (rangeMatcher.find()) {
+            int start = Integer.parseInt(rangeMatcher.group(1));
+            String endRaw = rangeMatcher.group(2).toLowerCase(Locale.ROOT);
+            int end = ("present".equals(endRaw) || "current".equals(endRaw) || "now".equals(endRaw))
+                ? currentYear
+                : Integer.parseInt(endRaw);
+
+            if (end < start) {
+                continue;
+            }
+            minStart = minStart == null ? start : Math.min(minStart, start);
+            maxEnd = maxEnd == null ? end : Math.max(maxEnd, end);
+        }
+
+        int spanYears = 0;
+        if (minStart != null && maxEnd != null) {
+            spanYears = Math.max(0, Math.min(25, maxEnd - minStart));
+        }
+
+        return Math.max(explicitYears, spanYears);
+    }
+
+    private boolean matchesSkill(String text, String skill) {
+        if (text == null || skill == null || skill.isBlank()) {
+            return false;
+        }
+
+        String resumeLower = text.toLowerCase(Locale.ROOT);
+        String skillLower = skill.toLowerCase(Locale.ROOT).trim();
+
+        String escapedSkill = Pattern.quote(skillLower);
+        Pattern strictBoundary = Pattern.compile("(^|[^a-z0-9+#])" + escapedSkill + "($|[^a-z0-9+#])");
+        if (strictBoundary.matcher(resumeLower).find()) {
+            return true;
+        }
+
+        // Fallback for cases like punctuation/spacing variants (e.g. "nodejs" vs "node.js").
+        String normalizedResume = normalizeForMatch(resumeLower);
+        String normalizedSkill = normalizeForMatch(skillLower);
+        return !normalizedSkill.isBlank() && normalizedResume.contains(normalizedSkill);
+    }
+
+    private String normalizeForMatch(String text) {
+        return text
+            .replaceAll("[^a-z0-9+#]+", " ")
+            .replaceAll("\\s+", " ")
+            .trim();
     }
 }

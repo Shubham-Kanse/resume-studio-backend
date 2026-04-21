@@ -412,7 +412,7 @@ public class FeedbackGenerator {
         // Skills format
         String formatAction = bank.skillsFormatAction(signals);
         if (formatAction != null) {
-            fixes.add(fix(rank++, "skill_match", "Restructure your skills section", bank.skillsFormatInterpretation(signals), formatAction, ImpactLevel.MEDIUM));
+            fixes.add(fix(rank++, "skills_format", "Restructure your skills section", bank.skillsFormatInterpretation(signals), formatAction, ImpactLevel.MEDIUM));
         }
 
         // Company no context
